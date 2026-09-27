@@ -1,0 +1,10 @@
+id: u0
+numero: 0
+titulo: Introducción
+descripcion: Qué es programar, cómo funciona esta app y tu primer programa en Python.
+objetivos:
+  - Escribir y ejecutar un programa que muestra texto con print().
+  - Usar comentarios.
+  - Leer un mensaje de error y corregirlo.
+lecciones:
+  - l01_primer_programa

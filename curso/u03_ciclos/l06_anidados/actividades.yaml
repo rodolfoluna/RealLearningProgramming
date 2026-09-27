@@ -1,0 +1,113 @@
+- id: u3-triangulo
+  titulo: Triángulo de asteriscos
+  tipo: codigo
+  enunciado: |
+    Pide una altura y dibuja un triángulo de asteriscos:
+
+    ```texto
+    Altura: 4
+    *
+    **
+    ***
+    ****
+    ```
+  codigo_inicial: |
+    altura = int(input("Altura: "))
+  pistas:
+    - "for i in range(1, altura + 1):"
+    - "\"*\" * i repite el asterisco i veces."
+  pruebas:
+    - nombre: Altura 4
+      entrada: "4"
+      salida: ["*", "**", "***", "****"]
+      modo: termina
+    - nombre: Altura 1
+      entrada: "1"
+      salida: ["*"]
+      modo: termina
+    - nombre: Altura 6
+      entrada: "6"
+      salida: ["*", "**", "***", "****", "*****", "******"]
+      modo: termina
+  solucion: |
+    altura = int(input("Altura: "))
+    for i in range(1, altura + 1):
+        print("*" * i)
+
+- id: u3-rectangulo
+  titulo: Rectángulo hueco
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Pide el ancho y el alto y dibuja un rectángulo **hueco** (solo el borde) con `#`:
+
+    ```texto
+    Ancho: 5
+    Alto: 4
+    #####
+    #   #
+    #   #
+    #####
+    ```
+  codigo_inicial: |
+    ancho = int(input("Ancho: "))
+    alto = int(input("Alto: "))
+  pistas:
+    - La primera y la última fila son completas.
+    - "Las filas de en medio: \"#\" + \" \" * (ancho - 2) + \"#\""
+  pruebas:
+    - nombre: 5 x 4
+      entrada: "5\n4\n"
+      salida: ["#####", "#   #", "#   #", "#####"]
+      modo: termina
+    - nombre: 3 x 3
+      entrada: "3\n3\n"
+      salida: ["###", "# #", "###"]
+      modo: termina
+    - nombre: 6 x 2
+      entrada: "6\n2\n"
+      salida: ["######", "######"]
+      modo: termina
+  solucion: |
+    ancho = int(input("Ancho: "))
+    alto = int(input("Alto: "))
+    for fila in range(1, alto + 1):
+        if fila == 1 or fila == alto:
+            print("#" * ancho)
+        else:
+            print("#" + " " * (ancho - 2) + "#")
+
+- id: u3-piramide
+  titulo: Pirámide
+  tipo: codigo
+  dificultad: 3
+  enunciado: |
+    Dibuja una pirámide centrada de la altura indicada:
+
+    ```texto
+    Altura: 4
+       *
+      ***
+     *****
+    *******
+    ```
+
+    La fila `i` (empezando en 1) tiene `altura - i` espacios y `2 × i - 1` asteriscos.
+  codigo_inicial: |
+    altura = int(input("Altura: "))
+  pistas:
+    - Calcula los espacios y los asteriscos de cada fila con las fórmulas del enunciado.
+    - "print(\" \" * espacios + \"*\" * asteriscos)"
+  pruebas:
+    - nombre: Altura 4
+      entrada: "4"
+      salida: ["   *", "  ***", " *****", "*******"]
+      modo: termina
+    - nombre: Altura 2
+      entrada: "2"
+      salida: [" *", "***"]
+      modo: termina
+  solucion: |
+    altura = int(input("Altura: "))
+    for i in range(1, altura + 1):
+        print(" " * (altura - i) + "*" * (2 * i - 1))

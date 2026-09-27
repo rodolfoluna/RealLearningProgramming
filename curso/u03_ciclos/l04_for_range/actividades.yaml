@@ -1,0 +1,84 @@
+- id: u3-tabla-multiplicar
+  titulo: Tabla de multiplicar
+  tipo: codigo
+  enunciado: |
+    Pide un número y muestra su tabla de multiplicar del 1 al 10 con este formato:
+
+    ```texto
+    Tabla del: 7
+    7 x 1 = 7
+    7 x 2 = 14
+    ...
+    7 x 10 = 70
+    ```
+  codigo_inicial: |
+    n = int(input("Tabla del: "))
+  pistas:
+    - "for i in range(1, 11):"
+    - "print(f\"{n} x {i} = {n * i}\")"
+  pruebas:
+    - nombre: Tabla del 7
+      entrada: "7"
+      salida: ["7 x 1 = 7", "7 x 2 = 14", "7 x 3 = 21", "7 x 4 = 28", "7 x 5 = 35", "7 x 6 = 42", "7 x 7 = 49", "7 x 8 = 56", "7 x 9 = 63", "7 x 10 = 70"]
+      modo: termina
+    - nombre: Tabla del 12
+      entrada: "12"
+      salida: ["12 x 1 = 12", "12 x 5 = 60", "12 x 10 = 120"]
+  solucion: |
+    n = int(input("Tabla del: "))
+    for i in range(1, 11):
+        print(f"{n} x {i} = {n * i}")
+
+- id: u3-predice-range
+  titulo: ¿Qué números genera range?
+  tipo: prediccion
+  enunciado: ¿Qué muestra este programa?
+  codigo: |
+    for i in range(2, 10, 3):
+        print(i)
+    for letra in "sol":
+        print(letra * 2)
+  salida_esperada: |
+    2
+    5
+    8
+    ss
+    oo
+    ll
+  explicacion: |
+    `range(2, 10, 3)` empieza en 2 y avanza de 3 en 3 sin llegar a 10: 2, 5, 8.
+    El segundo ciclo recorre la cadena y repite cada letra dos veces.
+
+- id: u3-factorial
+  titulo: Factorial
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    El factorial de n (n!) es el producto 1 × 2 × … × n, y 0! = 1. Pide `n` y muestra su factorial
+    usando un ciclo `for`:
+
+    ```texto
+    N: 5
+    5! = 120
+    ```
+  codigo_inicial: |
+    n = int(input("N: "))
+  pistas:
+    - Este acumulador multiplica, así que debe empezar en 1, no en 0.
+    - "for i in range(1, n + 1): resultado *= i"
+  pruebas:
+    - nombre: 5!
+      entrada: "5"
+      salida: ["5! = 120"]
+    - nombre: 0!
+      entrada: "0"
+      salida: ["0! = 1"]
+    - nombre: 10!
+      entrada: "10"
+      salida: ["10! = 3628800"]
+  solucion: |
+    n = int(input("N: "))
+    resultado = 1
+    for i in range(1, n + 1):
+        resultado *= i
+    print(f"{n}! = {resultado}")

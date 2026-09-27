@@ -1,0 +1,96 @@
+- id: u2-par-impar
+  titulo: ¿Par o impar?
+  tipo: codigo
+  enunciado: |
+    Pide un número entero y muestra si es par o impar:
+
+    ```texto
+    Número: 7
+    7 es impar
+    ```
+  codigo_inicial: |
+    n = int(input("Número: "))
+  pistas:
+    - Un número es par si el residuo de dividirlo entre 2 es 0.
+    - "if n % 2 == 0:"
+  pruebas:
+    - nombre: Impar
+      entrada: "7"
+      salida: ["7 es impar"]
+    - nombre: Par
+      entrada: "10"
+      salida: ["10 es par"]
+    - nombre: El cero es par
+      entrada: "0"
+      salida: ["0 es par"]
+    - nombre: Negativo
+      entrada: "-3"
+      salida: ["-3 es impar"]
+  solucion: |
+    n = int(input("Número: "))
+    if n % 2 == 0:
+        print(n, "es par")
+    else:
+        print(n, "es impar")
+
+- id: u2-aprobado
+  titulo: ¿Aprobado o reprobado?
+  tipo: codigo
+  enunciado: |
+    En tu escuela se aprueba con **70 o más**. Pide una calificación (puede tener decimales)
+    y muestra `Aprobado` o `Reprobado`.
+
+    ```texto
+    Calificación: 69.5
+    Reprobado
+    ```
+  codigo_inicial: |
+    # Pide la calificación
+  pistas:
+    - Usa float() porque la calificación puede tener decimales.
+    - 70 exacto también aprueba, así que usa >=.
+  pruebas:
+    - nombre: 85 aprueba
+      entrada: "85"
+      salida: ["Aprobado"]
+    - nombre: 69.5 reprueba
+      entrada: "69.5"
+      salida: ["Reprobado"]
+    - nombre: 70 exacto aprueba
+      entrada: "70"
+      salida: ["Aprobado"]
+  solucion: |
+    calificacion = float(input("Calificación: "))
+    if calificacion >= 70:
+        print("Aprobado")
+    else:
+        print("Reprobado")
+
+- id: u2-corrige-sangria
+  titulo: Corrige el if
+  tipo: codigo
+  enunciado: |
+    Este programa debería decir si un número es positivo, pero tiene errores de escritura.
+    Corrígelo. Con `5` debe mostrar `Es positivo` y con `-2`, `No es positivo`.
+  codigo_inicial: |
+    n = int(input("Número: "))
+    if n > 0
+    print("Es positivo")
+    else:
+        print("No es positivo")
+  pistas:
+    - La línea del if debe terminar con dos puntos.
+    - El print que va dentro del if necesita sangría de 4 espacios.
+  pruebas:
+    - nombre: Positivo
+      entrada: "5"
+      salida: ["Es positivo"]
+    - nombre: Negativo
+      entrada: "-2"
+      salida: ["No es positivo"]
+  solucion: |
+    n = int(input("Número: "))
+    if n > 0:
+        print("Es positivo")
+    else:
+        print("No es positivo")

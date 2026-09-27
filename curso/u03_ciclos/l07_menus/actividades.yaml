@@ -1,0 +1,156 @@
+- id: u3-calculadora
+  titulo: Calculadora con menú
+  tipo: codigo
+  dificultad: 3
+  enunciado: |
+    Haz una calculadora que repita este menú hasta elegir `5`:
+
+    ```texto
+    1) Sumar
+    2) Restar
+    3) Multiplicar
+    4) Dividir
+    5) Salir
+    Opción:
+    ```
+
+    Para las opciones 1 a 4 pide dos números (pueden tener decimales) y muestra
+    `Resultado: <valor>`. Si en la división el segundo número es 0, muestra
+    `No se puede dividir entre cero`. Una opción inexistente muestra `Opción no válida`.
+    Al salir muestra `¡Hasta luego!`.
+
+    Ejemplo:
+
+    ```texto
+    Opción: 1
+    Primer número: 2
+    Segundo número: 3
+    Resultado: 5.0
+    Opción: 5
+    ¡Hasta luego!
+    ```
+  codigo_inicial: |
+    opcion = ""
+    while opcion != "5":
+        print("1) Sumar")
+        print("2) Restar")
+        print("3) Multiplicar")
+        print("4) Dividir")
+        print("5) Salir")
+        opcion = input("Opción: ")
+        # Completa el programa
+  pistas:
+    - Para las opciones 1 a 4 necesitas los dos números; pídelos dentro de un if que agrupe esas opciones.
+    - "if opcion in (\"1\", \"2\", \"3\", \"4\"): ... y adentro otro if/elif para cada operación."
+    - Revisa el divisor antes de dividir.
+  pruebas:
+    - nombre: Suma y salir
+      entrada: "1\n2\n3\n5\n"
+      salida: ["Resultado: 5.0", "¡Hasta luego!"]
+    - nombre: Todas las operaciones
+      entrada: "2\n10\n4\n3\n2.5\n4\n4\n9\n2\n5\n"
+      salida: ["Resultado: 6.0", "Resultado: 10.0", "Resultado: 4.5", "¡Hasta luego!"]
+    - nombre: División entre cero
+      entrada: "4\n7\n0\n5\n"
+      salida: ["No se puede dividir entre cero", "¡Hasta luego!"]
+    - nombre: Opción inválida
+      entrada: "8\n5\n"
+      salida: ["Opción no válida", "¡Hasta luego!"]
+  solucion: |
+    opcion = ""
+    while opcion != "5":
+        print("1) Sumar")
+        print("2) Restar")
+        print("3) Multiplicar")
+        print("4) Dividir")
+        print("5) Salir")
+        opcion = input("Opción: ")
+        if opcion in ("1", "2", "3", "4"):
+            a = float(input("Primer número: "))
+            b = float(input("Segundo número: "))
+            if opcion == "1":
+                print("Resultado:", a + b)
+            elif opcion == "2":
+                print("Resultado:", a - b)
+            elif opcion == "3":
+                print("Resultado:", a * b)
+            elif b == 0:
+                print("No se puede dividir entre cero")
+            else:
+                print("Resultado:", a / b)
+        elif opcion != "5":
+            print("Opción no válida")
+    print("¡Hasta luego!")
+
+- id: u3-cajero
+  titulo: Cajero automático
+  tipo: codigo
+  dificultad: 3
+  enunciado: |
+    Simula un cajero automático. La cuenta empieza con **$1000**. Repite el menú hasta elegir `4`:
+
+    ```texto
+    1) Consultar saldo
+    2) Depositar
+    3) Retirar
+    4) Salir
+    ```
+
+    - Consultar: `Saldo: $1000.00`
+    - Depositar: pide la cantidad; si es positiva, súmala y muestra `Depósito realizado`;
+      si no, `Cantidad inválida`.
+    - Retirar: pide la cantidad; si es mayor que el saldo muestra `Fondos insuficientes`;
+      si no es positiva, `Cantidad inválida`; en otro caso réstala y muestra `Retiro realizado`.
+    - Salir: muestra `Gracias por usar el cajero`.
+
+    Muestra siempre el saldo con dos decimales.
+  codigo_inicial: |
+    saldo = 1000.0
+  pistas:
+    - La estructura es igual a la de la calculadora con menú.
+    - Para los montos usa float(input(...)).
+    - "En el retiro revisa primero si la cantidad es inválida y después si alcanza el saldo."
+  pruebas:
+    - nombre: Consultar y salir
+      entrada: "1\n4\n"
+      salida: ["Saldo: $1000.00", "Gracias por usar el cajero"]
+    - nombre: Depósito y retiro
+      entrada: "2\n250.5\n3\n100\n1\n4\n"
+      salida: ["Depósito realizado", "Retiro realizado", "Saldo: $1150.50"]
+    - nombre: Fondos insuficientes
+      entrada: "3\n5000\n1\n4\n"
+      salida: ["Fondos insuficientes", "Saldo: $1000.00"]
+    - nombre: Cantidades inválidas
+      entrada: "2\n-5\n3\n0\n4\n"
+      salida: ["Cantidad inválida", "Cantidad inválida", "Gracias por usar el cajero"]
+  solucion: |
+    saldo = 1000.0
+    opcion = ""
+    while opcion != "4":
+        print("1) Consultar saldo")
+        print("2) Depositar")
+        print("3) Retirar")
+        print("4) Salir")
+        opcion = input("Opción: ")
+        if opcion == "1":
+            print(f"Saldo: ${saldo:.2f}")
+        elif opcion == "2":
+            cantidad = float(input("Cantidad a depositar: "))
+            if cantidad > 0:
+                saldo += cantidad
+                print("Depósito realizado")
+            else:
+                print("Cantidad inválida")
+        elif opcion == "3":
+            cantidad = float(input("Cantidad a retirar: "))
+            if cantidad <= 0:
+                print("Cantidad inválida")
+            elif cantidad > saldo:
+                print("Fondos insuficientes")
+            else:
+                saldo -= cantidad
+                print("Retiro realizado")
+        elif opcion == "4":
+            print("Gracias por usar el cajero")
+        else:
+            print("Opción no válida")

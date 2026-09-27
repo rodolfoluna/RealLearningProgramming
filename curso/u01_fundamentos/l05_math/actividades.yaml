@@ -1,0 +1,99 @@
+- id: u1-hipotenusa
+  titulo: Teorema de Pitágoras
+  tipo: codigo
+  enunciado: |
+    Pide los dos catetos de un triángulo rectángulo y muestra la hipotenusa con dos decimales:
+    `c = √(a² + b²)`
+
+    ```texto
+    Cateto a: 3
+    Cateto b: 4
+    Hipotenusa: 5.00
+    ```
+  codigo_inicial: |
+    import math
+
+    # Pide los catetos como float
+  pistas:
+    - math.sqrt(x) calcula la raíz cuadrada.
+    - "a ** 2 es a al cuadrado."
+    - "Muestra con f\"Hipotenusa: {c:.2f}\""
+  pruebas:
+    - nombre: 3 y 4
+      entrada: "3\n4\n"
+      salida: ["Hipotenusa: 5.00"]
+    - nombre: 5 y 12
+      entrada: "5\n12\n"
+      salida: ["Hipotenusa: 13.00"]
+    - nombre: 1 y 1
+      entrada: "1\n1\n"
+      salida: ["Hipotenusa: 1.41"]
+  solucion: |
+    import math
+
+    a = float(input("Cateto a: "))
+    b = float(input("Cateto b: "))
+    c = math.sqrt(a ** 2 + b ** 2)
+    print(f"Hipotenusa: {c:.2f}")
+
+- id: u1-area-circulo
+  titulo: Área de un círculo
+  tipo: codigo
+  enunciado: |
+    Pide el radio de un círculo y muestra su área (π·r²) y su perímetro (2·π·r) con dos decimales:
+
+    ```texto
+    Radio: 2
+    Área: 12.57
+    Perímetro: 12.57
+    ```
+  codigo_inicial: |
+    import math
+
+  pistas:
+    - Usa math.pi para π.
+    - "El área es math.pi * r ** 2"
+  pruebas:
+    - nombre: Radio 2
+      entrada: "2"
+      salida: ["Área: 12.57", "Perímetro: 12.57"]
+    - nombre: Radio 5.5
+      entrada: "5.5"
+      salida: ["Área: 95.03", "Perímetro: 34.56"]
+  solucion: |
+    import math
+
+    r = float(input("Radio: "))
+    print(f"Área: {math.pi * r ** 2:.2f}")
+    print(f"Perímetro: {2 * math.pi * r:.2f}")
+
+- id: u1-temperatura
+  titulo: Convertidor de temperatura
+  tipo: codigo
+  enunciado: |
+    Pide una temperatura en grados Celsius y conviértela a Fahrenheit con la fórmula
+    `F = C × 9/5 + 32`. Muestra el resultado con un decimal:
+
+    ```texto
+    Grados Celsius: 25
+    25.0 °C equivalen a 77.0 °F
+    ```
+  codigo_inicial: |
+    # Pide los grados Celsius
+  pistas:
+    - Convierte con float() para aceptar decimales.
+    - "Con f-string: {celsius:.1f} y {fahrenheit:.1f}"
+  pruebas:
+    - nombre: 25 °C
+      entrada: "25"
+      salida: ["25.0 °C equivalen a 77.0 °F"]
+    - nombre: Bajo cero
+      entrada: "-40"
+      salida: ["-40.0 °C equivalen a -40.0 °F"]
+    - nombre: Con decimales
+      entrada: "36.6"
+      salida: ["36.6 °C equivalen a 97.9 °F"]
+  solucion: |
+    celsius = float(input("Grados Celsius: "))
+    fahrenheit = celsius * 9 / 5 + 32
+    print(f"{celsius:.1f} °C equivalen a {fahrenheit:.1f} °F")

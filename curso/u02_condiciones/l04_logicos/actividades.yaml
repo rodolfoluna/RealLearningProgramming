@@ -1,0 +1,104 @@
+- id: u2-bisiesto
+  titulo: Año bisiesto
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Un año es **bisiesto** si es divisible entre 4, **excepto** los divisibles entre 100,
+    que solo son bisiestos si también son divisibles entre 400. Pide un año e indica si es bisiesto:
+
+    ```texto
+    Año: 2024
+    2024 es bisiesto
+    ```
+  codigo_inicial: |
+    anio = int(input("Año: "))
+  pistas:
+    - "Divisible entre 4 significa anio % 4 == 0."
+    - "La condición completa: (divisible entre 4 y no entre 100) o divisible entre 400."
+  pruebas:
+    - nombre: "2024"
+      entrada: "2024"
+      salida: ["2024 es bisiesto"]
+    - nombre: "2023"
+      entrada: "2023"
+      salida: ["2023 no es bisiesto"]
+    - nombre: "1900 (divisible entre 100)"
+      entrada: "1900"
+      salida: ["1900 no es bisiesto"]
+    - nombre: "2000 (divisible entre 400)"
+      entrada: "2000"
+      salida: ["2000 es bisiesto"]
+  solucion: |
+    anio = int(input("Año: "))
+    if (anio % 4 == 0 and anio % 100 != 0) or anio % 400 == 0:
+        print(anio, "es bisiesto")
+    else:
+        print(anio, "no es bisiesto")
+
+- id: u2-mayor-de-tres
+  titulo: El mayor de tres números
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Pide tres números enteros y muestra cuál es el mayor **sin usar** la función `max()`:
+
+    ```texto
+    Primero: 4
+    Segundo: 9
+    Tercero: 2
+    El mayor es 9
+    ```
+  codigo_inicial: |
+    a = int(input("Primero: "))
+    b = int(input("Segundo: "))
+    c = int(input("Tercero: "))
+  pistas:
+    - "a es el mayor si a >= b and a >= c."
+    - Revisa el caso en el que dos números son iguales.
+  pruebas:
+    - nombre: El mayor en medio
+      entrada: "4\n9\n2\n"
+      salida: ["El mayor es 9"]
+    - nombre: El mayor al inicio
+      entrada: "15\n3\n7\n"
+      salida: ["El mayor es 15"]
+    - nombre: El mayor al final
+      entrada: "-1\n-5\n0\n"
+      salida: ["El mayor es 0"]
+    - nombre: Empates
+      entrada: "6\n6\n1\n"
+      salida: ["El mayor es 6"]
+  solucion: |
+    a = int(input("Primero: "))
+    b = int(input("Segundo: "))
+    c = int(input("Tercero: "))
+    if a >= b and a >= c:
+        mayor = a
+    elif b >= c:
+        mayor = b
+    else:
+        mayor = c
+    print("El mayor es", mayor)
+
+- id: u2-predice-logicos
+  titulo: and, or, not
+  tipo: prediccion
+  enunciado: ¿Qué muestra este programa?
+  codigo: |
+    x = 7
+    print(x > 5 and x < 10)
+    print(x < 5 or x == 7)
+    print(not x == 7)
+    if x > 0:
+        if x % 2 == 0:
+            print("positivo par")
+        else:
+            print("positivo impar")
+  salida_esperada: |
+    True
+    True
+    False
+    positivo impar
+  explicacion: |
+    7 es mayor que 5 **y** menor que 10; con `or` basta que `x == 7`. `not` invierte `True`.
+    En el `if` anidado, 7 es positivo e impar.

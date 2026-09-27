@@ -1,0 +1,64 @@
+- id: u1-datos-personales
+  titulo: Datos en variables
+  tipo: codigo
+  enunciado: |
+    Crea dos variables: `nombre` con el valor `"Luis"` y `edad` con el valor `20`.
+    Después muestra, usando esas variables, el mensaje:
+
+    ```texto
+    Luis tiene 20 años
+    ```
+  codigo_inicial: |
+    # Crea las variables nombre y edad
+
+    # Muestra el mensaje usando las variables
+  pistas:
+    - "Primero asigna: nombre = \"Luis\""
+    - print() puede recibir varios valores separados por comas; Python los separa con un espacio.
+    - "print(nombre, \"tiene\", edad, \"años\")"
+  pruebas:
+    - nombre: Muestra el mensaje
+      salida: Luis tiene 20 años
+      modo: normalizada
+  solucion: |
+    nombre = "Luis"
+    edad = 20
+    print(nombre, "tiene", edad, "años")
+
+- id: u1-predice-reasignacion
+  titulo: ¿Cuánto vale al final?
+  tipo: prediccion
+  enunciado: Escribe exactamente lo que muestra este programa.
+  codigo: |
+    x = 5
+    y = x + 2
+    x = 10
+    print(x)
+    print(y)
+    y = y * 2
+    print(x, y)
+  salida_esperada: |
+    10
+    7
+    10 14
+  explicacion: |
+    `y` se calcula con el valor que tenía `x` **en ese momento** (5), así que vale 7. Cambiar `x`
+    después no cambia `y`. Al final `y` se duplica: 14.
+
+- id: u1-tipo-de-dato
+  titulo: Tipos de datos
+  tipo: opcion_multiple
+  enunciado: ¿De qué tipo es el valor `"3.5"` (con comillas)?
+  opciones:
+    - texto: "`float`"
+      correcta: false
+      explicacion: Parece un número decimal, pero las comillas lo convierten en texto.
+    - texto: "`int`"
+      correcta: false
+      explicacion: No es entero, y además está entre comillas.
+    - texto: "`str`"
+      correcta: true
+      explicacion: Todo lo que está entre comillas es texto (`str`), aunque parezca número.
+    - texto: "`bool`"
+      correcta: false
+      explicacion: Los únicos valores `bool` son `True` y `False`.

@@ -1,0 +1,37 @@
+- id: u2-predice-comparaciones
+  titulo: ¿Verdadero o falso?
+  tipo: prediccion
+  enunciado: Escribe lo que muestra este programa.
+  codigo: |
+    a = 10
+    b = 3
+    print(a > b, a == b)
+    print(a % 2 == 0)
+    print("perro" == "Perro")
+    print(b * 3 != a)
+  salida_esperada: |
+    True False
+    True
+    False
+    True
+  explicacion: |
+    10 % 2 es 0, así que `a % 2 == 0` es `True` (10 es par). Las cadenas distinguen mayúsculas.
+    `b * 3` es 9, que es diferente de 10.
+
+- id: u2-igual-o-asigna
+  titulo: "= contra =="
+  tipo: opcion_multiple
+  enunciado: ¿Cuál de estas líneas **pregunta** si `x` vale 5?
+  opciones:
+    - texto: "`x = 5`"
+      correcta: false
+      explicacion: Un solo `=` asigna el valor 5 a `x`, no pregunta nada.
+    - texto: "`x == 5`"
+      correcta: true
+      explicacion: "`==` compara y da `True` o `False`."
+    - texto: "`x := 5`"
+      correcta: false
+      explicacion: Es una asignación especial (operador morsa); no compara.
+    - texto: "`5 => x`"
+      correcta: false
+      explicacion: "`=>` no es un operador de Python; el correcto sería `>=`."

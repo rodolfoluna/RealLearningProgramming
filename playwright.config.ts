@@ -20,8 +20,19 @@ export default defineConfig({
       reuseExistingServer: true,
       timeout: 60_000,
     },
+    {
+      command: "pnpm --filter @rlp/alumno exec vite --port 1420 --strictPort",
+      url: "http://localhost:1420",
+      reuseExistingServer: true,
+      timeout: 60_000,
+    },
   ],
   projects: [
     { name: "banco", testMatch: /banco\..*spec\.ts/, use: { baseURL: "http://localhost:5199" } },
+    {
+      name: "alumno",
+      testMatch: /alumno\..*spec\.ts/,
+      use: { baseURL: "http://localhost:1420", viewport: { width: 1366, height: 800 } },
+    },
   ],
 });

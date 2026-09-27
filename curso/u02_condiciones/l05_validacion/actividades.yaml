@@ -1,0 +1,73 @@
+- id: u2-numero-valido
+  titulo: ¿Es un número?
+  tipo: codigo
+  enunciado: |
+    Pide un número entero. Si el usuario escribe un número, muestra su doble; si no, muestra
+    `Eso no es un número entero`.
+
+    ```texto
+    Escribe un número: 21
+    El doble es 42
+    ```
+  codigo_inicial: |
+    # Usa try / except ValueError
+  pistas:
+    - Pon el int(input(...)) dentro del bloque try.
+    - "except ValueError: se ejecuta si la conversión falla."
+  pruebas:
+    - nombre: Número válido
+      entrada: "21"
+      salida: ["El doble es 42"]
+    - nombre: Texto
+      entrada: "hola"
+      salida: ["Eso no es un número entero"]
+    - nombre: Número con decimales
+      entrada: "3.5"
+      salida: ["Eso no es un número entero"]
+  solucion: |
+    try:
+        n = int(input("Escribe un número: "))
+        print("El doble es", n * 2)
+    except ValueError:
+        print("Eso no es un número entero")
+
+- id: u2-division-segura
+  titulo: División segura
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Pide dos números (pueden tener decimales) y muestra la división con dos decimales.
+    Maneja los dos errores posibles con mensajes claros:
+
+    - Si alguno no es número: `Error: escribe solo números`
+    - Si el divisor es cero: `Error: no se puede dividir entre cero`
+
+    ```texto
+    Dividendo: 10
+    Divisor: 4
+    Resultado: 2.50
+    ```
+  codigo_inicial: |
+    # Pide el dividendo y el divisor
+  pistas:
+    - Necesitas dos bloques except, uno para ValueError y otro para ZeroDivisionError.
+    - "Formato con dos decimales: f\"Resultado: {r:.2f}\""
+  pruebas:
+    - nombre: 10 / 4
+      entrada: "10\n4\n"
+      salida: ["Resultado: 2.50"]
+    - nombre: Divisor cero
+      entrada: "5\n0\n"
+      salida: ["Error: no se puede dividir entre cero"]
+    - nombre: Texto
+      entrada: "diez\n2\n"
+      salida: ["Error: escribe solo números"]
+  solucion: |
+    try:
+        a = float(input("Dividendo: "))
+        b = float(input("Divisor: "))
+        print(f"Resultado: {a / b:.2f}")
+    except ValueError:
+        print("Error: escribe solo números")
+    except ZeroDivisionError:
+        print("Error: no se puede dividir entre cero")
