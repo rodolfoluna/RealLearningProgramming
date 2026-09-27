@@ -112,6 +112,13 @@ export async function registrarEvento(tipo: string, actividad: string | null, da
   }
 }
 
+/** Tareas a completar antes de cerrar la app (p. ej. guardar lo tecleado en el editor). */
+export const alCerrar = new Set<() => Promise<unknown>>();
+
+export async function prepararCierre() {
+  await Promise.allSettled([...alCerrar].map((f) => f()));
+}
+
 let temporizadorAviso: ReturnType<typeof setTimeout> | null = null;
 
 export function avisar(texto: string, ms = 3500) {

@@ -8,6 +8,7 @@
   import { enDialogoNativo } from "../lib/dialogos";
   import {
     actualizarActividad,
+    alCerrar,
     app,
     avisar,
     politicaPegado,
@@ -121,12 +122,27 @@
     window.addEventListener("blur", alSalir);
     window.addEventListener("focus", alVolver);
     window.addEventListener("keydown", teclas);
+    window.addEventListener("pagehide", guardarPendiente);
+    document.addEventListener("visibilitychange", guardarPendiente);
   });
+
+  function guardarPendiente() {
+    editor?.vaciarOperaciones();
+  }
+
+  async function antesDeCerrar() {
+    editor?.vaciarOperaciones();
+    await colaGuardado;
+  }
+  alCerrar.add(antesDeCerrar);
 
   onDestroy(() => {
     window.removeEventListener("blur", alSalir);
     window.removeEventListener("focus", alVolver);
     window.removeEventListener("keydown", teclas);
+    window.removeEventListener("pagehide", guardarPendiente);
+    alCerrar.delete(antesDeCerrar);
+    document.removeEventListener("visibilitychange", guardarPendiente);
     if (temporizadorSintaxis) clearTimeout(temporizadorSintaxis);
     if (python.ocupado) python.detener();
     editor?.destruir();
@@ -134,6 +150,7 @@
   });
 
   function alSalir() {
+    editor?.vaciarOperaciones(); // guarda lo tecleado antes de perder el foco (o cerrar la ventana)
     if (!registrarSalidas() || enDialogoNativo() || salidaDesde) return;
     salidaDesde = Date.now();
     void registrarEvento("foco", id, { estado: "perdido" });

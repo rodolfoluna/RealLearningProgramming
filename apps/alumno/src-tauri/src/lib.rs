@@ -26,6 +26,23 @@ type R<T> = Result<T, String>;
 struct Estado {
     rutas: Rutas,
     sesion: Mutex<Option<SesionAlumno>>,
+    cerrando: std::sync::atomic::AtomicBool,
+}
+
+impl Estado {
+    fn cerrar_sesion(&self) {
+        let sesion = self.sesion.lock().ok().and_then(|mut g| g.take());
+        if let Some(s) = sesion {
+            let _ = s.cerrar();
+        }
+    }
+}
+
+/// La interfaz ya guardó lo pendiente: se cierra la sesión y la app.
+#[tauri::command]
+fn cerrar_app(app: tauri::AppHandle, estado: State<Estado>) {
+    estado.cerrar_sesion();
+    app.exit(0);
 }
 
 fn texto<E: std::fmt::Display>(e: E) -> String {
@@ -377,16 +394,29 @@ pub fn run() {
             app.manage(Estado {
                 rutas,
                 sesion: Mutex::new(None),
+                cerrando: Default::default(),
             });
             Ok(())
         })
         .on_window_event(|ventana, evento| {
-            if let tauri::WindowEvent::CloseRequested { .. } = evento {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = evento {
+                // Primero se pide a la interfaz que guarde lo tecleado; si no responde, se cierra igual.
                 let estado = ventana.state::<Estado>();
-                let sesion = estado.sesion.lock().ok().and_then(|mut g| g.take());
-                if let Some(s) = sesion {
-                    let _ = s.cerrar();
+                if estado
+                    .cerrando
+                    .swap(true, std::sync::atomic::Ordering::SeqCst)
+                {
+                    estado.cerrar_sesion();
+                    return;
                 }
+                api.prevent_close();
+                let _ = ventana.emit("cerrando", ());
+                let app = ventana.app_handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_secs(3));
+                    app.state::<Estado>().cerrar_sesion();
+                    app.exit(0);
+                });
             }
         })
         .invoke_handler(tauri::generate_handler![
@@ -412,6 +442,7 @@ pub fn run() {
             generar_ejecutable,
             abrir_carpeta,
             autoprueba_fin,
+            cerrar_app,
             consola_log,
             entrada_enviar,
             entrada_cancelar,

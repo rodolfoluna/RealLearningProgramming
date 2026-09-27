@@ -8,6 +8,7 @@
   import Actividad from "./Actividad.svelte";
   import Estadisticas from "./Estadisticas.svelte";
   import { ubicar } from "@rlp/curso";
+  import { tick } from "svelte";
 
   const alumno = $derived(app.alumno!);
   const g = $derived(alumno.estadisticas.global);
@@ -57,6 +58,9 @@
       const b = await backend();
       const r = await b.elegirArchivo("Elige el archivo .rlp de tu otro equipo", "rlp", "Avances de RLP");
       if (!r) return;
+      // Cierra la actividad abierta (guarda lo pendiente) para que el editor recargue lo importado.
+      app.seleccion = { tipo: "inicio" };
+      await tick();
       const res = await b.importarAvances(r);
       app.alumno = await b.estado();
       const partes = [`${res.eventos_nuevos} registros nuevos`, `${res.actividades_actualizadas.length} actividades actualizadas`];
