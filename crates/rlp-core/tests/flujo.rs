@@ -657,3 +657,41 @@ fn historial_grande_se_verifica_rapido() {
         bytes.len() / 1024
     );
 }
+
+#[cfg(feature = "excel")]
+#[test]
+fn exportar_a_excel() {
+    let (dir, profe, _s, archivo) = entrega_base();
+    let e = abrir_entrega(&archivo, &profe, &ctx()).unwrap();
+    let bd = BdProfesor::abrir(&dir.path().join("profesor.db")).unwrap();
+    let reg = bd.registrar_entrega(&e).unwrap();
+    let perfil = e.manifiesto.perfil_id.clone();
+    bd.calificar(&perfil, "u1-a1", Some(9.5), "Bien, revisa la sangría")
+        .unwrap();
+    let actividades = vec![
+        ("u1-a1".to_string(), "Actividad uno".to_string()),
+        ("u1-a2".to_string(), "Actividad dos".to_string()),
+    ];
+    let bytes = rlp_core::excel::exportar_xlsx(&bd, None, &actividades).unwrap();
+
+    let mut zip = zip::ZipArchive::new(Cursor::new(bytes)).unwrap();
+    let mut leer = |nombre: &str| {
+        let mut s = String::new();
+        zip.by_name(nombre).unwrap().read_to_string(&mut s).unwrap();
+        s
+    };
+    let libro = leer("xl/workbook.xml");
+    for hoja in ["Resumen", "Actividades", "Calificaciones"] {
+        assert!(
+            libro.contains(&format!("name=\"{hoja}\"")),
+            "falta la hoja {hoja}"
+        );
+    }
+    let textos = leer("xl/sharedStrings.xml");
+    assert!(textos.contains(&reg.nombre) && textos.contains(&reg.numero_control));
+    assert!(textos.contains("Actividad uno"));
+    let calif = leer("xl/worksheets/sheet3.xml");
+    assert!(calif.contains("<v>9.5</v>"), "calificación capturada");
+    assert!(calif.contains("AVERAGE"), "promedio con fórmula");
+    assert!(leer("xl/comments1.xml").contains("revisa la sangría"));
+}

@@ -42,13 +42,14 @@
     return "progreso";
   }
 
-  async function exportarCsv() {
+  async function exportar(formato: "xlsx" | "csv") {
     try {
       const b = await backend();
-      const carpeta = await b.elegirCarpeta("¿Dónde guardo el archivo CSV?");
+      const carpeta = await b.elegirCarpeta(formato === "xlsx" ? "¿Dónde guardo el archivo de Excel?" : "¿Dónde guardo el archivo CSV?");
       if (!carpeta) return;
-      const ruta = await b.exportarCsv(app.grupoId, actividades.map((a) => [a.id, a.titulo]), carpeta);
-      avisar(`CSV guardado en ${ruta}`, 6000);
+      const pares = actividades.map((a) => [a.id, a.titulo] as [string, string]);
+      const ruta = formato === "xlsx" ? await b.exportarXlsx(app.grupoId, pares, carpeta) : await b.exportarCsv(app.grupoId, pares, carpeta);
+      avisar(`${formato === "xlsx" ? "Excel" : "CSV"} guardado en ${ruta}`, 6000);
     } catch (e) {
       avisar(mensajeError(e), 6000);
     }
@@ -67,7 +68,8 @@
     <input class="buscar" placeholder="Buscar por nombre o número de control" bind:value={buscar} />
     <label class="fila interruptor"><input type="checkbox" bind:checked={mapa} /> Ver mapa de actividades</label>
     <span class="espaciador"></span>
-    <button onclick={exportarCsv} disabled={!filas.length}>⬇ Exportar CSV (Excel)</button>
+    <button onclick={() => exportar("xlsx")} disabled={!filas.length} title="Hojas Resumen, Actividades y Calificaciones">⬇ Exportar a Excel</button>
+    <button onclick={() => exportar("csv")} disabled={!filas.length}>CSV</button>
   </div>
 
   {#if error}

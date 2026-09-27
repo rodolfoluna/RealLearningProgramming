@@ -31,5 +31,6 @@ export function crearBackendTauri(): Backend {
     calificar: (perfilId, actividadId, calificacion, comentario) =>
       invoke("calificar", { perfilId, actividadId, calificacion, comentario }),
     exportarCsv: (grupoId, actividades, carpeta) => invoke("exportar_csv", { grupoId, actividades, carpeta }),
+    exportarXlsx: (grupoId, actividades, carpeta) => invoke("exportar_xlsx", { grupoId, actividades, carpeta }),
   };
 }

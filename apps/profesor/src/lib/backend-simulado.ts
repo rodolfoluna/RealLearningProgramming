@@ -198,5 +198,6 @@ export function crearBackendSimulado(): Backend {
       (calificaciones[perfil] ??= {})[act] = { calificacion, comentario, actualizado: Date.now() };
     },
     exportarCsv: async () => "simulado://carpeta/avance.csv",
+    exportarXlsx: async () => "simulado://carpeta/avance.xlsx",
   };
 }

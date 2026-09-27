@@ -72,6 +72,10 @@ export async function autoprueba(fase: string) {
         if (!l.marcas.some((m) => m.tipo === "pegado")) throw new Error("falta la marca del intento de pegar");
         return `${l.tramos.length} tramo(s), ${l.marcas.length} marca(s)`;
       });
+      await paso("exportar a Excel", async () => {
+        await b.calificar(d.fila.perfil_id, "u1-suma-dos-numeros", 10, "¡Muy bien!");
+        return b.exportarXlsx(null, [["u1-suma-dos-numeros", "Suma de dos números"]], compartida);
+      });
       await paso("tablero", async () => {
         const t = await b.tablero(null);
         if (t.length !== 1 || t[0].numero_control !== "21349999") throw new Error(JSON.stringify(t));

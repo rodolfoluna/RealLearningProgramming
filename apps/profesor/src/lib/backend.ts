@@ -28,6 +28,7 @@ export interface Backend {
   reproduccion(entregaId: number, actividadId: string): Promise<LineaDeTiempo>;
   calificar(perfilId: string, actividadId: string, calificacion: number | null, comentario: string): Promise<void>;
   exportarCsv(grupoId: string | null, actividades: [string, string][], carpeta: string): Promise<string>;
+  exportarXlsx(grupoId: string | null, actividades: [string, string][], carpeta: string): Promise<string>;
 }
 
 let instancia: Promise<Backend> | null = null;

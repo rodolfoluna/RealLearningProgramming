@@ -359,6 +359,21 @@ fn exportar_csv(
     Ok(destino.to_string_lossy().into_owned())
 }
 
+/// Libro de Excel con las hojas Resumen, Actividades y Calificaciones.
+#[tauri::command]
+fn exportar_xlsx(
+    estado: State<Estado>,
+    grupo_id: Option<String>,
+    actividades: Vec<(String, String)>,
+    carpeta: String,
+) -> R<String> {
+    let bytes = estado
+        .con_bd(|bd| rlp_core::excel::exportar_xlsx(bd, grupo_id.as_deref(), &actividades))?;
+    let destino = PathBuf::from(carpeta).join(format!("avance_{}.xlsx", ahora_ms() / 1000));
+    fs::write(&destino, bytes).map_err(texto)?;
+    Ok(destino.to_string_lossy().into_owned())
+}
+
 fn resolver_rutas() -> Rutas {
     let base = std::env::var_os("RLP_CARPETA")
         .map(PathBuf::from)
@@ -464,6 +479,7 @@ pub fn run() {
             reproduccion,
             calificar,
             exportar_csv,
+            exportar_xlsx,
             autoprueba_fin,
             consola_log,
             entrada_enviar,

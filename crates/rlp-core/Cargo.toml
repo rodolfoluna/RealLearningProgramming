@@ -11,6 +11,8 @@ default = ["firmar"]
 # Incluye la llave privada con la que la App Alumno firma eventos y entregas.
 # La App Profesor se compila sin esta función: solo verifica.
 firmar = []
+# Exportación a Excel (.xlsx) de la App Profesor.
+excel = ["dep:rust_xlsxwriter"]
 
 [dependencies]
 aes-gcm = "0.10"
@@ -23,6 +25,7 @@ hex = "0.4"
 hkdf = "0.12"
 rand_core = { version = "0.6", features = ["getrandom"] }
 regex = "1"
+rust_xlsxwriter = { version = "0.99", optional = true }
 rusqlite = { version = "0.37", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

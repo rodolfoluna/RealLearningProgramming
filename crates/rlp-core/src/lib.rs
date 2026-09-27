@@ -20,6 +20,8 @@ pub mod almacen;
 pub mod alumno;
 
 pub mod bd_profesor;
+#[cfg(feature = "excel")]
+pub mod excel;
 pub mod profesor;
 pub mod verificacion;
 
