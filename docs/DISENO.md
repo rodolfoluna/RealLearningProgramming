@@ -199,7 +199,11 @@ Además el tablero marca si un mismo perfil aparece con otro número de control 
 - Desarrollo: llave pública fija (la App Profesor la acepta en **amarillo**).
 - Producción: `cargo run -p rlp-core --example generar_llave_app` genera un par. La semilla va al
   secreto de CI `RLP_CLAVE_APP`; la pública, a `crates/rlp-core/llaves_app.txt` (o a la variable
-  `RLP_CLAVE_APP_PUBLICA`). La semilla se inyecta ofuscada por `build.rs`.
+  `RLP_CLAVE_APP_PUBLICA`). La semilla se inyecta ofuscada por `build.rs`. La lista conserva las
+  llaves de versiones anteriores para seguir verificando sus entregas.
+- Al publicar (etiqueta `v*`), `cargo run -p rlp-core --example verificar_llave_app` detiene el
+  workflow si falta el secreto o si su llave pública no está en la lista: una versión publicada
+  nunca firma con la llave de desarrollo.
 - La App Profesor se compila **sin** la función `firmar`: no contiene ninguna llave privada. Cada
   app se compila por separado para que Cargo no unifique esa función.
 
@@ -375,11 +379,11 @@ Los diccionarios quedan como posible unidad opcional en una versión posterior.
 
 ## 11. Distribución
 
-1. Descarga el artefacto `rlp-windows-portable` del workflow **Build Windows** (o una versión
-   etiquetada).
-2. Profesor: descomprime `RLP-Profesor-*.zip`, crea sus llaves, **guarda el respaldo**, crea el grupo.
-3. Con "Instalar en carpeta de la App Alumno" coloca el grupo en la carpeta `RLP-Alumno` y cópiala a
-   las PCs o memorias USB (o entrega el `.rlpg` para que cada alumno lo importe).
-4. La App Alumno requiere el WebView2 de Microsoft (incluido en Windows 11 y en Windows 10
-   actualizado). Si un antivirus bloquea los `.exe` generados, agrega una excepción para la carpeta
-   de la app.
+- Cada push genera el artefacto `rlp-windows-portable` del workflow **Build Windows**; cada
+  etiqueta `v*` publica además un **Release** de GitHub con los dos zips y las notas de
+  `CHANGELOG.md` (el zip del profesor incluye `INSTALACION.md`).
+- Guía completa para un laboratorio (WebView2 sin internet, antivirus, equipos que se restauran al
+  reiniciar, entregas, actualizar sin perder datos): [`docs/INSTALACION.md`](INSTALACION.md).
+- Resumen: el profesor descomprime `RLP-Profesor`, crea sus llaves, **guarda el respaldo** y crea
+  el grupo; con "Instalar en carpeta de la App Alumno" coloca el grupo en la carpeta `RLP-Alumno`
+  y la copia a las PCs o memorias USB (o entrega el `.rlpg` para que cada alumno lo importe).

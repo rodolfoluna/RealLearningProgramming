@@ -6,7 +6,7 @@ members = ["crates/rlp-core", "crates/rlp-puente", "apps/alumno/src-tauri", "app
 default-members = ["crates/rlp-core"]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "MIT"
 authors = ["Rodolfo Luna"]

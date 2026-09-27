@@ -3210,7 +3210,7 @@ dependencies = [
 
 [[package]]
 name = "rlp-alumno"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "rlp-core",
  "rlp-puente",
@@ -3225,7 +3225,7 @@ dependencies = [
 
 [[package]]
 name = "rlp-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aes-gcm",
  "argon2",
@@ -3252,7 +3252,7 @@ dependencies = [
 
 [[package]]
 name = "rlp-profesor"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "rlp-core",
  "rlp-puente",
@@ -3266,7 +3266,7 @@ dependencies = [
 
 [[package]]
 name = "rlp-puente"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "tauri",
 ]

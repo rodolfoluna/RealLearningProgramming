@@ -2,3 +2,4 @@
 # La App Profesor acepta como íntegras las entregas firmadas con cualquiera de ellas.
 # Formato: <llave-publica-base64> <descripción>
 # Genera un par nuevo con: cargo run -p rlp-core --example generar_llave_app
+y2sr3jlNxJDd3ySEv75Ljzr4VC6sMTzCNt8LJkyxEQ0= v0.2.0 (producción, 2026-09)

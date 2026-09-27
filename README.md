@@ -46,9 +46,20 @@ pnpm exec playwright test              # interfaz y Pyodide en Chromium
 El contenido está en `curso/` (Markdown + YAML + Python). Para agregar una actividad, edita el
 `actividades.yaml` de la lección, ejecuta `pnpm curso` y valida con `python3 scripts/validar_curso.py`.
 
-## Compilar para Windows
+## Compilar y publicar
 
 El workflow **Build Windows** genera `RLP-Alumno-*.zip` y `RLP-Profesor-*.zip` (carpetas
-portables). Para producción, genera la llave de firma de la App Alumno con
-`cargo run -p rlp-core --example generar_llave_app`, guarda la semilla en el secreto
-`RLP_CLAVE_APP` y la llave pública en `crates/rlp-core/llaves_app.txt`.
+portables) en cada push. Para publicar una versión:
+
+1. Configura una sola vez el secreto `RLP_CLAVE_APP` (Settings → Secrets and variables →
+   Actions) con la semilla de la llave de firma de la App Alumno; su llave pública ya está en
+   `crates/rlp-core/llaves_app.txt`. Para cambiarla: `cargo run -p rlp-core --example
+   generar_llave_app` y agrega la nueva llave pública (conserva las anteriores para que las
+   entregas viejas se sigan verificando).
+2. Anota los cambios en `CHANGELOG.md` y sube la versión en `Cargo.toml`, los `package.json` y
+   los `tauri.conf.json` de las apps.
+3. Crea la etiqueta sobre `main` (`git tag v0.2.0 && git push origin v0.2.0`). El workflow
+   verifica la llave de producción, compila, corre la autoprueba y publica el **Release** con los
+   dos zips y las notas del `CHANGELOG.md`.
+
+La guía para instalar en un laboratorio está en [`docs/INSTALACION.md`](docs/INSTALACION.md).
