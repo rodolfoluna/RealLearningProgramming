@@ -59,6 +59,33 @@ struct EstadoApp {
     perfiles: Vec<PerfilLocal>,
     puede_generar_exe: bool,
     dev: bool,
+    /// Fase de autoprueba (solo compilaciones de desarrollo, variable RLP_AUTOPRUEBA).
+    autoprueba: Option<String>,
+}
+
+/// Autoprueba de extremo a extremo: solo existe en compilaciones de desarrollo.
+fn fase_autoprueba() -> Option<String> {
+    if cfg!(debug_assertions) {
+        std::env::var("RLP_AUTOPRUEBA")
+            .ok()
+            .filter(|s| !s.is_empty())
+    } else {
+        None
+    }
+}
+
+#[tauri::command]
+fn autoprueba_fin(app: tauri::AppHandle, resultado: Value) -> R<()> {
+    if fase_autoprueba().is_none() {
+        return Err("No disponible.".into());
+    }
+    let ok = resultado
+        .get("ok")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+    println!("AUTOPRUEBA {}", resultado);
+    app.exit(if ok { 0 } else { 1 });
+    Ok(())
 }
 
 #[tauri::command]
@@ -73,6 +100,7 @@ fn estado_app(estado: State<Estado>) -> R<EstadoApp> {
         perfiles: listar_perfiles(&r.perfiles),
         puede_generar_exe: ejecutable::disponible(r),
         dev: rlp_core::llave_app::llave_app().dev,
+        autoprueba: fase_autoprueba(),
     })
 }
 
@@ -292,9 +320,55 @@ fn abrir_carpeta(app: tauri::AppHandle, estado: State<Estado>, ruta: String) -> 
         .map_err(texto)
 }
 
+/// En compilaciones de desarrollo, reenvía errores y `console.*` del WebView a la terminal.
+#[tauri::command]
+fn entrada_enviar(puente: State<rlp_puente::Puente>, linea: String) {
+    puente.enviar(linea);
+}
+
+#[tauri::command]
+fn entrada_cancelar(puente: State<rlp_puente::Puente>) {
+    puente.cancelar();
+}
+
+#[tauri::command]
+fn consola_log(nivel: String, mensaje: String) {
+    if cfg!(debug_assertions) {
+        eprintln!("[webview {nivel}] {mensaje}");
+    }
+}
+
+fn consola_depuracion<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
+    tauri::plugin::Builder::new("consola")
+        .js_init_script(
+            r#"(() => {
+  const enviar = (nivel, args) => { try { window.__TAURI_INTERNALS__.invoke("consola_log", { nivel, mensaje: args.map(a => a instanceof Error ? a.stack || a.message : typeof a === "object" ? JSON.stringify(a) : String(a)).join(" ") }); } catch (_) {} };
+  for (const n of ["log", "warn", "error"]) { const o = console[n].bind(console); console[n] = (...a) => { o(...a); enviar(n, a); }; }
+  addEventListener("error", e => enviar("error", [e.message + " @ " + e.filename + ":" + e.lineno]));
+  addEventListener("unhandledrejection", e => enviar("rechazo", [e.reason]));
+})();"#
+                .to_string(),
+        )
+        .on_page_load(|w, p| eprintln!("[webview] {:?} {}", p.event(), w.url().map(|u| u.to_string()).unwrap_or_default()))
+        .build()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let mut constructor = tauri::Builder::default();
+    if cfg!(debug_assertions) {
+        constructor = constructor.plugin(consola_depuracion());
+    }
+    constructor
+        .manage(rlp_puente::Puente::default())
+        .register_asynchronous_uri_scheme_protocol(
+            rlp_puente::ESQUEMA,
+            |ctx, peticion, responder| {
+                ctx.app_handle()
+                    .state::<rlp_puente::Puente>()
+                    .atender(peticion, responder);
+            },
+        )
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
@@ -337,6 +411,10 @@ pub fn run() {
             unirse_grupo,
             generar_ejecutable,
             abrir_carpeta,
+            autoprueba_fin,
+            consola_log,
+            entrada_enviar,
+            entrada_cancelar,
         ])
         .run(tauri::generate_context!())
         .expect("error al iniciar la App Alumno");

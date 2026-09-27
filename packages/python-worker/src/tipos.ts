@@ -69,7 +69,15 @@ export interface EventosEjecucion {
 // ---------------------------------------------------------------- protocolo con el worker
 
 export type MensajeAlWorker =
-  | { tipo: "iniciar"; indexURL: string; control: SharedArrayBuffer; interrupcion: SharedArrayBuffer }
+  | {
+      tipo: "iniciar";
+      indexURL: string;
+      /** Memoria compartida (si el entorno la ofrece). */
+      control?: SharedArrayBuffer;
+      interrupcion?: SharedArrayBuffer;
+      /** URL base del puente de entrada síncrona (sin memoria compartida). */
+      puente?: string;
+    }
   | { tipo: "ejecutar"; id: number; codigo: string }
   | { tipo: "probar"; id: number; codigo: string; pruebas: string }
   | { tipo: "sintaxis"; id: number; codigo: string };

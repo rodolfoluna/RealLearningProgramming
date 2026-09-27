@@ -26,6 +26,12 @@ export default defineConfig({
       reuseExistingServer: true,
       timeout: 60_000,
     },
+    {
+      command: "pnpm --filter @rlp/profesor exec vite --port 1421 --strictPort",
+      url: "http://localhost:1421",
+      reuseExistingServer: true,
+      timeout: 60_000,
+    },
   ],
   projects: [
     { name: "banco", testMatch: /banco\..*spec\.ts/, use: { baseURL: "http://localhost:5199" } },
@@ -33,6 +39,11 @@ export default defineConfig({
       name: "alumno",
       testMatch: /alumno\..*spec\.ts/,
       use: { baseURL: "http://localhost:1420", viewport: { width: 1366, height: 800 } },
+    },
+    {
+      name: "profesor",
+      testMatch: /profesor\..*spec\.ts/,
+      use: { baseURL: "http://localhost:1421", viewport: { width: 1440, height: 900 } },
     },
   ],
 });

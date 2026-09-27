@@ -38,6 +38,7 @@ export interface EstadoApp {
   perfiles: PerfilLocal[];
   puede_generar_exe: boolean;
   dev: boolean;
+  autoprueba?: string | null;
 }
 
 export interface EstadoActividad {

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/rlp-core", "apps/alumno/src-tauri"]
+members = ["crates/rlp-core", "crates/rlp-puente", "apps/alumno/src-tauri", "apps/profesor/src-tauri"]
 # Las apps Tauri requieren WebView del sistema para compilar; `cargo test` sin
 # argumentos solo compila y prueba el núcleo.
 default-members = ["crates/rlp-core"]

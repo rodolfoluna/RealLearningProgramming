@@ -1,2 +1,2 @@
-export { EjecutorPython, type OpcionesEjecutor } from "./cliente";
+export { EjecutorPython, type OpcionesEjecutor, type PuenteEntrada } from "./cliente";
 export * from "./tipos";

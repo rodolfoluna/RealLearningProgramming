@@ -2,6 +2,10 @@
 // Web Worker que aloja Pyodide (CPython en WebAssembly) y ejecuta el código del alumno.
 // Corre en su propio hilo: un ciclo infinito no congela la interfaz y el hilo principal
 // puede interrumpirlo (búfer de interrupción) o terminarlo por completo.
+//
+// Dos modos para input() y time.sleep():
+//  - Con SharedArrayBuffer: espera con Atomics.wait (WebView2/Chromium).
+//  - Sin él (WebKitGTK, algunos Android): XHR síncrono al "puente" que sirve la app en Rust.
 
 import type { PyodideAPI } from "pyodide";
 import harnessPy from "./harness.py?raw";
@@ -15,9 +19,10 @@ const decodificador = new TextDecoder();
 
 let pyodide: PyodideAPI;
 let harness: any;
-let control: Int32Array;
-let datos: Uint8Array;
-let interrupcion: Uint8Array;
+let control: Int32Array | null = null;
+let datos: Uint8Array | null = null;
+let interrupcion: Uint8Array | null = null;
+let puente: string | null = null;
 
 let idActual = 0;
 let pendiente: { out: string; err: string } = { out: "", err: "" };
@@ -48,7 +53,8 @@ function escritor(flujo: "out" | "err") {
         pendiente[flujo] += texto;
         if (totalSalida > LIMITE_SALIDA) {
           excedida = true;
-          interrupcion[0] = 2; // provoca KeyboardInterrupt en el programa
+          if (interrupcion) interrupcion[0] = 2; // provoca KeyboardInterrupt en el programa
+          else throw new Error("salida excesiva"); // sin memoria compartida: print() falla y el programa termina
         }
         if (pendiente[flujo].length > 4096 || performance.now() - ultimoEnvio > 30) vaciarSalida();
       }
@@ -57,15 +63,43 @@ function escritor(flujo: "out" | "err") {
   };
 }
 
+/** Petición síncrona al puente de Rust. Devuelve el texto o null si no hubo respuesta útil. */
+function pedirAlPuente(ruta: string): string | null {
+  if (!puente) return null;
+  try {
+    const x = new XMLHttpRequest();
+    x.open("GET", `${puente}${ruta}`, false);
+    x.send(null);
+    return x.status === 200 ? x.responseText : null;
+  } catch {
+    return null;
+  }
+}
+
 function leerEntrada(): string | null {
   vaciarSalida();
-  Atomics.store(control, CONTROL.ESTADO_ENTRADA, 0);
   enviar({ tipo: "entrada", id: idActual });
-  Atomics.wait(control, CONTROL.ESTADO_ENTRADA, 0);
-  if (Atomics.load(control, CONTROL.ESTADO_ENTRADA) !== 1) return null; // cancelada → EOF
-  const n = Atomics.load(control, CONTROL.LONGITUD);
-  const linea = decodificador.decode(datos.slice(0, n));
-  return linea + "\n";
+  if (control && datos) {
+    Atomics.store(control, CONTROL.ESTADO_ENTRADA, 0);
+    Atomics.wait(control, CONTROL.ESTADO_ENTRADA, 0);
+    if (Atomics.load(control, CONTROL.ESTADO_ENTRADA) !== 1) return null; // cancelada → EOF
+    const n = Atomics.load(control, CONTROL.LONGITUD);
+    return decodificador.decode(datos.slice(0, n)) + "\n";
+  }
+  const linea = pedirAlPuente(`esperar?t=${Date.now()}`);
+  return linea === null ? null : linea + "\n";
+}
+
+function esperar(segundos: number) {
+  const ms = Math.max(0, segundos * 1000);
+  if (control) {
+    Atomics.wait(control, CONTROL.DORMIR, 0, ms);
+  } else if (pedirAlPuente(`dormir?ms=${Math.round(ms)}&t=${Date.now()}`) === null) {
+    const fin = performance.now() + ms;
+    while (performance.now() < fin) {
+      /* sin puente: espera activa */
+    }
+  }
 }
 
 async function iniciar(indexURL: string) {
@@ -74,14 +108,12 @@ async function iniciar(indexURL: string) {
   pyodide.setStdout(escritor("out"));
   pyodide.setStderr(escritor("err"));
   pyodide.setStdin({ stdin: leerEntrada });
-  pyodide.setInterruptBuffer(interrupcion);
+  if (interrupcion) pyodide.setInterruptBuffer(interrupcion);
 
   pyodide.FS.mkdirTree("/rlp");
   pyodide.FS.writeFile("/rlp/harness.py", harnessPy);
   pyodide.FS.writeFile("/rlp/errores_es.py", erroresPy);
-  pyodide.globals.set("_rlp_esperar", (segundos: number) => {
-    Atomics.wait(control, CONTROL.DORMIR, 0, Math.max(0, segundos * 1000));
-  });
+  pyodide.globals.set("_rlp_esperar", esperar);
   pyodide.globals.set("_rlp_notificar", (indice: number) => {
     enviar({ tipo: "prueba_inicio", id: idActual, indice });
   });
@@ -117,16 +149,19 @@ function prepararEjecucion(id: number) {
   totalSalida = 0;
   excedida = false;
   ultimoEnvio = performance.now();
-  interrupcion[0] = 0;
+  if (interrupcion) interrupcion[0] = 0;
 }
 
 self.onmessage = async (evento: MessageEvent<MensajeAlWorker>) => {
   const m = evento.data;
   switch (m.tipo) {
     case "iniciar":
-      control = new Int32Array(m.control, 0, 4);
-      datos = new Uint8Array(m.control, CONTROL.DATOS, CONTROL.TAMANO_DATOS);
-      interrupcion = new Uint8Array(m.interrupcion);
+      if (m.control && m.interrupcion) {
+        control = new Int32Array(m.control, 0, 4);
+        datos = new Uint8Array(m.control, CONTROL.DATOS, CONTROL.TAMANO_DATOS);
+        interrupcion = new Uint8Array(m.interrupcion);
+      }
+      puente = m.puente ?? null;
       try {
         await iniciar(m.indexURL);
       } catch (e) {

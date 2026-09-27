@@ -12,6 +12,14 @@ import {
   type ResultadoPruebas,
 } from "./tipos";
 
+/** Entrada síncrona servida por la app (para WebView sin SharedArrayBuffer). */
+export interface PuenteEntrada {
+  /** URL base (terminada en "/") del protocolo del puente. */
+  url: string;
+  enviar(linea: string): Promise<unknown>;
+  cancelar(): Promise<unknown>;
+}
+
 export interface OpcionesEjecutor {
   /** URL (terminada en "/") donde están pyodide.mjs, pyodide.asm.wasm y python_stdlib.zip. */
   indexURL: string;
@@ -19,53 +27,56 @@ export interface OpcionesEjecutor {
   timeoutPruebaMs?: number;
   /** Tiempo de gracia tras interrumpir antes de terminar el worker a la fuerza. */
   graciaMs?: number;
+  /** Se usa cuando no hay SharedArrayBuffer. */
+  puenteEntrada?: PuenteEntrada;
   /** Permite inyectar el worker (pruebas). */
   crearWorker?: () => Worker;
 }
 
 type Operacion =
-  | {
-      tipo: "ejecutar";
-      id: number;
-      eventos: EventosEjecucion;
-      resolver: (r: ResultadoEjecucion) => void;
-    }
-  | {
-      tipo: "probar";
-      id: number;
-      pruebas: Prueba[];
-      parciales: ResultadoPrueba[];
-      alProgreso?: (r: ResultadoPrueba) => void;
-      resolver: (r: ResultadoPruebas) => void;
-    }
+  | { tipo: "ejecutar"; id: number; eventos: EventosEjecucion; resolver: (r: ResultadoEjecucion) => void }
+  | { tipo: "probar"; id: number; resolver: (r: ResultadoPrueba | null) => void; resultado: ResultadoPrueba | null }
   | { tipo: "sintaxis"; id: number; resolver: (r: ErrorPython | null) => void };
 
 const MENSAJE_TIEMPO = "Tu programa tardó demasiado. ¿Hay un ciclo que nunca termina?";
 
 /**
- * Ejecuta código Python del alumno en un Web Worker con Pyodide.
- * Solo corre una operación a la vez.
+ * Ejecuta código Python del alumno en un Web Worker con Pyodide. Solo corre una operación a la vez.
  */
 export class EjecutorPython {
   private worker?: Worker;
   private listo?: Promise<void>;
-  private readonly control = new SharedArrayBuffer(CONTROL.DATOS + CONTROL.TAMANO_DATOS);
-  private readonly interrupcion = new SharedArrayBuffer(1);
-  private readonly ctrl = new Int32Array(this.control, 0, 4);
+  private readonly control: SharedArrayBuffer | null;
+  private readonly interrupcion: SharedArrayBuffer | null;
+  private readonly ctrl: Int32Array | null;
   private siguienteId = 1;
   private actual?: Operacion;
   private detenidoPorUsuario = false;
+  private tiempoAgotado = false;
   private temporizadores: ReturnType<typeof setTimeout>[] = [];
   private cola: Promise<unknown> = Promise.resolve();
 
   version = "";
   esperandoEntrada = false;
 
-  constructor(private readonly opciones: OpcionesEjecutor) {}
+  constructor(private readonly opciones: OpcionesEjecutor) {
+    if (EjecutorPython.disponible()) {
+      this.control = new SharedArrayBuffer(CONTROL.DATOS + CONTROL.TAMANO_DATOS);
+      this.interrupcion = new SharedArrayBuffer(1);
+      this.ctrl = new Int32Array(this.control, 0, 4);
+    } else {
+      this.control = this.interrupcion = this.ctrl = null;
+    }
+  }
 
-  /** ¿El entorno permite memoria compartida (necesaria para input())? */
+  /** ¿El entorno permite memoria compartida? (si no, se usa el puente de entrada). */
   static disponible(): boolean {
     return typeof SharedArrayBuffer !== "undefined" && globalThis.crossOriginIsolated === true;
+  }
+
+  /** "memoria" (SharedArrayBuffer), "puente" (entrada vía la app) o "limitado" (sin input()). */
+  get modo(): "memoria" | "puente" | "limitado" {
+    return this.control ? "memoria" : this.opciones.puenteEntrada ? "puente" : "limitado";
   }
 
   get ocupado(): boolean {
@@ -102,8 +113,9 @@ export class EjecutorPython {
       const mensaje: MensajeAlWorker = {
         tipo: "iniciar",
         indexURL: this.opciones.indexURL,
-        control: this.control,
-        interrupcion: this.interrupcion,
+        control: this.control ?? undefined,
+        interrupcion: this.interrupcion ?? undefined,
+        puente: this.control ? undefined : this.opciones.puenteEntrada?.url,
       };
       w.postMessage(mensaje);
     });
@@ -128,11 +140,7 @@ export class EjecutorPython {
         if (m.indice >= 0 && op.tipo === "probar") this.armarTimeoutPrueba();
         break;
       case "prueba_fin":
-        if (op.tipo === "probar") {
-          const r = JSON.parse(m.resultado) as ResultadoPrueba;
-          op.parciales.push(r);
-          op.alProgreso?.(r);
-        }
+        if (op.tipo === "probar") op.resultado = JSON.parse(m.resultado) as ResultadoPrueba;
         break;
       case "fin":
         this.terminarOperacion(m.resultado, m.salida_excedida);
@@ -151,13 +159,15 @@ export class EjecutorPython {
       if (salidaExcedida) {
         r.salida_excedida = true;
         r.estado = "detenido";
+        r.error = null;
       } else if (this.detenidoPorUsuario && r.estado !== "ok") {
         r.estado = "detenido";
         r.error = null;
       }
       op.resolver(r);
     } else if (op.tipo === "probar") {
-      op.resolver(JSON.parse(json) as ResultadoPruebas);
+      const r = JSON.parse(json) as ResultadoPruebas;
+      op.resolver(r.resultados[0] ?? op.resultado);
     } else {
       op.resolver(JSON.parse(json) as ErrorPython | null);
     }
@@ -168,27 +178,33 @@ export class EjecutorPython {
     this.temporizadores = [];
   }
 
-  private interrumpir() {
+  /** Pide al programa que se detenga (KeyboardInterrupt) si hay memoria compartida. */
+  private interrumpir(): boolean {
+    if (!this.interrupcion || !this.ctrl) return false;
     new Uint8Array(this.interrupcion)[0] = 2;
     Atomics.store(this.ctrl, CONTROL.ESTADO_ENTRADA, 2);
     Atomics.notify(this.ctrl, CONTROL.ESTADO_ENTRADA);
     Atomics.notify(this.ctrl, CONTROL.DORMIR);
-  }
-
-  /** Programa la terminación forzada si el worker no responde a la interrupción. */
-  private armarTerminacion() {
-    this.temporizadores.push(
-      setTimeout(() => this.forzarTerminacion(), this.opciones.graciaMs ?? 1500),
-    );
+    return true;
   }
 
   private armarTimeoutPrueba() {
     this.temporizadores.push(
       setTimeout(() => {
-        this.interrumpir();
-        this.armarTerminacion();
+        this.tiempoAgotado = true;
+        this.detenerAhora();
       }, this.opciones.timeoutPruebaMs ?? 4000),
     );
+  }
+
+  /** Interrumpe; si no responde (o no hay memoria compartida), termina el worker. */
+  private detenerAhora() {
+    if (this.interrumpir()) {
+      this.temporizadores.push(setTimeout(() => this.forzarTerminacion(), this.opciones.graciaMs ?? 1500));
+    } else {
+      void this.opciones.puenteEntrada?.cancelar().catch(() => undefined);
+      this.forzarTerminacion();
+    }
   }
 
   private forzarTerminacion() {
@@ -201,26 +217,9 @@ export class EjecutorPython {
     this.limpiarTemporizadores();
     void this.iniciar().catch(() => undefined);
     if (!op) return;
-    if (op.tipo === "ejecutar") {
-      op.resolver({ estado: "detenido", error: null, duracion_ms: 0 });
-    } else if (op.tipo === "probar") {
-      const resultados = [...op.parciales];
-      for (let i = resultados.length; i < op.pruebas.length; i++) {
-        const p = op.pruebas[i];
-        resultados.push({
-          indice: i,
-          nombre: p.nombre ?? `Prueba ${i + 1}`,
-          oculta: !!p.oculta,
-          tipo: p.funcion ? "funcion" : "io",
-          paso: false,
-          tiempo_agotado: i === op.parciales.length && !this.detenidoPorUsuario,
-          mensaje: i === op.parciales.length && !this.detenidoPorUsuario ? MENSAJE_TIEMPO : "No se ejecutó.",
-        });
-      }
-      op.resolver({ pasadas: resultados.filter((r) => r.paso).length, total: resultados.length, resultados });
-    } else {
-      op.resolver(null);
-    }
+    if (op.tipo === "ejecutar") op.resolver({ estado: "detenido", error: null, duracion_ms: 0 });
+    else if (op.tipo === "probar") op.resolver(op.resultado);
+    else op.resolver(null);
   }
 
   private encolar<T>(fn: () => Promise<T>): Promise<T> {
@@ -229,75 +228,99 @@ export class EjecutorPython {
     return p;
   }
 
-  private async lanzar(op: Operacion, mensaje: MensajeAlWorker) {
-    await this.iniciar();
-    this.detenidoPorUsuario = false;
-    new Uint8Array(this.interrupcion)[0] = 0;
-    Atomics.store(this.ctrl, CONTROL.ESTADO_ENTRADA, 0);
-    this.actual = op;
-    this.worker!.postMessage(mensaje);
+  private correr<T>(op: (id: number, resolver: (v: T) => void) => Operacion, mensaje: (id: number) => MensajeAlWorker): Promise<T> {
+    return new Promise<T>((resolver, rechazar) => {
+      this.iniciar()
+        .then(() => {
+          const id = this.siguienteId++;
+          if (this.interrupcion) new Uint8Array(this.interrupcion)[0] = 0;
+          if (this.ctrl) Atomics.store(this.ctrl, CONTROL.ESTADO_ENTRADA, 0);
+          this.actual = op(id, resolver);
+          this.worker!.postMessage(mensaje(id));
+        })
+        .catch(rechazar);
+    });
   }
 
   /** Ejecuta un programa de forma interactiva (input() pide datos a la interfaz). */
   ejecutar(codigo: string, eventos: EventosEjecucion = {}): Promise<ResultadoEjecucion> {
-    return this.encolar(
-      () =>
-        new Promise<ResultadoEjecucion>((resolver, rechazar) => {
-          const id = this.siguienteId++;
-          this.lanzar({ tipo: "ejecutar", id, eventos, resolver }, { tipo: "ejecutar", id, codigo }).catch(
-            rechazar,
-          );
-        }),
-    );
+    return this.encolar(() => {
+      this.detenidoPorUsuario = false;
+      return this.correr<ResultadoEjecucion>(
+        (id, resolver) => ({ tipo: "ejecutar", id, eventos, resolver }),
+        (id) => ({ tipo: "ejecutar", id, codigo }),
+      );
+    });
   }
 
   /** Entrega una línea al input() que está esperando. */
   enviarEntrada(linea: string): void {
     if (!this.esperandoEntrada) return;
-    const bytes = new TextEncoder().encode(linea).slice(0, CONTROL.TAMANO_DATOS);
-    new Uint8Array(this.control, CONTROL.DATOS, CONTROL.TAMANO_DATOS).set(bytes);
-    Atomics.store(this.ctrl, CONTROL.LONGITUD, bytes.length);
     this.esperandoEntrada = false;
-    Atomics.store(this.ctrl, CONTROL.ESTADO_ENTRADA, 1);
-    Atomics.notify(this.ctrl, CONTROL.ESTADO_ENTRADA);
+    if (this.control && this.ctrl) {
+      const bytes = new TextEncoder().encode(linea).slice(0, CONTROL.TAMANO_DATOS);
+      new Uint8Array(this.control, CONTROL.DATOS, CONTROL.TAMANO_DATOS).set(bytes);
+      Atomics.store(this.ctrl, CONTROL.LONGITUD, bytes.length);
+      Atomics.store(this.ctrl, CONTROL.ESTADO_ENTRADA, 1);
+      Atomics.notify(this.ctrl, CONTROL.ESTADO_ENTRADA);
+    } else {
+      void this.opciones.puenteEntrada?.enviar(linea);
+    }
   }
 
-  /** Detiene lo que se esté ejecutando (KeyboardInterrupt y, si no responde, termina el worker). */
+  /** Detiene lo que se esté ejecutando. */
   detener(): void {
     if (!this.actual) return;
     this.detenidoPorUsuario = true;
     this.limpiarTemporizadores();
-    this.interrumpir();
-    this.armarTerminacion();
+    this.detenerAhora();
   }
 
-  /** Corre las pruebas automáticas de una actividad. */
-  probar(
-    codigo: string,
-    pruebas: Prueba[],
-    alProgreso?: (r: ResultadoPrueba) => void,
-  ): Promise<ResultadoPruebas> {
-    return this.encolar(
-      () =>
-        new Promise<ResultadoPruebas>((resolver, rechazar) => {
-          const id = this.siguienteId++;
-          this.lanzar(
-            { tipo: "probar", id, pruebas, parciales: [], alProgreso, resolver },
-            { tipo: "probar", id, codigo, pruebas: JSON.stringify(pruebas) },
-          ).catch(rechazar);
-        }),
-    );
+  /**
+   * Corre las pruebas automáticas de una actividad, una por una: si una no termina, se corta
+   * y se continúa con las demás.
+   */
+  probar(codigo: string, pruebas: Prueba[], alProgreso?: (r: ResultadoPrueba) => void): Promise<ResultadoPruebas> {
+    return this.encolar(async () => {
+      this.detenidoPorUsuario = false;
+      const resultados: ResultadoPrueba[] = [];
+      for (const [i, prueba] of pruebas.entries()) {
+        const nombre = prueba.nombre ?? `Prueba ${i + 1}`;
+        let r: ResultadoPrueba | null = null;
+        if (!this.detenidoPorUsuario) {
+          this.tiempoAgotado = false;
+          r = await this.correr<ResultadoPrueba | null>(
+            (id, resolver) => ({ tipo: "probar", id, resolver, resultado: null }),
+            (id) => ({ tipo: "probar", id, codigo, pruebas: JSON.stringify([prueba]) }),
+          );
+        }
+        const agotado = this.tiempoAgotado;
+        const final: ResultadoPrueba = r
+          ? { ...r, indice: i, nombre, oculta: !!prueba.oculta }
+          : {
+              indice: i,
+              nombre,
+              oculta: !!prueba.oculta,
+              tipo: prueba.funcion ? "funcion" : "io",
+              paso: false,
+              tiempo_agotado: agotado,
+              mensaje: agotado ? MENSAJE_TIEMPO : "No se ejecutó.",
+            };
+        resultados.push(final);
+        alProgreso?.(final);
+      }
+      return { pasadas: resultados.filter((r) => r.paso).length, total: resultados.length, resultados };
+    });
   }
 
   /** Revisa la sintaxis sin ejecutar. Si hay algo corriendo, no revisa (devuelve null). */
   async sintaxis(codigo: string): Promise<ErrorPython | null> {
     if (this.ocupado) return null;
-    return this.encolar(
-      () =>
-        new Promise<ErrorPython | null>((resolver, rechazar) => {
-          const id = this.siguienteId++;
-          this.lanzar({ tipo: "sintaxis", id, resolver }, { tipo: "sintaxis", id, codigo }).catch(rechazar);
-        }),
+    return this.encolar(() =>
+      this.correr<ErrorPython | null>(
+        (id, resolver) => ({ tipo: "sintaxis", id, resolver }),
+        (id) => ({ tipo: "sintaxis", id, codigo }),
+      ),
     );
   }
 

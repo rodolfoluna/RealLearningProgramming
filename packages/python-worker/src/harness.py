@@ -325,6 +325,8 @@ def _correr_capturando(codigo, entrada, permitir_input=True, mensaje_sin_input=N
     ns["input"] = input_simulado
     error = None
     agotado = False
+    dormir_original = time.sleep
+    time.sleep = lambda _segundos: None  # en las pruebas no se espera
     try:
         objeto = _compilar(codigo)
         with contextlib.redirect_stdout(salida), contextlib.redirect_stderr(salida):
@@ -345,6 +347,7 @@ def _correr_capturando(codigo, entrada, permitir_input=True, mensaje_sin_input=N
         }
     except BaseException as exc:  # noqa: BLE001
         error = info_error(exc, codigo)
+    time.sleep = dormir_original
     _restaurar_entorno()
     programa = salida.getvalue()
     consola = programa

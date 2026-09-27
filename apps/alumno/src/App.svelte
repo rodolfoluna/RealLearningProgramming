@@ -12,6 +12,7 @@
     try {
       await cargarEstadoApp();
       app.vista = "inicio";
+      if (app.estadoApp?.autoprueba) void import("./lib/autoprueba").then((m) => m.autoprueba(app.estadoApp!.autoprueba!));
     } catch (e) {
       errorFatal = mensajeError(e);
     }

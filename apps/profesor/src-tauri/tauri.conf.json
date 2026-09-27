@@ -1,25 +1,24 @@
 {
   "$schema": "../../../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "RLP Alumno",
+  "productName": "RLP Profesor",
   "version": "0.1.0",
-  "identifier": "mx.reallearningprogramming.alumno",
+  "identifier": "mx.reallearningprogramming.profesor",
   "build": {
     "beforeDevCommand": "pnpm --dir ../.. preparar && pnpm dev",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:1421",
     "beforeBuildCommand": "pnpm --dir ../.. preparar && pnpm build",
     "frontendDist": "../dist"
   },
   "app": {
     "windows": [
       {
-        "title": "RLP Alumno — Python desde cero",
-        "width": 1280,
-        "height": 800,
-        "minWidth": 360,
-        "minHeight": 520,
+        "title": "RLP Profesor — Revisión de entregas",
+        "width": 1360,
+        "height": 860,
+        "minWidth": 900,
+        "minHeight": 560,
         "center": true,
-        "dragDropEnabled": false,
-        "zoomHotkeysEnabled": true
+        "dragDropEnabled": false
       }
     ],
     "security": {

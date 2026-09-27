@@ -3,7 +3,8 @@
 import type { Curso } from "@rlp/curso";
 import cursoJson from "@rlp/curso/alumno.json";
 import type { PoliticaPegado } from "@rlp/editor";
-import { EjecutorPython } from "@rlp/python-worker";
+import { EjecutorPython, type PuenteEntrada } from "@rlp/python-worker";
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { backend } from "./backend";
 import type { EstadoActividad, EstadoAlumno, EstadoApp } from "./tipos";
 
@@ -25,7 +26,17 @@ export const app = $state({
 });
 
 /** Intérprete de Python compartido (un solo worker con Pyodide). */
-export const python = new EjecutorPython({ indexURL: "/pyodide/", timeoutPruebaMs: 4000 });
+export const python = new EjecutorPython({ indexURL: "/pyodide/", timeoutPruebaMs: 4000, puenteEntrada: puente() });
+
+/** Entrada síncrona vía Rust para WebView sin SharedArrayBuffer (p. ej. WebKitGTK). */
+function puente(): PuenteEntrada | undefined {
+  if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) return undefined;
+  return {
+    url: convertFileSrc("", "rlpentrada"),
+    enviar: (linea) => invoke("entrada_enviar", { linea }),
+    cancelar: () => invoke("entrada_cancelar"),
+  };
+}
 
 function localStorageSeguro(clave: string): string | null {
   try {
