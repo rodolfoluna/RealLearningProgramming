@@ -1,0 +1,13 @@
+{
+  "name": "@rlp/python-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./harness.py?raw": "./src/harness.py?raw"
+  },
+  "dependencies": {
+    "pyodide": "314.0.7"
+  }
+}

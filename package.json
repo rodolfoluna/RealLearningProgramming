@@ -1,0 +1,23 @@
+{
+  "name": "real-learning-programming",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "curso": "node scripts/compilar-curso.mjs",
+    "pyodide": "node scripts/copiar-pyodide.mjs",
+    "preparar": "pnpm curso && pnpm pyodide",
+    "dev:alumno": "pnpm preparar && pnpm --filter @rlp/alumno dev",
+    "dev:profesor": "pnpm preparar && pnpm --filter @rlp/profesor dev",
+    "build": "pnpm preparar && pnpm -r --filter ./apps/* build",
+    "check": "pnpm -r check",
+    "test": "vitest run",
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "js-yaml": "^4.1.0",
+    "typescript": "^5.9.0",
+    "vitest": "^4.0.0"
+  },
+  "packageManager": "pnpm@10.33.0"
+}
