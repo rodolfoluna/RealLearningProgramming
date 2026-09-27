@@ -88,14 +88,27 @@ fn nivel_de(e: &EntregaAbierta, id: &str) -> Nivel {
         .unwrap_or(Nivel::Verde)
 }
 
-/// Todas las revisiones en verde salvo la firma, que en pruebas usa la llave de desarrollo.
+/// Nivel del check de firma según la llave con la que se compiló esta prueba: desarrollo →
+/// amarillo; llave publicada y de confianza → verde; llave desconocida → rojo.
+fn nivel_firma_esperado() -> Nivel {
+    let app = rlp_core::llave_app::llave_app();
+    match rlp_core::llave_app::buscar_confiable(&app.publica_b64()) {
+        Some(l) if l.dev => Nivel::Amarillo,
+        Some(_) => Nivel::Verde,
+        None => Nivel::Rojo,
+    }
+}
+
+/// Todas las revisiones en verde salvo la firma, que depende de la llave de la compilación.
 fn integra(e: &EntregaAbierta) {
     for c in &e.reporte.checks {
-        if c.id == "firma" {
-            assert_eq!(c.nivel, Nivel::Amarillo, "llave de desarrollo");
-        } else {
-            assert_eq!(c.nivel, Nivel::Verde, "{}: {}", c.nombre, c.detalle);
-        }
+        let esperado = match c.id.as_str() {
+            "firma" => nivel_firma_esperado(),
+            // Eventos firmados con una llave que no está en la lista de confianza.
+            "cadena" if nivel_firma_esperado() == Nivel::Rojo => Nivel::Amarillo,
+            _ => Nivel::Verde,
+        };
+        assert_eq!(c.nivel, esperado, "{}: {}", c.nombre, c.detalle);
     }
 }
 
@@ -441,8 +454,8 @@ fn codigo_cambiado_sin_historial_se_detecta_aunque_la_firma_sea_valida() {
     let e = abrir_entrega(&mala, &profe, &ctx()).unwrap();
     assert_eq!(
         nivel_de(&e, "firma"),
-        Nivel::Amarillo,
-        "firma válida (llave de desarrollo)"
+        nivel_firma_esperado(),
+        "firma válida de la app"
     );
     assert_eq!(nivel_de(&e, "replay"), Nivel::Rojo);
     assert_eq!(e.reporte.nivel, Nivel::Rojo);

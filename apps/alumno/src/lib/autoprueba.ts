@@ -76,6 +76,13 @@ export async function autoprueba(fase: string) {
       if (r.estado !== "detenido") throw new Error(r.estado);
       return r.estado;
     });
+    if (fase.startsWith("alumno+exe")) {
+      await paso("crear ejecutable (PyInstaller)", async () => {
+        const lineas: string[] = [];
+        const ruta = await b.generarEjecutable("hola_prueba", 'print("Hola desde el ejecutable")\n', (l) => lineas.push(l));
+        return { ruta, ultimas: lineas.slice(-2) };
+      });
+    }
     await paso("exportar entrega", () => b.exportar(compartida));
   } catch {
     /* el paso fallido ya quedó registrado */

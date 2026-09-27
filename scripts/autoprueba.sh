@@ -34,6 +34,15 @@ sys.exit(0 if r["ok"] else 1)'
 }
 
 correr rlp-profesor "$DIR/profesor" profesor-grupo
-correr rlp-alumno "$DIR/alumno" alumno
+if [ "${RLP_AUTOPRUEBA_EXE:-0}" = "1" ]; then
+  # Requiere PyInstaller en RLP_PYTHON (o python3). Luego se ejecuta el programa generado.
+  correr rlp-alumno "$DIR/alumno" alumno+exe
+  echo "== ejecutable generado"
+  salida=$("$DIR/alumno/mis_ejecutables/hola_prueba" < /dev/null)
+  echo "  $salida" | head -2
+  echo "$salida" | grep -q "Hola desde el ejecutable" || { echo "FALLÓ: el ejecutable no funcionó"; exit 1; }
+else
+  correr rlp-alumno "$DIR/alumno" alumno
+fi
 correr rlp-profesor "$DIR/profesor" profesor-importar
 echo "Autoprueba completa: OK"

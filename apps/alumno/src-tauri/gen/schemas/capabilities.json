@@ -1,1 +1,0 @@
-{"default":{"identifier":"default","description":"Permisos de la ventana principal de la App Alumno","local":true,"windows":["main"],"permissions":["core:default","dialog:allow-open"]}}

@@ -1,0 +1,27 @@
+RLP Alumno — Programación en Python desde cero
+==============================================
+
+Esta carpeta es PORTABLE: puedes copiarla a tu memoria USB o a Documentos.
+Tus avances se guardan cifrados dentro de la carpeta "datos". Nadie puede abrirlos sin tu
+contraseña (tu profesor sí puede abrir las entregas que le envíes).
+
+Primer uso
+  1. Abre "RLP Alumno.exe".
+  2. Si tu profesor te dio un archivo de grupo (.rlpg), impórtalo.
+  3. Elige "Soy nuevo", escribe tu número de control, tu nombre y una contraseña.
+  4. ANOTA tu código de recuperación: lo necesitas si olvidas tu contraseña.
+
+Entregar tus avances
+  Menú de tu nombre > "Exportar entrega". Se crea un archivo .rlp: entrégaselo a tu profesor.
+
+Trabajar en otra computadora
+  En la otra computadora abre la app y elige "Tengo mis avances en un archivo", luego tu .rlp y
+  tu contraseña. Para regresar, exporta allá e importa acá con "Importar avances de otro equipo".
+
+Notas
+  - En el editor no se puede pegar texto: escribe tu código. Las copias, los intentos de pegar y
+    las salidas de la ventana se cuentan; tú y tu profesor ven esas estadísticas.
+  - "Crear .exe" guarda tu programa en la carpeta "mis_ejecutables". Si el antivirus lo bloquea,
+    pide que se agregue una excepción para esta carpeta.
+  - La carpeta "runtime" contiene Python para crear ejecutables. No la borres.
+  - Requiere Microsoft Edge WebView2 (incluido en Windows 11 y en Windows 10 actualizado).

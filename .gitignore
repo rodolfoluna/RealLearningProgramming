@@ -22,6 +22,10 @@ datos/
 datos_profesor/
 mis_ejecutables/
 
+# Empaquetado
+dist-portable/
+prueba-exe/
+
 # Playwright
 test-results/
 playwright-report/
@@ -31,6 +35,7 @@ tests/e2e/capturas/
 __pycache__/
 *.pyc
 .venv/
+.venv-*/
 .pytest_cache/
 
 # Editor/SO
@@ -39,3 +44,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Esquemas generados por tauri-build
+apps/*/src-tauri/gen/

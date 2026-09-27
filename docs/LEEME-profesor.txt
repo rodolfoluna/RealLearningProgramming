@@ -1,0 +1,23 @@
+RLP Profesor — Revisión de entregas
+===================================
+
+Primer uso
+  1. Abre "RLP Profesor.exe" y crea tus llaves con una contraseña de al menos 10 caracteres.
+  2. GUARDA EL RESPALDO de tus llaves (.rlpk) en una memoria USB o en tu nube. Sin tus llaves no
+     podrás abrir las entregas de tus alumnos.
+  3. En "Grupos" crea tu grupo (formato del número de control, política de pegado...).
+  4. Entrega el grupo a tus alumnos:
+       - "Guardar archivo de grupo" y compárteles el .rlpg, o
+       - "Instalar en carpeta de la App Alumno" y copia esa carpeta a las computadoras.
+
+Revisar
+  "Importar entregas" acepta archivos .rlp sueltos o una carpeta completa.
+  Semáforo de integridad:
+    Verde    la entrega es íntegra: el código se reconstruye tecla a tecla desde su historial.
+    Amarillo revisar: ráfagas de escritura imposibles, reloj alterado, compilación de desarrollo...
+    Rojo     alterada o no verificable (historial roto, código que no sale de lo escrito, etc.).
+  En el detalle de cada alumno puedes ver su código, volver a correr las pruebas, calificar y
+  comentar. "Exportar CSV" genera una hoja para Excel.
+
+Datos
+  Todo se guarda en la carpeta "datos_profesor" junto a la app. Funciona sin internet.
