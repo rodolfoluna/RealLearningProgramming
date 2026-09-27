@@ -412,6 +412,22 @@ impl BdProfesor {
         }))
     }
 
+    /// Contenido descifrado de una entrega (para reproducir su historial).
+    pub fn payload(&self, entrega_id: i64) -> Resultado<Option<Payload>> {
+        let texto: Option<Option<String>> = self
+            .conn
+            .query_row(
+                "SELECT payload FROM entregas WHERE id = ?1",
+                params![entrega_id],
+                |r| r.get(0),
+            )
+            .optional()?;
+        Ok(match texto.flatten() {
+            Some(t) => Some(serde_json::from_str(&t)?),
+            None => None,
+        })
+    }
+
     pub fn calificar(
         &self,
         perfil_id: &str,

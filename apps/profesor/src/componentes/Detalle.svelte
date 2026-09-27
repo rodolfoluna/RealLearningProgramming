@@ -2,11 +2,12 @@
   import type { Actividad } from "@rlp/curso";
   import { crearVisor, type EditorCodigo } from "@rlp/editor";
   import type { ResultadoPruebas } from "@rlp/python-worker";
-  import { fecha, Markdown, mensajeError, minutos, Semaforo } from "@rlp/ui-comun";
+  import { fecha, Markdown, mensajeError, minutos, Modal, Semaforo } from "@rlp/ui-comun";
   import { onDestroy, onMount } from "svelte";
   import { backend } from "../lib/backend";
   import { actividades, app, avisar, curso, python } from "../lib/app.svelte";
-  import { contadoresVacios, type DetalleEntrega } from "../lib/tipos";
+  import { contadoresVacios, type DetalleEntrega, type LineaDeTiempo } from "../lib/tipos";
+  import Reproductor from "./Reproductor.svelte";
 
   let { entregaId }: { entregaId: number } = $props();
   let d = $state<DetalleEntrega | null>(null);
@@ -19,6 +20,8 @@
   let probando = $state(false);
   let calificacion = $state("");
   let comentario = $state("");
+  let reproduccion = $state<LineaDeTiempo | null>(null);
+  let cargandoReproduccion = $state(false);
 
   onMount(async () => {
     try {
@@ -64,6 +67,18 @@
       avisar(mensajeError(e));
     } finally {
       probando = false;
+    }
+  }
+
+  async function verReproduccion() {
+    if (!elegida || !d) return;
+    cargandoReproduccion = true;
+    try {
+      reproduccion = await (await backend()).reproduccion(d.fila.entrega_id, elegida.id);
+    } catch (e) {
+      avisar(mensajeError(e));
+    } finally {
+      cargandoReproduccion = false;
     }
   }
 
@@ -180,6 +195,9 @@
             {#if elegida.tipo === "codigo"}
               <div class="visor" bind:this={visorPadre}></div>
               <div class="fila">
+                <button onclick={verReproduccion} disabled={cargandoReproduccion} data-ver-reproduccion>
+                  {cargandoReproduccion ? "Cargando…" : "⏯ Ver cómo lo escribió"}
+                </button>
                 <button onclick={reprobar} disabled={probando}>{probando ? "Probando…" : "✔ Volver a correr las pruebas"}</button>
                 {#if pruebas}
                   <span class:alerta={pruebas.pasadas !== pruebas.total}>Pasaron {pruebas.pasadas} de {pruebas.total}</span>
@@ -232,6 +250,14 @@
     {/if}
   {/if}
 </div>
+
+<Modal titulo={elegida ? `Cómo escribió: ${elegida.titulo}` : "Reproducción"} abierto={reproduccion !== null} cerrar={() => (reproduccion = null)} ancho="1000px">
+  {#if reproduccion}
+    {#key reproduccion}
+      <Reproductor linea={reproduccion} />
+    {/key}
+  {/if}
+</Modal>
 
 <style>
   .detalle {

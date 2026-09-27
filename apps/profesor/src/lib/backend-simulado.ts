@@ -11,7 +11,10 @@ import {
   type DetalleEntrega,
   type FilaTablero,
   type GrupoInfo,
+  type LineaDeTiempo,
+  type Marca,
   type Nivel,
+  type OpConTiempo,
   type ResumenActividad,
 } from "./tipos";
 
@@ -47,6 +50,41 @@ function checks(nivel: Nivel): Check[] {
   if (nivel === "amarillo") base[6] = { ...base[6], nivel: "amarillo", detalle: "'u3-cajero': 2 ráfaga(s) de escritura a más de 12 caracteres/s" };
   if (nivel === "rojo") base[6] = { ...base[6], nivel: "rojo", detalle: "'u3-calculadora': el código entregado NO coincide con lo escrito en la app" };
   return base;
+}
+
+/** Historial de demostración: teclea `codigo` con pausas, un error corregido y algunas marcas. */
+function historialSimulado(actividad: string, codigo: string, pegados: number): LineaDeTiempo {
+  let semilla = 7;
+  const azar = () => ((semilla = (semilla * 1103515245 + 12345) % 2147483648) / 2147483648);
+  const inicio = Date.now() - 2 * 86400_000;
+  let t = inicio;
+  let pos = 0;
+  const ops: OpConTiempo[] = [];
+  const marcas: Marca[] = [];
+  [...codigo].forEach((c, i) => {
+    t += 120 + Math.round(azar() * 260) + (c === "\n" ? 900 + Math.round(azar() * 2500) : 0);
+    if (i === Math.floor(codigo.length / 2)) t += 5 * 60_000; // se fue un rato
+    if (i === 12) {
+      // Un error de dedo que corrige.
+      ops.push([t, pos, pos, "x", "t"]);
+      t += 400;
+      ops.push([t, pos, pos + 1, "", "d"]);
+      t += 300;
+    }
+    ops.push([t, pos, pos, c, "t"]);
+    pos += c.length;
+    if (i === Math.floor(codigo.length * 0.4)) marcas.push({ t, tipo: "ejecucion", dispositivo: "d1", datos: { estado: "error" } });
+    if (pegados && i === Math.floor(codigo.length * 0.6)) marcas.push({ t, tipo: "pegado", dispositivo: "d1", datos: { permitido: false } });
+    if (i === Math.floor(codigo.length * 0.7)) marcas.push({ t: t + 10, tipo: "foco", dispositivo: "d1", datos: { estado: "perdido" } });
+  });
+  marcas.push({ t: t + 2000, tipo: "prueba", dispositivo: "d1", datos: { pasadas: 3, total: 3 } });
+  return {
+    actividad,
+    tramos: [{ dispositivo: "d1", motivo: "inicio", texto_inicial: "", ops, t_inicio: inicio, t_fin: t }],
+    marcas,
+    codigo_final: codigo,
+    avisos: [],
+  };
 }
 
 export function crearBackendSimulado(): Backend {
@@ -124,7 +162,8 @@ export function crearBackendSimulado(): Backend {
     importarCarpeta: async () => [{ archivo: "archivo_danado.rlp", error: "Formato no reconocido: no es un archivo .rlp", registro: null }],
     tablero: async () => filas,
     detalle: async (id) => {
-      const f = filas.find((x) => x.entrega_id === id)!;
+      const base = filas.find((x) => x.entrega_id === id % 100)!;
+      const f = { ...base, entrega_id: id };
       const actividades: DetalleEntrega["actividades"] = {};
       for (const [aid, r] of Object.entries(f.actividades)) {
         const act = acts.find((a) => a.id === aid)!;
@@ -145,8 +184,15 @@ export function crearBackendSimulado(): Backend {
         reporte: { nivel: f.nivel, checks: checks(f.nivel), ritmo: { tecleados: 5400, automaticos: 800, deshacer_rehacer: 120, pegados: 0, otros: 0, max_cps: f.nivel === "amarillo" ? 18.4 : 5.2, rafagas: f.nivel === "amarillo" ? 2 : 0 }, ritmo_por_actividad: {} },
         estadisticas: { global: f.global, por_actividad },
         calificaciones: calificaciones[f.perfil_id] ?? {},
-        historial: Array.from({ length: f.entregas }, (_, k) => ({ entrega_id: f.entrega_id, recibido: f.recibido - k * 86400_000 * 7, creado: f.creado - k * 86400_000 * 7, nivel: f.nivel })),
+        // Entregas anteriores: ids 100, 200… sobre el de la más reciente (ver `base` arriba).
+        historial: Array.from({ length: f.entregas }, (_, k) => ({ entrega_id: f.entrega_id + 100 * k, recibido: f.recibido - k * 86400_000 * 7, creado: f.creado - k * 86400_000 * 7, nivel: f.nivel })),
       };
+    },
+    reproduccion: async (id, actividad) => {
+      const f = filas.find((x) => x.entrega_id === id % 100)!;
+      const act = acts.find((a) => a.id === actividad)!;
+      const codigo = f.actividades[actividad]?.completada ? act.solucion ?? "" : act.codigo_inicial ?? "";
+      return historialSimulado(actividad, codigo, f.global.pegados_intentos);
     },
     calificar: async (perfil, act, calificacion, comentario) => {
       (calificaciones[perfil] ??= {})[act] = { calificacion, comentario, actualizado: Date.now() };

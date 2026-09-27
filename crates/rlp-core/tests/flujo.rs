@@ -317,6 +317,81 @@ fn continuar_en_otro_dispositivo_y_volver() {
     assert!(SesionAlumno::restaurar(otro.path(), &archivo3, &contrasena("mala"), kdf()).is_err());
 }
 
+#[test]
+fn reproduccion_de_la_escritura_en_varios_dispositivos() {
+    let pc = TempDir::new().unwrap();
+    let cel = TempDir::new().unwrap();
+    let (profe, grupo) = profesor_y_grupo();
+    let (mut s, _) = SesionAlumno::registrar(
+        pc.path(),
+        "21340006",
+        "Eva Ríos",
+        "clave-eva",
+        Some(&grupo),
+        kdf(),
+    )
+    .unwrap();
+    escribir(&mut s, "u1-a1", "n = 3\n");
+    s.registrar_evento("pegado", Some("u1-a1"), json!({"permitido": false}))
+        .unwrap();
+    s.registrar_evento("copia", Some("u1-a2"), json!({}))
+        .unwrap();
+    let (_, archivo1) = s.exportar().unwrap();
+    let mut c =
+        SesionAlumno::restaurar(cel.path(), &archivo1, &contrasena("clave-eva"), kdf()).unwrap();
+    escribir(&mut c, "u1-a1", "print(n * 2)\n");
+    let (_, archivo2) = c.exportar().unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(5));
+    s.importar(&archivo2).unwrap();
+    escribir(&mut s, "u1-a1", "# listo\n");
+    let (_, archivo3) = s.exportar().unwrap();
+    let e = abrir_entrega(&archivo3, &profe, &ctx()).unwrap();
+    let p = e.payload.unwrap();
+
+    let linea = rlp_core::reproduccion::linea_de_tiempo(&p, "u1-a1").unwrap();
+    assert!(linea.avisos.is_empty(), "{:?}", linea.avisos);
+    let motivos: Vec<&str> = linea.tramos.iter().map(|t| t.motivo.as_str()).collect();
+    assert_eq!(motivos, ["inicio", "continuacion", "continuacion"]);
+    assert_eq!(linea.tramos[0].texto_inicial.as_deref(), Some(INICIAL));
+    // Cada tramo, reproducido desde su texto inicial, termina donde empieza el siguiente.
+    let mut anterior: Option<String> = None;
+    for t in &linea.tramos {
+        let inicio = t.texto_inicial.clone().expect("texto inicial resuelto");
+        if let Some(a) = &anterior {
+            assert_eq!(&inicio, a);
+        }
+        let ops: Vec<_> = t
+            .ops
+            .iter()
+            .map(
+                |(_, desde, hasta, insertado, origen)| rlp_core::replay::OpEdicion {
+                    dt: 0,
+                    desde: *desde,
+                    hasta: *hasta,
+                    insertado: insertado.clone(),
+                    origen: *origen,
+                },
+            )
+            .collect();
+        anterior = Some(rlp_core::replay::aplicar(&inicio, &ops).unwrap());
+        assert!(
+            t.ops.windows(2).all(|w| w[0].0 <= w[1].0),
+            "tiempos en orden"
+        );
+    }
+    assert_eq!(anterior.as_deref(), Some(linea.codigo_final.as_str()));
+    assert_eq!(
+        linea.codigo_final,
+        format!("{INICIAL}n = 3\nprint(n * 2)\n# listo\n")
+    );
+    // Solo las marcas de esta actividad.
+    let tipos: Vec<&str> = linea.marcas.iter().map(|m| m.tipo.as_str()).collect();
+    assert_eq!(tipos, ["pegado"]);
+
+    let vacia = rlp_core::reproduccion::linea_de_tiempo(&p, "u1-a9").unwrap();
+    assert!(vacia.tramos.is_empty() && vacia.marcas.is_empty());
+}
+
 // ------------------------------------------------------------------ manipulaciones
 
 fn reescribir_zip(bytes: &[u8], cambiar: impl Fn(&str, Vec<u8>) -> Vec<u8>) -> Vec<u8> {

@@ -155,6 +155,33 @@ export interface ResultadoImportacion {
   registro: RegistroEntrega | null;
 }
 
+/** Operación de edición con su momento: [t (epoch ms), desde, hasta, insertado, origen]. */
+export type OpConTiempo = [number, number, number, string, string];
+
+export interface Tramo {
+  dispositivo: string;
+  motivo: "inicio" | "reinicio" | "continuacion" | string;
+  texto_inicial: string | null;
+  ops: OpConTiempo[];
+  t_inicio: number;
+  t_fin: number;
+}
+
+export interface Marca {
+  t: number;
+  tipo: string;
+  dispositivo: string;
+  datos: Record<string, unknown> | null;
+}
+
+export interface LineaDeTiempo {
+  actividad: string;
+  tramos: Tramo[];
+  marcas: Marca[];
+  codigo_final: string;
+  avisos: string[];
+}
+
 export function contadoresVacios(): Contadores {
   return {
     tiempo_ms: 0, ejecuciones: 0, errores: 0, pruebas: 0, pruebas_exitosas: 0, copias: 0, pegados_intentos: 0,

@@ -61,6 +61,17 @@ export async function autoprueba(fase: string) {
         if (res.pasadas !== res.total) throw new Error(JSON.stringify(res));
         return `${res.pasadas}/${res.total}`;
       });
+      await paso("reproducción de la escritura", async () => {
+        const l = await b.reproduccion(d.fila.entrega_id, "u1-suma-dos-numeros");
+        let texto = "";
+        for (const t of l.tramos) {
+          texto = t.texto_inicial ?? "";
+          for (const [, desde, hasta, insertado] of t.ops) texto = texto.slice(0, desde) + insertado + texto.slice(hasta);
+        }
+        if (l.avisos.length || !l.tramos.length || texto !== l.codigo_final) throw new Error(JSON.stringify(l.avisos));
+        if (!l.marcas.some((m) => m.tipo === "pegado")) throw new Error("falta la marca del intento de pegar");
+        return `${l.tramos.length} tramo(s), ${l.marcas.length} marca(s)`;
+      });
       await paso("tablero", async () => {
         const t = await b.tablero(null);
         if (t.length !== 1 || t[0].numero_control !== "21349999") throw new Error(JSON.stringify(t));

@@ -9,6 +9,7 @@ use rlp_core::bd_profesor::{BdProfesor, DetalleEntrega, FilaTablero, RegistroEnt
 use rlp_core::crypto::ParametrosKdf;
 use rlp_core::modelo::{ahora_ms, GrupoInfo};
 use rlp_core::profesor::{ArchivoIdentidad, IdentidadProfesor, NuevoGrupo};
+use rlp_core::reproduccion::{linea_de_tiempo, LineaDeTiempo};
 use rlp_core::verificacion::{abrir_entrega, Contexto};
 use serde::Serialize;
 use tauri::{Manager, State};
@@ -325,6 +326,15 @@ fn detalle(estado: State<Estado>, entrega_id: i64) -> R<DetalleEntrega> {
         .ok_or_else(|| "Entrega no encontrada.".into())
 }
 
+/// Línea de tiempo para reproducir cómo se escribió el código de una actividad.
+#[tauri::command]
+fn reproduccion(estado: State<Estado>, entrega_id: i64, actividad_id: String) -> R<LineaDeTiempo> {
+    let payload = estado
+        .con_bd(|bd| bd.payload(entrega_id))?
+        .ok_or("Esta entrega no se pudo abrir: no hay historial que reproducir.")?;
+    linea_de_tiempo(&payload, &actividad_id).map_err(texto)
+}
+
 #[tauri::command]
 fn calificar(
     estado: State<Estado>,
@@ -451,6 +461,7 @@ pub fn run() {
             importar_carpeta,
             tablero,
             detalle,
+            reproduccion,
             calificar,
             exportar_csv,
             autoprueba_fin,

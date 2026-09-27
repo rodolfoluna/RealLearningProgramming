@@ -12,6 +12,7 @@ pub mod grupo;
 pub mod llave_app;
 pub mod modelo;
 pub mod replay;
+pub mod reproduccion;
 
 #[cfg(feature = "firmar")]
 pub mod almacen;

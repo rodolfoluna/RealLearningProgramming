@@ -27,6 +27,7 @@ export function crearBackendTauri(): Backend {
     importarCarpeta: (carpeta, codigosIniciales) => invoke("importar_carpeta", { carpeta, codigosIniciales }),
     tablero: (grupoId) => invoke("tablero", { grupoId }),
     detalle: (entregaId) => invoke("detalle", { entregaId }),
+    reproduccion: (entregaId, actividadId) => invoke("reproduccion", { entregaId, actividadId }),
     calificar: (perfilId, actividadId, calificacion, comentario) =>
       invoke("calificar", { perfilId, actividadId, calificacion, comentario }),
     exportarCsv: (grupoId, actividades, carpeta) => invoke("exportar_csv", { grupoId, actividades, carpeta }),

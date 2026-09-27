@@ -3,6 +3,7 @@ import type {
   EstadoApp,
   FilaTablero,
   GrupoInfo,
+  LineaDeTiempo,
   NuevoGrupo,
   ResultadoImportacion,
 } from "./tipos";
@@ -24,6 +25,7 @@ export interface Backend {
   importarCarpeta(carpeta: string, codigosIniciales: Record<string, string>): Promise<ResultadoImportacion[]>;
   tablero(grupoId: string | null): Promise<FilaTablero[]>;
   detalle(entregaId: number): Promise<DetalleEntrega>;
+  reproduccion(entregaId: number, actividadId: string): Promise<LineaDeTiempo>;
   calificar(perfilId: string, actividadId: string, calificacion: number | null, comentario: string): Promise<void>;
   exportarCsv(grupoId: string | null, actividades: [string, string][], carpeta: string): Promise<string>;
 }
