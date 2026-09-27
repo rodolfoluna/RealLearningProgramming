@@ -1,0 +1,180 @@
+- id: u6-promedio
+  titulo: Promedio de una lista
+  tipo: codigo
+  enunciado: |
+    Escribe la función `promedio(numeros)` que devuelva el promedio de los números de la
+    lista. Si la lista está vacía, devuelve `0`.
+  codigo_inicial: |
+    def promedio(numeros):
+        pass
+
+
+    print(promedio([8, 9, 10]))
+  pistas:
+    - Suma con un acumulador (o con sum) y divide entre len(numeros).
+    - Revisa primero si la lista está vacía para no dividir entre cero.
+  pruebas:
+    - nombre: Tres números
+      funcion: promedio
+      args: [[8, 9, 10]]
+      esperado: 9.0
+    - nombre: Decimales
+      funcion: promedio
+      args: [[7.5, 8, 9.25, 10]]
+      esperado: 8.6875
+    - nombre: Un solo número
+      funcion: promedio
+      args: [[42]]
+      esperado: 42.0
+    - nombre: Lista vacía
+      funcion: promedio
+      args: [[]]
+      esperado: 0
+  solucion: |
+    def promedio(numeros):
+        if len(numeros) == 0:
+            return 0
+        total = 0
+        for n in numeros:
+            total += n
+        return total / len(numeros)
+
+
+    print(promedio([8, 9, 10]))
+
+- id: u6-maximo
+  titulo: El mayor sin max()
+  tipo: codigo
+  enunciado: |
+    Escribe la función `maximo(numeros)` que devuelva el número más grande de la lista **sin
+    usar** `max()` ni `sort()`. La lista siempre tiene al menos un elemento.
+  codigo_inicial: |
+    def maximo(numeros):
+        pass
+
+
+    print(maximo([4, 17, 9]))
+  pistas:
+    - Empieza suponiendo que el mayor es numeros[0].
+    - Recorre la lista y actualiza el mayor cuando encuentres uno más grande.
+  pruebas:
+    - nombre: En medio
+      funcion: maximo
+      args: [[4, 17, 9]]
+      esperado: 17
+    - nombre: Al final
+      funcion: maximo
+      args: [[1, 2, 3, 50]]
+      esperado: 50
+    - nombre: Todos negativos
+      funcion: maximo
+      args: [[-8, -3, -12]]
+      esperado: -3
+    - nombre: Un elemento
+      funcion: maximo
+      args: [[7]]
+      esperado: 7
+  solucion: |
+    def maximo(numeros):
+        mayor = numeros[0]
+        for n in numeros:
+            if n > mayor:
+                mayor = n
+        return mayor
+
+
+    print(maximo([4, 17, 9]))
+
+- id: u6-contar-mayores
+  titulo: ¿Cuántos superan el límite?
+  tipo: codigo
+  enunciado: |
+    Escribe la función `contar_mayores(numeros, limite)` que devuelva cuántos números de la
+    lista son **mayores o iguales** que `limite`.
+
+    ```python
+    contar_mayores([85, 60, 92, 70, 45], 70)   # 3
+    ```
+  codigo_inicial: |
+    def contar_mayores(numeros, limite):
+        pass
+
+
+    print(contar_mayores([85, 60, 92, 70, 45], 70))
+  pistas:
+    - Un contador que empieza en 0 y un if dentro del for.
+  pruebas:
+    - nombre: Calificaciones
+      funcion: contar_mayores
+      args: [[85, 60, 92, 70, 45], 70]
+      esperado: 3
+    - nombre: Ninguno
+      funcion: contar_mayores
+      args: [[1, 2, 3], 10]
+      esperado: 0
+    - nombre: Lista vacía
+      funcion: contar_mayores
+      args: [[], 5]
+      esperado: 0
+  solucion: |
+    def contar_mayores(numeros, limite):
+        contador = 0
+        for n in numeros:
+            if n >= limite:
+                contador += 1
+        return contador
+
+
+    print(contar_mayores([85, 60, 92, 70, 45], 70))
+
+- id: u6-reporte-grupo
+  titulo: Reporte del grupo
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Pide cuántos alumnos hay y luego la calificación de cada uno. Guárdalas en una lista y
+    muestra el reporte:
+
+    ```texto
+    ¿Cuántos alumnos? 4
+    Calificación 1: 85
+    Calificación 2: 60
+    Calificación 3: 92
+    Calificación 4: 70
+    Promedio: 76.8
+    Más alta: 92
+    Más baja: 60
+    Aprobados: 3
+    ```
+
+    El promedio va con un decimal y aprueba quien tiene 70 o más. Las calificaciones son enteras.
+  codigo_inicial: |
+    n = int(input("¿Cuántos alumnos? "))
+    calificaciones = []
+  pistas:
+    - "for i in range(n): calificaciones.append(int(input(f\"Calificación {i + 1}: \")))"
+    - Después calcula todo recorriendo la lista (o con sum, max y min).
+    - "print(f\"Promedio: {promedio:.1f}\")"
+  pruebas:
+    - nombre: Ejemplo
+      entrada: "4\n85\n60\n92\n70\n"
+      salida: ["Promedio: 76.8", "Más alta: 92", "Más baja: 60", "Aprobados: 3"]
+    - nombre: Un alumno
+      entrada: "1\n100\n"
+      salida: ["Promedio: 100.0", "Más alta: 100", "Más baja: 100", "Aprobados: 1"]
+    - nombre: Todos reprobados
+      entrada: "3\n50\n65\n69\n"
+      salida: ["Promedio: 61.3", "Más alta: 69", "Más baja: 50", "Aprobados: 0"]
+  solucion: |
+    n = int(input("¿Cuántos alumnos? "))
+    calificaciones = []
+    for i in range(n):
+        calificaciones.append(int(input(f"Calificación {i + 1}: ")))
+    aprobados = 0
+    for c in calificaciones:
+        if c >= 70:
+            aprobados += 1
+    print(f"Promedio: {sum(calificaciones) / n:.1f}")
+    print("Más alta:", max(calificaciones))
+    print("Más baja:", min(calificaciones))
+    print("Aprobados:", aprobados)

@@ -1,0 +1,149 @@
+- id: u7-agenda
+  titulo: Agenda de contactos
+  tipo: codigo
+  dificultad: 3
+  puntos: 30
+  enunciado: |
+    Haz una agenda donde cada contacto es `[nombre, telefono]`.
+
+    **Funciones**:
+
+    - `telefono_valido(telefono)`: `True` si son exactamente 10 dígitos.
+    - `buscar_contactos(agenda, texto)`: devuelve la lista de contactos cuyo nombre **contiene**
+      `texto` (sin importar mayúsculas), en el orden de la agenda.
+    - `posicion_contacto(agenda, nombre)`: devuelve la posición del contacto con ese nombre
+      exacto (sin importar mayúsculas) o `-1`.
+
+    **Menú** (hasta elegir `5`):
+
+    ```texto
+    1) Agregar
+    2) Buscar
+    3) Ver todos
+    4) Eliminar
+    5) Salir
+    ```
+
+    1. Pide `Nombre: ` y `Teléfono: `. Si el nombre ya existe muestra `Ese contacto ya existe`;
+       si el teléfono no es válido, `Teléfono inválido`; si todo está bien, guárdalo y muestra
+       `Contacto guardado`.
+    2. Pide `Buscar: ` y muestra cada resultado como `Ana López: 5512345678`, o `Sin resultados`.
+    3. Muestra todos **en orden alfabético** con el mismo formato, o `La agenda está vacía`.
+    4. Pide `Nombre: ` y muestra `Contacto eliminado` o `No existe ese contacto`.
+    5. Muestra `Hasta luego`.
+  codigo_inicial: |
+    def telefono_valido(telefono):
+        pass
+
+
+    def buscar_contactos(agenda, texto):
+        pass
+
+
+    def posicion_contacto(agenda, nombre):
+        pass
+
+
+    # Programa principal
+    agenda = []
+  pistas:
+    - "telefono_valido: len(telefono) == 10 and telefono.isdigit()"
+    - "buscar_contactos: if texto.lower() in nombre.lower(): resultado.append([nombre, telefono])"
+    - "Para ver todos: for nombre, telefono in sorted(agenda):"
+    - "Para eliminar: del agenda[i]"
+  pruebas:
+    - nombre: Teléfono válido
+      funcion: telefono_valido
+      args: ["5512345678"]
+      esperado: true
+    - nombre: Teléfono corto
+      funcion: telefono_valido
+      args: ["55123456"]
+      esperado: false
+    - nombre: Teléfono con letras
+      funcion: telefono_valido
+      args: ["55-1234-56"]
+      esperado: false
+    - nombre: Buscar varios
+      funcion: buscar_contactos
+      args: [[["Ana López", "5512345678"], ["Luis Pérez", "3312345678"], ["Mariana Ruiz", "8112345678"]], "ana"]
+      esperado: [["Ana López", "5512345678"], ["Mariana Ruiz", "8112345678"]]
+    - nombre: Buscar sin resultados
+      funcion: buscar_contactos
+      args: [[["Ana López", "5512345678"]], "zzz"]
+      esperado: []
+    - nombre: posicion_contacto
+      funcion: posicion_contacto
+      args: [[["Ana López", "5512345678"], ["Luis Pérez", "3312345678"]], "luis pérez"]
+      esperado: 1
+    - nombre: Agregar y ver en orden
+      entrada: "1\nLuis Pérez\n3312345678\n1\nAna López\n5512345678\n3\n5\n"
+      salida: ["Contacto guardado", "Contacto guardado", "Ana López: 5512345678", "Luis Pérez: 3312345678", "Hasta luego"]
+    - nombre: Validaciones
+      entrada: "1\nAna\n123\n1\nAna\n5512345678\n1\nana\n5500000000\n3\n5\n"
+      salida: ["Teléfono inválido", "Contacto guardado", "Ese contacto ya existe", "Ana: 5512345678"]
+    - nombre: Buscar y eliminar
+      entrada: "1\nAna López\n5512345678\n2\nlóp\n2\nxyz\n4\nana lópez\n4\nana lópez\n3\n5\n"
+      salida: ["Ana López: 5512345678", "Sin resultados", "Contacto eliminado", "No existe ese contacto", "La agenda está vacía"]
+  solucion: |
+    def telefono_valido(telefono):
+        return len(telefono) == 10 and telefono.isdigit()
+
+
+    def buscar_contactos(agenda, texto):
+        resultado = []
+        for nombre, telefono in agenda:
+            if texto.lower() in nombre.lower():
+                resultado.append([nombre, telefono])
+        return resultado
+
+
+    def posicion_contacto(agenda, nombre):
+        for i in range(len(agenda)):
+            if agenda[i][0].lower() == nombre.lower():
+                return i
+        return -1
+
+
+    # Programa principal
+    agenda = []
+    opcion = ""
+    while opcion != "5":
+        print("1) Agregar")
+        print("2) Buscar")
+        print("3) Ver todos")
+        print("4) Eliminar")
+        print("5) Salir")
+        opcion = input("Opción: ")
+        if opcion == "1":
+            nombre = input("Nombre: ")
+            telefono = input("Teléfono: ")
+            if posicion_contacto(agenda, nombre) != -1:
+                print("Ese contacto ya existe")
+            elif not telefono_valido(telefono):
+                print("Teléfono inválido")
+            else:
+                agenda.append([nombre, telefono])
+                print("Contacto guardado")
+        elif opcion == "2":
+            encontrados = buscar_contactos(agenda, input("Buscar: "))
+            if len(encontrados) == 0:
+                print("Sin resultados")
+            for nombre, telefono in encontrados:
+                print(f"{nombre}: {telefono}")
+        elif opcion == "3":
+            if len(agenda) == 0:
+                print("La agenda está vacía")
+            for nombre, telefono in sorted(agenda):
+                print(f"{nombre}: {telefono}")
+        elif opcion == "4":
+            i = posicion_contacto(agenda, input("Nombre: "))
+            if i == -1:
+                print("No existe ese contacto")
+            else:
+                del agenda[i]
+                print("Contacto eliminado")
+        elif opcion == "5":
+            print("Hasta luego")
+        else:
+            print("Opción no válida")

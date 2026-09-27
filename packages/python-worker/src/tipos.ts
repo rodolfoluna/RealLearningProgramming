@@ -23,13 +23,17 @@ export interface ResultadoEjecucion {
 export interface Prueba {
   nombre?: string;
   oculta?: boolean;
-  // Prueba de entrada/salida
+  // Prueba de entrada/salida (en pruebas de función: datos para los input() de la función)
   entrada?: string;
+  /** Lo que el programa (o la función) debe mostrar. */
   salida?: string | string[];
   modo?: "contiene" | "exacta" | "normalizada" | "regex" | "termina";
   // Prueba de función
   funcion?: string;
   args?: unknown[];
+  /** Argumentos con nombre. */
+  kwargs?: Record<string, unknown>;
+  /** Valor que debe devolver la función (sin él y con `salida`, no se revisa). */
   esperado?: unknown;
 }
 
@@ -49,6 +53,8 @@ export interface ResultadoPrueba {
   modo?: string;
   // funcion
   llamada?: string;
+  salida_esperada?: string | string[];
+  salida_obtenida?: string;
 }
 
 export interface ResultadoPruebas {

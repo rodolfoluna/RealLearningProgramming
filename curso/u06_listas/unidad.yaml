@@ -1,0 +1,18 @@
+id: u6
+numero: 6
+titulo: Listas
+descripcion: Guardar muchos datos en una sola variable; recorrerlos, buscarlos, filtrarlos y organizarlos en tablas.
+objetivos:
+  - Crear listas, leer y cambiar sus elementos por posición.
+  - Agregar, quitar y ordenar elementos con los métodos de las listas.
+  - Recorrer listas para sumar, contar y encontrar el mayor o el menor.
+  - Buscar elementos y construir listas filtradas.
+  - Usar tuplas, rebanadas y listas por comprensión.
+  - Representar tablas y tableros con listas de listas (matrices).
+lecciones:
+  - l01_crear_indexar
+  - l02_metodos
+  - l03_recorrer_acumular
+  - l04_buscar_filtrar
+  - l05_tuplas_rebanadas
+  - l06_matrices

@@ -36,8 +36,17 @@
           <div><span class="etq">Tu programa mostró</span><pre>{r.obtenido || "(nada)"}</pre></div>
         {:else}
           <div><span class="etq">Llamada</span><pre>{r.llamada}</pre></div>
-          <div><span class="etq">Se esperaba</span><pre>{r.esperado}</pre></div>
-          {#if r.obtenido !== undefined}<div><span class="etq">Tu función devolvió</span><pre>{r.obtenido}</pre></div>{/if}
+          {#if r.entrada}
+            <div><span class="etq">Datos de entrada</span><pre>{r.entrada}</pre></div>
+          {/if}
+          {#if r.esperado !== undefined}
+            <div><span class="etq">Debe devolver</span><pre>{r.esperado}</pre></div>
+            {#if r.obtenido !== undefined}<div><span class="etq">Tu función devolvió</span><pre>{r.obtenido}</pre></div>{/if}
+          {/if}
+          {#if r.salida_esperada !== undefined}
+            <div><span class="etq">{r.modo === "contiene" ? "Debe mostrar" : "Salida esperada"}</span><pre>{texto(r.salida_esperada)}</pre></div>
+            {#if r.salida_obtenida !== undefined}<div><span class="etq">Tu función mostró</span><pre>{r.salida_obtenida || "(nada)"}</pre></div>{/if}
+          {/if}
         {/if}
         {#if !r.paso}<p class="mensaje">{r.mensaje}</p>{/if}
         {#if r.error}<ErrorPy error={r.error} {alIrALinea} />{/if}

@@ -313,11 +313,19 @@ Tipos de prueba (`pruebas:` de una actividad de código):
   modo: contiene | exacta | normalizada | regex | termina
 - funcion: es_par              # llama una función del alumno
   args: [4]
-  esperado: true
+  kwargs: {base: 10}           # argumentos con nombre (opcional)
+  esperado: true               # valor devuelto (se revisa si está, o si no hay "salida")
+  entrada: "17\n"              # datos para los input() dentro de la función (opcional)
+  salida: ["Hola, Ana"]        # lo que la función debe mostrar (opcional; usa "modo")
   oculta: true                 # no se muestran los datos si falla
 ```
 
-### Incluido en esta versión (4 unidades, 20 lecciones, 53 actividades)
+En las pruebas de función, el programa principal se ejecuta hasta su primer `input()` y ahí se
+detiene sin error: así se pueden probar por separado las funciones de un programa completo (con
+menú) siempre que estén definidas antes del programa principal, que es la estructura que enseña
+el curso.
+
+### Incluido en esta versión (8 unidades, 42 lecciones, 118 actividades; curso 1.1)
 
 | Unidad | Lecciones |
 |--------|-----------|
@@ -325,28 +333,27 @@ Tipos de prueba (`pruebas:` de una actividad de código):
 | 1 Fundamentos | Variables y tipos · Operadores · input() y conversión · Cadenas y f-strings · math y redondeo |
 | 2 Condiciones | Comparaciones · if/else · elif · and/or/not y anidadas · try/except |
 | 3 Ciclos | while · Contadores y acumuladores · Centinela · for y range · break/continue · Anidados y figuras · Programas con menú (calculadora, cajero) |
+| 4 Funciones | def y llamada · Parámetros · return (print contra return) · Valores por defecto y argumentos con nombre · Alcance (UnboundLocalError) · Descomponer un programa |
+| 5 Cadenas | Recorrer (vocales, invertir, palíndromos) · Métodos (split/join, title, count…) · Validaciones (número de control, contraseña segura, correo) · Formato de tablas y cifrado César |
+| 6 Listas | Crear e indexar · Métodos · Recorrer y acumular (máximo sin max) · Buscar y filtrar · Tuplas, rebanadas y comprensiones · Matrices |
+| 7 Proyectos | Control de calificaciones · Inventario · Ahorcado (2 partes) · Gato (2 partes) · Agenda · Piedra, papel o tijera · Conversor decimal/binario · Punto de venta |
 
-### Siguientes unidades (fase 2)
-
-| Unidad | Contenido |
-|--------|-----------|
-| 4 Funciones | def, parámetros, return, valores por defecto, alcance, descomposición, `random` |
-| 5 Cadenas a fondo | recorridos, métodos, validaciones, contar y reemplazar |
-| 6 Listas | índices, rebanadas, métodos, recorrer, buscar, máximos/promedios, tuplas, matrices |
-| 7 Diccionarios (opcional) | pares llave-valor, conteos, agendas |
-| 8 Proyectos | calculadora completa, adivina el número, cajero, control de calificaciones, inventario, ahorcado, gato, agenda |
+Cada proyecto se califica por partes (cada función con sus pruebas) y como programa completo.
+Los diccionarios quedan como posible unidad opcional en una versión posterior.
 
 ---
 
 ## 9. Plan por fases
 
-- **Fase 1 (esta entrega, Windows)**: núcleo, App Alumno, App Profesor, curso U0–U3, CI y
-  empaquetado portable.
-- **Fase 2**: **APK Android** (barra de teclas de código, teclado sin sugerencias, heurísticas de
-  IME, unirse al grupo por **QR**, compartir `.rlp`, pausa de la app como salida); unidades 4–6 y 8;
-  **reproductor visual del historial** (ver cómo se escribió el código); **retroalimentación
-  firmada** profesor → alumno (cifrada con la DEK del alumno); restablecer contraseña desde el
-  profesor; exportar a Excel; problemas de Parsons; historial de versiones; consola interactiva.
+- **Fase 1 (hecha, Windows)**: núcleo, App Alumno, App Profesor, curso U0–U3, CI y empaquetado
+  portable.
+- **Fase 2 (en curso)**: unidades 4–7 del curso (**hecho**: funciones, cadenas, listas y
+  proyectos); versión publicable (llave de firma de producción, Releases); **reproductor visual
+  del historial** (ver cómo se escribió el código); **retroalimentación firmada** profesor →
+  alumno (cifrada con la DEK del alumno); restablecer contraseña desde el profesor; exportar a
+  Excel; **APK Android** (barra de teclas de código, teclado sin sugerencias, heurísticas de IME,
+  unirse al grupo por **QR**, compartir `.rlp`, pausa de la app como salida). Después: problemas
+  de Parsons, historial de versiones, consola interactiva.
 - **Fase 3**: **detección de similitud** entre alumnos (huellas de tokens/AST); visualizador paso a
   paso (tipo Python Tutor); editor del curso y paquetes `.curso` firmados; insignias y rachas;
   tablero de dificultades por actividad.
@@ -360,7 +367,7 @@ Tipos de prueba (`pruebas:` de una actividad de código):
 | Núcleo (Rust) | cifrado, contraseñas, recuperación, envolturas, firmas, UTF-16 (propiedades), flujo completo, continuar en otro dispositivo, byte alterado, manifiesto editado, re-cifrado con otra llave, código cambiado sin historial, eventos borrados, otro profesor | `cargo test -p rlp-core` |
 | Editor (TS) | filtro de pegado, inserciones sospechosas, operaciones reproducibles | `pnpm vitest run` |
 | Navegador | Pyodide con `input()`, detener, `time.sleep`, errores en español, pruebas con ciclo infinito; pegado por teclado, menú, evento y arrastre; política "propio"; flujos de interfaz de ambas apps | `pnpm exec playwright test` |
-| Curso | 53 soluciones y predicciones en CPython y Pyodide | `python3 scripts/validar_curso.py`, `node scripts/validar-curso-pyodide.mjs` |
+| Curso | 118 actividades: soluciones, códigos iniciales y predicciones en CPython y Pyodide; pruebas del arnés | `python3 scripts/validar_curso.py`, `node scripts/validar-curso-pyodide.mjs`, `python3 -m unittest discover packages/python-worker/pruebas` |
 | Apps reales | profesor → alumno → profesor con Tauri, WebView y núcleo reales | `scripts/autoprueba.sh` (Linux/Xvfb), `scripts/autoprueba.ps1` (Windows/WebView2) |
 | Windows | compilación, runtime con PyInstaller que genera un `.exe` funcional, empaquetado | `.github/workflows/build-windows.yml` |
 

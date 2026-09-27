@@ -1,0 +1,131 @@
+- id: u6-buscar
+  titulo: Buscar la posición
+  tipo: codigo
+  enunciado: |
+    Escribe la función `buscar(lista, valor)` que devuelva la posición de la **primera** vez
+    que aparece `valor`, o `-1` si no está. No uses `index()`.
+  codigo_inicial: |
+    def buscar(lista, valor):
+        pass
+
+
+    print(buscar(["Ana", "Luis", "Sofía"], "Luis"))
+  pistas:
+    - "for i in range(len(lista)): if lista[i] == valor: return i"
+    - El return -1 va después del ciclo, no dentro.
+  pruebas:
+    - nombre: Encontrado
+      funcion: buscar
+      args: [["Ana", "Luis", "Sofía"], "Luis"]
+      esperado: 1
+    - nombre: Primera aparición
+      funcion: buscar
+      args: [[5, 3, 5, 3], 3]
+      esperado: 1
+    - nombre: No está
+      funcion: buscar
+      args: [[1, 2, 3], 9]
+      esperado: -1
+    - nombre: Al final
+      funcion: buscar
+      args: [[1, 2, 3], 3]
+      esperado: 2
+    - nombre: Lista vacía
+      funcion: buscar
+      args: [[], "x"]
+      esperado: -1
+      oculta: true
+  solucion: |
+    def buscar(lista, valor):
+        for i in range(len(lista)):
+            if lista[i] == valor:
+                return i
+        return -1
+
+
+    print(buscar(["Ana", "Luis", "Sofía"], "Luis"))
+
+- id: u6-pares
+  titulo: Filtrar pares
+  tipo: codigo
+  enunciado: |
+    Escribe la función `pares(numeros)` que devuelva una lista nueva solo con los números pares.
+
+    ```python
+    pares([1, 2, 3, 4, 10, 7])   # [2, 4, 10]
+    ```
+  codigo_inicial: |
+    def pares(numeros):
+        pass
+
+
+    print(pares([1, 2, 3, 4, 10, 7]))
+  pistas:
+    - Lista vacía para el resultado, un for y append de los que cumplan n % 2 == 0.
+  pruebas:
+    - nombre: Mezcla
+      funcion: pares
+      args: [[1, 2, 3, 4, 10, 7]]
+      esperado: [2, 4, 10]
+    - nombre: Ninguno
+      funcion: pares
+      args: [[1, 3, 5]]
+      esperado: []
+    - nombre: Negativos y cero
+      funcion: pares
+      args: [[-4, -3, 0]]
+      esperado: [-4, 0]
+  solucion: |
+    def pares(numeros):
+        resultado = []
+        for n in numeros:
+            if n % 2 == 0:
+                resultado.append(n)
+        return resultado
+
+
+    print(pares([1, 2, 3, 4, 10, 7]))
+
+- id: u6-aprobados-nombres
+  titulo: ¿Quién aprobó?
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Escribe la función `aprobados(nombres, calificaciones)` que reciba dos listas paralelas y
+    devuelva la lista de nombres de quienes tienen **70 o más**, en el mismo orden.
+
+    ```python
+    aprobados(["Ana", "Luis", "Sofía"], [85, 60, 92])   # ["Ana", "Sofía"]
+    ```
+  codigo_inicial: |
+    def aprobados(nombres, calificaciones):
+        pass
+
+
+    print(aprobados(["Ana", "Luis", "Sofía"], [85, 60, 92]))
+  pistas:
+    - Recorre las posiciones con range(len(nombres)).
+    - Si calificaciones[i] >= 70, agrega nombres[i] al resultado.
+  pruebas:
+    - nombre: Ejemplo
+      funcion: aprobados
+      args: [["Ana", "Luis", "Sofía"], [85, 60, 92]]
+      esperado: ["Ana", "Sofía"]
+    - nombre: Justo 70
+      funcion: aprobados
+      args: [["Eva", "Iván"], [70, 69]]
+      esperado: ["Eva"]
+    - nombre: Nadie
+      funcion: aprobados
+      args: [["Leo"], [10]]
+      esperado: []
+  solucion: |
+    def aprobados(nombres, calificaciones):
+        resultado = []
+        for i in range(len(nombres)):
+            if calificaciones[i] >= 70:
+                resultado.append(nombres[i])
+        return resultado
+
+
+    print(aprobados(["Ana", "Luis", "Sofía"], [85, 60, 92]))

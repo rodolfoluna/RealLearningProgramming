@@ -7,6 +7,7 @@ conversiones de tipos.
 
 import builtins
 import contextlib
+import copy
 import io
 import json
 import linecache
@@ -296,35 +297,71 @@ class _DemasiadaSalida(Exception):
     pass
 
 
-def _correr_capturando(codigo, entrada, permitir_input=True, mensaje_sin_input=None):
-    """Ejecuta el programa con entrada simulada.
+class _ProgramaDetenido(BaseException):
+    """El programa principal pidió datos durante una prueba de función: ahí se detiene.
 
-    Devuelve (salida_programa, salida_consola, error, espacio_de_nombres, tiempo_agotado).
+    Hereda de BaseException para que un `except Exception` del alumno no lo atrape.
     """
-    lineas = list(entrada.replace("\r\n", "\n").split("\n")) if entrada else []
-    if lineas and lineas[-1] == "":
-        lineas.pop()
-    salida = _SalidaLimitada()
-    ns = _espacio_nombres()
 
-    ecos = []  # (posición en la salida, valor tecleado) para reconstruir la vista de consola
 
-    def input_simulado(mensaje=""):
-        salida.write(str(mensaje))
-        if not permitir_input:
-            raise EOFError(mensaje_sin_input or "input() no está permitido aquí.")
-        if not lineas:
+_ERROR_SALIDA_EXCESIVA = {
+    "tipo": "SalidaExcesiva",
+    "mensaje": "",
+    "linea": None,
+    "columna": None,
+    "texto_linea": "",
+    "explicacion": "Tu programa imprimió demasiado texto. ¿Hay un ciclo que nunca termina?",
+    "traza": [],
+}
+
+
+class _EntradaSimulada:
+    """Reemplazo de input(): toma las líneas de la prueba y lleva la cuenta de los ecos."""
+
+    def __init__(self, entrada, salida):
+        self.lineas = list(entrada.replace("\r\n", "\n").split("\n")) if entrada else []
+        if self.lineas and self.lineas[-1] == "":
+            self.lineas.pop()
+        self.salida = salida
+        self.ecos = []  # (posición en la salida, valor tecleado) para reconstruir la vista de consola
+        self.detener = False  # True: input() detiene el programa (pruebas de función)
+
+    def __call__(self, mensaje=""):
+        self.salida.write(str(mensaje))
+        if self.detener:
+            raise _ProgramaDetenido()
+        if not self.lineas:
             raise EOFError("Tu programa pidió más datos con input() de los que la prueba proporciona.")
-        valor = lineas.pop(0)
-        ecos.append((salida.tell(), valor))
+        valor = self.lineas.pop(0)
+        self.ecos.append((self.salida.tell(), valor))
         # En la salida "del programa" el dato tecleado no aparece, solo el salto de línea;
         # así una prueba no puede aprobarse con el eco de la entrada.
-        salida.write("\n")
+        self.salida.write("\n")
         return valor
 
-    ns["input"] = input_simulado
+    def consola(self):
+        """La salida como se vería en la consola: con lo que se tecleó."""
+        texto = self.salida.getvalue()
+        for posicion, valor in reversed(self.ecos):
+            texto = texto[:posicion] + valor + texto[posicion:]
+        return texto
+
+
+def _correr_capturando(codigo, entrada, detener_en_input=False):
+    """Ejecuta el programa con entrada simulada.
+
+    Con `detener_en_input`, el primer input() del programa principal lo detiene sin error
+    (las pruebas de función solo necesitan las definiciones que hay antes).
+    Devuelve (salida_programa, salida_consola, error, espacio_de_nombres, tiempo_agotado, detenido).
+    """
+    salida = _SalidaLimitada()
+    ns = _espacio_nombres()
+    entrada_simulada = _EntradaSimulada(entrada, salida)
+    entrada_simulada.detener = detener_en_input
+    ns["input"] = entrada_simulada
     error = None
     agotado = False
+    detenido = False
     dormir_original = time.sleep
     time.sleep = lambda _segundos: None  # en las pruebas no se espera
     try:
@@ -333,32 +370,22 @@ def _correr_capturando(codigo, entrada, permitir_input=True, mensaje_sin_input=N
             exec(objeto, ns)
     except SystemExit:
         pass
+    except _ProgramaDetenido:
+        detenido = True
     except KeyboardInterrupt:
         agotado = True
     except _DemasiadaSalida:
-        error = {
-            "tipo": "SalidaExcesiva",
-            "mensaje": "",
-            "linea": None,
-            "columna": None,
-            "texto_linea": "",
-            "explicacion": "Tu programa imprimió demasiado texto. ¿Hay un ciclo que nunca termina?",
-            "traza": [],
-        }
+        error = dict(_ERROR_SALIDA_EXCESIVA)
     except BaseException as exc:  # noqa: BLE001
         error = info_error(exc, codigo)
     time.sleep = dormir_original
     _restaurar_entorno()
-    programa = salida.getvalue()
-    consola = programa
-    for posicion, valor in reversed(ecos):
-        consola = consola[:posicion] + valor + consola[posicion:]
-    return programa, consola, error, ns, agotado
+    return salida.getvalue(), entrada_simulada.consola(), error, ns, agotado, detenido
 
 
 def _probar_io(codigo, prueba):
     entrada = prueba.get("entrada", "") or ""
-    salida, consola, error, _, agotado = _correr_capturando(codigo, entrada)
+    salida, consola, error, _, agotado, _ = _correr_capturando(codigo, entrada)
     modo = prueba.get("modo", "contiene")
     esperado = prueba.get("salida", "")
     resultado = {"tipo": "io", "entrada": entrada, "esperado": esperado, "obtenido": consola, "modo": modo}
@@ -373,16 +400,29 @@ def _probar_io(codigo, prueba):
 
 
 def _probar_funcion(codigo, prueba):
+    """Llama a una función del alumno y revisa lo que devuelve y, si se pide, lo que imprime.
+
+    Campos de la prueba: funcion, args, kwargs (argumentos con nombre), esperado (valor
+    devuelto), entrada (datos para los input() dentro de la función), salida y modo (lo que la
+    función debe imprimir). Sin `esperado` pero con `salida`, el valor devuelto no se revisa.
+    """
     nombre = prueba["funcion"]
-    args = prueba.get("args", [])
+    args = copy.deepcopy(prueba.get("args", []))
+    kwargs = copy.deepcopy(prueba.get("kwargs", {}))
+    revisa_valor = "esperado" in prueba or "salida" not in prueba
     esperado = prueba.get("esperado")
-    llamada = f"{nombre}({', '.join(repr(a) for a in args)})"
-    resultado = {"tipo": "funcion", "llamada": llamada, "esperado": repr(esperado)}
-    _, _, error, ns, agotado = _correr_capturando(
-        codigo, "", permitir_input=False,
-        mensaje_sin_input="En este ejercicio no uses input() fuera de la función: la prueba llama a tu función "
-                          "directamente.",
-    )
+    entrada = prueba.get("entrada", "") or ""
+    modo = prueba.get("modo", "contiene")
+    llamada = f"{nombre}({', '.join([repr(a) for a in args] + [f'{k}={v!r}' for k, v in kwargs.items()])})"
+    resultado = {"tipo": "funcion", "llamada": llamada}
+    if revisa_valor:
+        resultado["esperado"] = repr(esperado)
+    if entrada:
+        resultado["entrada"] = entrada
+    if "salida" in prueba:
+        resultado["salida_esperada"] = prueba["salida"]
+        resultado["modo"] = modo
+    _, _, error, ns, agotado, detenido = _correr_capturando(codigo, "", detener_en_input=True)
     if agotado:
         return {**resultado, "paso": False, "tiempo_agotado": True,
                 "mensaje": "Tu programa tardó demasiado. ¿Hay un ciclo que nunca termina?"}
@@ -391,30 +431,48 @@ def _probar_funcion(codigo, prueba):
                 "mensaje": f"Tu programa terminó con un error ({error['tipo']}). {error['explicacion']}"}
     funcion = ns.get(nombre)
     if not callable(funcion):
+        extra = (" Escribe tus funciones al principio, antes del programa principal que pide datos con input()."
+                 if detenido else "")
         return {**resultado, "paso": False,
-                "mensaje": f"No encontré la función {nombre}(). Revisa que la definas con def {nombre}(...):"}
+                "mensaje": f"No encontré la función {nombre}(). Revisa que la definas con def {nombre}(...):{extra}"}
+
     captura = _SalidaLimitada()
+    entrada_simulada = _EntradaSimulada(entrada, captura)
+    ns["input"] = entrada_simulada
+    dormir_original = time.sleep
+    time.sleep = lambda _segundos: None
     try:
         with contextlib.redirect_stdout(captura):
-            obtenido = funcion(*args)
+            obtenido = funcion(*args, **kwargs)
     except KeyboardInterrupt:
-        _restaurar_entorno()
         return {**resultado, "paso": False, "tiempo_agotado": True,
                 "mensaje": "Tu función tardó demasiado. ¿Hay un ciclo que nunca termina?"}
+    except _DemasiadaSalida:
+        return {**resultado, "paso": False, "error": dict(_ERROR_SALIDA_EXCESIVA),
+                "mensaje": f"{llamada} imprimió demasiado texto. ¿Hay un ciclo que nunca termina?"}
     except BaseException as exc:  # noqa: BLE001
-        _restaurar_entorno()
         err = info_error(exc, codigo)
         return {**resultado, "paso": False, "error": err,
                 "mensaje": f"{llamada} produjo un error ({err['tipo']}). {err['explicacion']}"}
-    _restaurar_entorno()
+    finally:
+        time.sleep = dormir_original
+        _restaurar_entorno()
+
     resultado["obtenido"] = repr(obtenido)
-    if _iguales(obtenido, esperado):
-        return {**resultado, "paso": True, "mensaje": "Correcto."}
-    extra = ""
-    if obtenido is None and esperado is not None:
-        extra = " ¿Olvidaste usar return?"
-    return {**resultado, "paso": False,
-            "mensaje": f"{llamada} debía devolver {esperado!r} pero devolvió {obtenido!r}.{extra}"}
+    if "salida" in prueba:
+        resultado["salida_obtenida"] = entrada_simulada.consola()
+    if revisa_valor and not _iguales(obtenido, esperado):
+        extra = ""
+        if obtenido is None and esperado is not None:
+            extra = " ¿Olvidaste usar return?" if not captura.getvalue() else \
+                " ¿Usaste print en lugar de return? print muestra el valor, return lo devuelve."
+        return {**resultado, "paso": False,
+                "mensaje": f"{llamada} debía devolver {esperado!r} pero devolvió {obtenido!r}.{extra}"}
+    if "salida" in prueba:
+        paso, mensaje = comparar(captura.getvalue(), prueba["salida"], modo)
+        if not paso:
+            return {**resultado, "paso": False, "mensaje": f"{llamada} no mostró lo esperado. {mensaje}"}
+    return {**resultado, "paso": True, "mensaje": "Correcto."}
 
 
 def probar(codigo, pruebas_json):

@@ -1,0 +1,128 @@
+- id: u4-precio-final
+  titulo: Precio final con descuento e IVA
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Escribe la función `precio_final(precio, descuento=0, iva=0.16)`:
+
+    1. Aplica el **descuento**, que es un porcentaje de 0 a 100.
+    2. Al resultado súmale el **IVA** (0.16 significa 16 %).
+    3. Devuelve el total **redondeado a 2 decimales** con `round`.
+
+    ```python
+    precio_final(100)                           # 116.0
+    precio_final(100, 10)                       # 104.4
+    precio_final(250, iva=0)                    # 250.0
+    precio_final(200, descuento=50, iva=0.08)   # 108.0
+    ```
+  codigo_inicial: |
+    def precio_final(precio, descuento, iva):
+        pass  # Reemplaza esta línea
+
+
+    print(precio_final(100))
+  pistas:
+    - Agrega los valores por defecto en la definición: descuento=0, iva=0.16
+    - "con_descuento = precio - precio * descuento / 100"
+    - "return round(con_descuento * (1 + iva), 2)"
+  pruebas:
+    - nombre: Solo el precio
+      funcion: precio_final
+      args: [100]
+      esperado: 116.0
+    - nombre: Con descuento
+      funcion: precio_final
+      args: [100, 10]
+      esperado: 104.4
+    - nombre: Sin IVA (argumento con nombre)
+      funcion: precio_final
+      args: [250]
+      kwargs: {iva: 0}
+      esperado: 250.0
+    - nombre: Descuento e IVA con nombre
+      funcion: precio_final
+      args: [200]
+      kwargs: {descuento: 50, iva: 0.08}
+      esperado: 108.0
+    - nombre: Redondeo
+      funcion: precio_final
+      args: [19.99, 15]
+      esperado: 19.71
+      oculta: true
+  solucion: |
+    def precio_final(precio, descuento=0, iva=0.16):
+        con_descuento = precio - precio * descuento / 100
+        return round(con_descuento * (1 + iva), 2)
+
+
+    print(precio_final(100))
+
+- id: u4-repetir
+  titulo: Repetir texto
+  tipo: codigo
+  enunciado: |
+    Escribe la función `repetir(texto, veces=2, separador=" ")` que **devuelva** una cadena con
+    `texto` repetido `veces` veces, con `separador` entre cada repetición (pero no al final).
+
+    ```python
+    repetir("hola")                          # "hola hola"
+    repetir("ja", 3, "")                     # "jajaja"
+    repetir("sí", veces=4, separador="-")    # "sí-sí-sí-sí"
+    ```
+  codigo_inicial: |
+    def repetir(texto, veces=2, separador=" "):
+        pass  # Reemplaza esta línea
+
+
+    print(repetir("hola"))
+  pistas:
+    - Puedes construir el resultado en una variable que empieza vacía ("") y crece en un ciclo.
+    - Agrega el separador solo antes de las repeticiones que no son la primera.
+    - "Otra forma: (texto + separador) * veces y luego quitar el último separador."
+  pruebas:
+    - nombre: Valores por defecto
+      funcion: repetir
+      args: ["hola"]
+      esperado: "hola hola"
+    - nombre: Sin separador
+      funcion: repetir
+      args: ["ja", 3, ""]
+      esperado: "jajaja"
+    - nombre: Argumentos con nombre
+      funcion: repetir
+      args: ["sí"]
+      kwargs: {veces: 4, separador: "-"}
+      esperado: "sí-sí-sí-sí"
+    - nombre: Una sola vez
+      funcion: repetir
+      args: ["x", 1]
+      esperado: "x"
+  solucion: |
+    def repetir(texto, veces=2, separador=" "):
+        resultado = ""
+        for i in range(veces):
+            if i > 0:
+                resultado += separador
+            resultado += texto
+        return resultado
+
+
+    print(repetir("hola"))
+
+- id: u4-om-por-defecto
+  titulo: ¿Cuál definición es incorrecta?
+  tipo: opcion_multiple
+  enunciado: ¿Cuál de estas definiciones produce un **error de sintaxis**?
+  opciones:
+    - texto: "`def f(a, b=1):`"
+      correcta: false
+      explicacion: Correcta; el parámetro con valor por defecto va al final.
+    - texto: "`def f(a=1, b):`"
+      correcta: true
+      explicacion: Después de un parámetro con valor por defecto no puede ir uno sin él.
+    - texto: "`def f(a=1, b=2):`"
+      correcta: false
+      explicacion: Correcta; todos pueden tener valor por defecto.
+    - texto: "`def f():`"
+      correcta: false
+      explicacion: Correcta; una función puede no tener parámetros.

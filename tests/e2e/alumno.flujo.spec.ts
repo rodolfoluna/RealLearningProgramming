@@ -87,6 +87,35 @@ test("programa interactivo con input() en la consola", async ({ page }) => {
   await page.screenshot({ path: `${capturas}/alumno-08-input.png` });
 });
 
+test("prueba de función que revisa lo que la función muestra", async ({ page }) => {
+  await registrarse(page);
+  await page.getByRole("navigation", { name: "Temario" }).getByRole("button", { name: /Funciones/ }).click();
+  await page.locator('[data-actividad="u4-saludo-hora"]').click();
+  const editor = page.locator("[data-editor] .cm-content");
+  await editor.click();
+  await page.keyboard.press("Control+A");
+  await page.keyboard.press("Delete");
+  // El editor sangra solo la línea siguiente a los dos puntos.
+  await page.keyboard.type('def saludar(nombre, hora):\nprint("Hola,", nombre)', { delay: 5 });
+  await page.getByRole("button", { name: "✔ Probar" }).click();
+  await expect(page.getByText(/Pasaron 0 de 5 pruebas/)).toBeVisible({ timeout: 60_000 });
+  const primera = page.locator("details.prueba").first();
+  await expect(primera).toContainText("saludar('Ana', 9)");
+  await expect(primera).toContainText("Debe mostrar");
+  await expect(primera.locator("pre").last()).toHaveText("Hola, Ana");
+
+  await editor.click();
+  await page.keyboard.press("Control+A");
+  await page.keyboard.press("Delete");
+  await page.keyboard.type(
+    'def saludar(nombre, hora):\nprint("Buenos días," if hora < 12 else "Buenas tardes," if hora < 19 else "Buenas noches,", nombre)',
+    { delay: 5 },
+  );
+  await page.getByRole("button", { name: "✔ Probar" }).click();
+  await expect(page.getByText("¡Todas las pruebas pasaron!")).toBeVisible({ timeout: 60_000 });
+  await page.screenshot({ path: `${capturas}/alumno-09-prueba-de-funcion.png` });
+});
+
 test("diseño en pantalla de celular", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await registrarse(page);

@@ -1,0 +1,174 @@
+- id: u7-calificaciones
+  titulo: Control de calificaciones
+  tipo: codigo
+  dificultad: 3
+  puntos: 30
+  enunciado: |
+    Haz un programa para registrar las calificaciones de un grupo. Cada alumno es un registro
+    `[nombre, calificacion]` dentro de la lista `registros`.
+
+    **Funciones** (se prueban por separado):
+
+    - `promedio_grupo(registros)`: devuelve el promedio de las calificaciones (0 si no hay alumnos).
+    - `mejor_alumno(registros)`: devuelve el nombre con la calificación más alta (el primero si
+      hay empate; `""` si no hay alumnos).
+    - `contar_aprobados(registros)`: devuelve cuántos tienen 70 o más.
+
+    **Programa principal**: repite el menú hasta elegir `4`:
+
+    ```texto
+    1) Agregar alumno
+    2) Ver lista
+    3) Estadísticas
+    4) Salir
+    ```
+
+    1. Pide `Nombre: ` y `Calificación: `. Si la calificación no es un entero de 0 a 100 muestra
+       `Calificación inválida` (y no lo agregues); si es válida muestra `Alumno agregado`.
+    2. Muestra cada alumno numerado: `1. Ana - 85`.
+    3. Muestra `Promedio: 72.5` (un decimal), `Mejor: Ana (85)` y `Aprobados: 1 de 2`.
+    4. Muestra `Hasta luego`.
+
+    En las opciones 2 y 3, si no hay alumnos muestra `No hay alumnos`. Cualquier otra opción
+    muestra `Opción no válida`.
+  codigo_inicial: |
+    def promedio_grupo(registros):
+        """Devuelve el promedio de las calificaciones (0 si no hay alumnos)."""
+        pass
+
+
+    def mejor_alumno(registros):
+        """Devuelve el nombre con la calificación más alta ("" si no hay alumnos)."""
+        pass
+
+
+    def contar_aprobados(registros):
+        """Devuelve cuántos alumnos tienen 70 o más."""
+        pass
+
+
+    # Programa principal
+    registros = []
+    opcion = ""
+    while opcion != "4":
+        print("1) Agregar alumno")
+        print("2) Ver lista")
+        print("3) Estadísticas")
+        print("4) Salir")
+        opcion = input("Opción: ")
+        # Completa cada opción
+  pistas:
+    - "Para recorrer los registros: for nombre, calificacion in registros:"
+    - "Para validar la calificación usa try/except ValueError y revisa el rango 0 <= c <= 100."
+    - "En Estadísticas necesitas la calificación del mejor: búscala o haz que tu ciclo guarde ambas cosas."
+    - "Para numerar: for i in range(len(registros)): nombre, calif = registros[i]"
+  pruebas:
+    - nombre: promedio_grupo
+      funcion: promedio_grupo
+      args: [[["Ana", 85], ["Luis", 60], ["Sofía", 92]]]
+      esperado: 79.0
+    - nombre: promedio_grupo sin alumnos
+      funcion: promedio_grupo
+      args: [[]]
+      esperado: 0
+    - nombre: mejor_alumno
+      funcion: mejor_alumno
+      args: [[["Ana", 85], ["Luis", 60], ["Sofía", 92]]]
+      esperado: "Sofía"
+    - nombre: mejor_alumno con empate
+      funcion: mejor_alumno
+      args: [[["Leo", 90], ["Eva", 90]]]
+      esperado: "Leo"
+    - nombre: mejor_alumno sin alumnos
+      funcion: mejor_alumno
+      args: [[]]
+      esperado: ""
+    - nombre: contar_aprobados
+      funcion: contar_aprobados
+      args: [[["Ana", 85], ["Luis", 60], ["Sofía", 70]]]
+      esperado: 2
+    - nombre: Agregar, ver y estadísticas
+      entrada: "1\nAna\n85\n1\nLuis\n60\n2\n3\n4\n"
+      salida: ["Alumno agregado", "Alumno agregado", "1. Ana - 85", "2. Luis - 60", "Promedio: 72.5", "Mejor: Ana (85)", "Aprobados: 1 de 2", "Hasta luego"]
+    - nombre: Calificaciones inválidas
+      entrada: "1\nEva\n150\n1\nEva\nabc\n2\n4\n"
+      salida: ["Calificación inválida", "Calificación inválida", "No hay alumnos", "Hasta luego"]
+    - nombre: Sin alumnos y opción inválida
+      entrada: "3\n7\n4\n"
+      salida: ["No hay alumnos", "Opción no válida", "Hasta luego"]
+  solucion: |
+    def promedio_grupo(registros):
+        """Devuelve el promedio de las calificaciones (0 si no hay alumnos)."""
+        if len(registros) == 0:
+            return 0
+        total = 0
+        for nombre, calificacion in registros:
+            total += calificacion
+        return total / len(registros)
+
+
+    def mejor_alumno(registros):
+        """Devuelve el nombre con la calificación más alta ("" si no hay alumnos)."""
+        mejor = ""
+        mejor_calif = -1
+        for nombre, calificacion in registros:
+            if calificacion > mejor_calif:
+                mejor = nombre
+                mejor_calif = calificacion
+        return mejor
+
+
+    def contar_aprobados(registros):
+        """Devuelve cuántos alumnos tienen 70 o más."""
+        aprobados = 0
+        for nombre, calificacion in registros:
+            if calificacion >= 70:
+                aprobados += 1
+        return aprobados
+
+
+    def calificacion_de(registros, nombre):
+        for n, calificacion in registros:
+            if n == nombre:
+                return calificacion
+        return None
+
+
+    # Programa principal
+    registros = []
+    opcion = ""
+    while opcion != "4":
+        print("1) Agregar alumno")
+        print("2) Ver lista")
+        print("3) Estadísticas")
+        print("4) Salir")
+        opcion = input("Opción: ")
+        if opcion == "1":
+            nombre = input("Nombre: ")
+            try:
+                calificacion = int(input("Calificación: "))
+            except ValueError:
+                calificacion = -1
+            if 0 <= calificacion <= 100:
+                registros.append([nombre, calificacion])
+                print("Alumno agregado")
+            else:
+                print("Calificación inválida")
+        elif opcion == "2":
+            if len(registros) == 0:
+                print("No hay alumnos")
+            for i in range(len(registros)):
+                nombre, calificacion = registros[i]
+                print(f"{i + 1}. {nombre} - {calificacion}")
+        elif opcion == "3":
+            if len(registros) == 0:
+                print("No hay alumnos")
+            else:
+                mejor = mejor_alumno(registros)
+                print(f"Promedio: {promedio_grupo(registros):.1f}")
+                print(f"Mejor: {mejor} ({calificacion_de(registros, mejor)})")
+                print(f"Aprobados: {contar_aprobados(registros)} de {len(registros)}")
+        elif opcion == "4":
+            print("Hasta luego")
+        else:
+            print("Opción no válida")

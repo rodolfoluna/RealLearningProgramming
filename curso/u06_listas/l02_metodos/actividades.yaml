@@ -1,0 +1,120 @@
+- id: u6-lista-compras
+  titulo: Lista de compras
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Pide artículos hasta que el usuario escriba `fin`. Si un artículo ya estaba en la lista,
+    muestra `Ya está en la lista` y no lo agregues de nuevo. Al final muestra cuántos
+    artículos hay y la lista **ordenada alfabéticamente** y numerada:
+
+    ```texto
+    Artículo: pan
+    Artículo: leche
+    Artículo: pan
+    Ya está en la lista
+    Artículo: arroz
+    Artículo: fin
+    Tienes 3 artículos:
+    1. arroz
+    2. leche
+    3. pan
+    ```
+  codigo_inicial: |
+    compras = []
+  pistas:
+    - Usa un ciclo while con centinela (como en la unidad 3) y append para agregar.
+    - "Antes de agregar pregunta: if articulo in compras:"
+    - "compras.sort() y luego for i in range(len(compras)): print(f\"{i + 1}. {compras[i]}\")"
+  pruebas:
+    - nombre: Ejemplo
+      entrada: "pan\nleche\npan\narroz\nfin\n"
+      salida: ["Ya está en la lista", "Tienes 3 artículos:", "1. arroz", "2. leche", "3. pan"]
+    - nombre: Lista vacía
+      entrada: "fin\n"
+      salida: "Tienes 0 artículos:"
+    - nombre: Orden alfabético
+      entrada: "zanahoria\nmanzana\nfin\n"
+      salida: ["1. manzana", "2. zanahoria"]
+  solucion: |
+    compras = []
+    articulo = input("Artículo: ")
+    while articulo != "fin":
+        if articulo in compras:
+            print("Ya está en la lista")
+        else:
+            compras.append(articulo)
+        articulo = input("Artículo: ")
+    compras.sort()
+    print(f"Tienes {len(compras)} artículos:")
+    for i in range(len(compras)):
+        print(f"{i + 1}. {compras[i]}")
+
+- id: u6-sin-repetidos
+  titulo: Quitar repetidos
+  tipo: codigo
+  enunciado: |
+    Escribe la función `sin_repetidos(lista)` que devuelva una lista **nueva** con los
+    elementos de `lista` sin repetir, en el orden en que aparecen por primera vez.
+
+    ```python
+    sin_repetidos([3, 1, 3, 2, 1])          # [3, 1, 2]
+    sin_repetidos(["a", "b", "a"])          # ["a", "b"]
+    ```
+  codigo_inicial: |
+    def sin_repetidos(lista):
+        pass
+
+
+    print(sin_repetidos([3, 1, 3, 2, 1]))
+  pistas:
+    - Crea una lista vacía para el resultado.
+    - Recorre la lista original y agrega cada elemento solo si todavía no está en el resultado.
+  pruebas:
+    - nombre: Números
+      funcion: sin_repetidos
+      args: [[3, 1, 3, 2, 1]]
+      esperado: [3, 1, 2]
+    - nombre: Textos
+      funcion: sin_repetidos
+      args: [["a", "b", "a"]]
+      esperado: ["a", "b"]
+    - nombre: Sin repetidos
+      funcion: sin_repetidos
+      args: [[1, 2, 3]]
+      esperado: [1, 2, 3]
+    - nombre: Lista vacía
+      funcion: sin_repetidos
+      args: [[]]
+      esperado: []
+  solucion: |
+    def sin_repetidos(lista):
+        resultado = []
+        for elemento in lista:
+            if elemento not in resultado:
+                resultado.append(elemento)
+        return resultado
+
+
+    print(sin_repetidos([3, 1, 3, 2, 1]))
+
+- id: u6-predice-metodos
+  titulo: Métodos que cambian la lista
+  tipo: prediccion
+  enunciado: ¿Qué muestra este programa?
+  codigo: |
+    numeros = [5, 3, 8]
+    numeros.append(1)
+    numeros.insert(0, 9)
+    print(numeros)
+    numeros.remove(3)
+    ultimo = numeros.pop()
+    print(ultimo, numeros)
+    resultado = numeros.sort()
+    print(resultado, numeros)
+  salida_esperada: |
+    [9, 5, 3, 8, 1]
+    1 [9, 5, 8]
+    None [5, 8, 9]
+  explicacion: |
+    `append` agrega al final y `insert(0, …)` al principio. `remove(3)` quita el 3 y `pop()`
+    quita y devuelve el último (1). `sort()` ordena la lista pero **devuelve None**.

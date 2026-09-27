@@ -3,12 +3,16 @@
 # (explicación) y actividades.yaml (ejercicios). Compila con: pnpm curso
 id: python-desde-cero
 titulo: Programación en Python desde cero
-version: "1.0"
+version: "1.1"
 descripcion: >
   Curso práctico de fundamentos de programación en modo consola: salida y entrada de datos,
-  variables, operadores, condiciones, ciclos y programas completos.
+  variables, operadores, condiciones, ciclos, funciones, cadenas, listas y proyectos completos.
 unidades:
   - u00_introduccion
   - u01_fundamentos
   - u02_condiciones
   - u03_ciclos
+  - u04_funciones
+  - u05_cadenas
+  - u06_listas
+  - u07_proyectos

@@ -1,0 +1,108 @@
+- id: u7-piedra-papel-tijera
+  titulo: Piedra, papel o tijera
+  tipo: codigo
+  dificultad: 2
+  puntos: 20
+  enunciado: |
+    **Función**: `ganador(jugador, computadora)` recibe dos elecciones (`"piedra"`, `"papel"` o
+    `"tijera"`) y devuelve `"jugador"`, `"computadora"` o `"empate"`.
+
+    **Juego**: repite hasta que el usuario escriba `salir`:
+
+    1. Pide `piedra, papel o tijera (o salir): ` (sin importar mayúsculas).
+    2. Si no es una opción válida, muestra `Opción no válida`.
+    3. Si es válida, la computadora elige al azar; muestra `La computadora eligió papel` y el
+       resultado: `¡Ganaste!`, `Perdiste` o `Empate`.
+
+    Al salir muestra `Marcador final: tú 2, computadora 1, empates 0`.
+  codigo_inicial: |
+    import random
+
+    OPCIONES = ["piedra", "papel", "tijera"]
+
+
+    def ganador(jugador, computadora):
+        pass
+
+
+    # Programa principal
+  pistas:
+    - "En ganador: primero el empate (jugador == computadora); luego las tres formas de ganar con or."
+    - "(jugador == \"piedra\" and computadora == \"tijera\") or ..."
+    - "computadora = random.choice(OPCIONES)"
+  pruebas:
+    - nombre: Piedra gana a tijera
+      funcion: ganador
+      args: ["piedra", "tijera"]
+      esperado: "jugador"
+    - nombre: Tijera gana a papel
+      funcion: ganador
+      args: ["tijera", "papel"]
+      esperado: "jugador"
+    - nombre: Papel gana a piedra
+      funcion: ganador
+      args: ["papel", "piedra"]
+      esperado: "jugador"
+    - nombre: Pierde con papel contra tijera
+      funcion: ganador
+      args: ["papel", "tijera"]
+      esperado: "computadora"
+    - nombre: Pierde con piedra contra papel
+      funcion: ganador
+      args: ["piedra", "papel"]
+      esperado: "computadora"
+    - nombre: Empate
+      funcion: ganador
+      args: ["tijera", "tijera"]
+      esperado: "empate"
+    - nombre: Tres rondas
+      entrada: "piedra\nPAPEL\ntijera\nsalir\n"
+      salida: ["La computadora eligió", "La computadora eligió", "La computadora eligió", "Marcador final"]
+    - nombre: El marcador suma 3
+      entrada: "piedra\npiedra\npiedra\nsalir\n"
+      salida: 'Marcador final: tú (0, computadora 0, empates 3|0, computadora 1, empates 2|0, computadora 2, empates 1|0, computadora 3, empates 0|1, computadora 0, empates 2|1, computadora 1, empates 1|1, computadora 2, empates 0|2, computadora 0, empates 1|2, computadora 1, empates 0|3, computadora 0, empates 0)$'
+      modo: regex
+    - nombre: Opción inválida y salir
+      entrada: "lagarto\nsalir\n"
+      salida: ["Opción no válida", "Marcador final: tú 0, computadora 0, empates 0"]
+  solucion: |
+    import random
+
+    OPCIONES = ["piedra", "papel", "tijera"]
+
+
+    def ganador(jugador, computadora):
+        if jugador == computadora:
+            return "empate"
+        gana = (
+            (jugador == "piedra" and computadora == "tijera")
+            or (jugador == "tijera" and computadora == "papel")
+            or (jugador == "papel" and computadora == "piedra")
+        )
+        if gana:
+            return "jugador"
+        return "computadora"
+
+
+    # Programa principal
+    ganadas = perdidas = empates = 0
+    while True:
+        eleccion = input("piedra, papel o tijera (o salir): ").lower()
+        if eleccion == "salir":
+            break
+        if eleccion not in OPCIONES:
+            print("Opción no válida")
+            continue
+        computadora = random.choice(OPCIONES)
+        print(f"La computadora eligió {computadora}")
+        resultado = ganador(eleccion, computadora)
+        if resultado == "jugador":
+            print("¡Ganaste!")
+            ganadas += 1
+        elif resultado == "computadora":
+            print("Perdiste")
+            perdidas += 1
+        else:
+            print("Empate")
+            empates += 1
+    print(f"Marcador final: tú {ganadas}, computadora {perdidas}, empates {empates}")

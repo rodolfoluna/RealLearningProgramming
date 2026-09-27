@@ -1,0 +1,82 @@
+- id: u6-predice-indices
+  titulo: Posiciones de una lista
+  tipo: prediccion
+  enunciado: ¿Qué muestra este programa?
+  codigo: |
+    colores = ["rojo", "verde", "azul", "negro"]
+    print(colores[0])
+    print(colores[-1])
+    print(len(colores))
+    colores[1] = "amarillo"
+    print(colores)
+  salida_esperada: |
+    rojo
+    negro
+    4
+    ['rojo', 'amarillo', 'azul', 'negro']
+  explicacion: |
+    La posición 0 es el primer elemento y -1 el último. Al asignar `colores[1]` se reemplaza
+    `"verde"`. `print` de una lista muestra sus elementos entre corchetes y con comillas.
+
+- id: u6-dia-semana
+  titulo: Día de la semana
+  tipo: codigo
+  enunciado: |
+    Pide un número del 1 al 7 y muestra el nombre del día usando la lista `DIAS` (1 es lunes):
+
+    ```texto
+    Número de día (1-7): 3
+    Día: Miércoles
+    ```
+
+    Si el número no está entre 1 y 7, muestra `Día inválido`.
+  codigo_inicial: |
+    DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+    n = int(input("Número de día (1-7): "))
+  pistas:
+    - El día 1 está en la posición 0, así que usa DIAS[n - 1].
+    - Revisa el rango antes de usar la lista. ¡Cuidado! DIAS[-1] no da error, da "Domingo".
+  pruebas:
+    - nombre: Miércoles
+      entrada: "3"
+      salida: "Día: Miércoles"
+    - nombre: Domingo
+      entrada: "7"
+      salida: "Día: Domingo"
+    - nombre: Cero
+      entrada: "0"
+      salida: "Día inválido"
+    - nombre: Ocho
+      entrada: "8"
+      salida: "Día inválido"
+  solucion: |
+    DIAS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+    n = int(input("Número de día (1-7): "))
+    if 1 <= n <= 7:
+        print("Día:", DIAS[n - 1])
+    else:
+        print("Día inválido")
+
+- id: u6-om-fuera-de-rango
+  titulo: Fuera de la lista
+  tipo: opcion_multiple
+  enunciado: |
+    ¿Qué pasa al ejecutar este programa?
+
+    ```python
+    numeros = [10, 20, 30, 40, 50]
+    print(numeros[5])
+    ```
+  opciones:
+    - texto: Muestra `50`
+      correcta: false
+      explicacion: "`50` está en la posición 4 (o -1). Las posiciones van de 0 a 4."
+    - texto: Error `IndexError`
+      correcta: true
+      explicacion: La lista tiene 5 elementos, así que la posición 5 no existe.
+    - texto: Muestra `None`
+      correcta: false
+      explicacion: Python no inventa un valor; avisa con un error.
+    - texto: Muestra `10`, porque vuelve a empezar
+      correcta: false
+      explicacion: Las listas no "dan la vuelta" con índices positivos.

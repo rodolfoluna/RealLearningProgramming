@@ -1,0 +1,18 @@
+id: u4
+numero: 4
+titulo: Funciones
+descripcion: Dividir los programas en partes con nombre que reciben datos, devuelven resultados y se pueden reutilizar.
+objetivos:
+  - Definir funciones con def y llamarlas.
+  - Enviar datos a una función con parámetros y argumentos.
+  - Distinguir entre mostrar un resultado (print) y devolverlo (return).
+  - Usar valores por defecto y argumentos con nombre.
+  - Entender el alcance de las variables (locales y globales).
+  - Descomponer un programa en funciones pequeñas y probarlas por separado.
+lecciones:
+  - l01_def
+  - l02_parametros
+  - l03_return
+  - l04_por_defecto
+  - l05_alcance
+  - l06_descomponer

@@ -1,0 +1,167 @@
+- id: u7-inventario
+  titulo: Inventario de la papelería
+  tipo: codigo
+  dificultad: 3
+  puntos: 30
+  enunciado: |
+    Completa el programa de inventario. Cada producto es `[nombre, cantidad, precio]`.
+
+    **Funciones**:
+
+    - `buscar_producto(inventario, nombre)`: devuelve la posición del producto (sin importar
+      mayúsculas) o `-1` si no existe.
+    - `valor_inventario(inventario)`: devuelve la suma de cantidad × precio de todos los productos.
+    - `por_agotarse(inventario, minimo)`: devuelve la lista de **nombres** con cantidad menor que
+      `minimo`.
+
+    **Menú** (hasta elegir `5`):
+
+    ```texto
+    1) Ver inventario
+    2) Agregar producto
+    3) Vender
+    4) Reporte
+    5) Salir
+    ```
+
+    1. Muestra cada producto con `f"{nombre:<12}{cantidad:>6}{precio:>10.2f}"`.
+    2. Pide `Nombre: `. Si ya existe, muestra `Ese producto ya existe`. Si no, pide `Cantidad: `
+       y `Precio: `, agrégalo y muestra `Producto agregado`.
+    3. Pide `Producto: `; si no existe muestra `No existe ese producto`. Si existe, pide
+       `Cantidad: `; si no alcanza muestra `No hay suficiente`; si alcanza, descuéntala y muestra
+       `Total a pagar: $65.00`.
+    4. Muestra `Valor del inventario: $1057.00` y `Por agotarse (menos de 5): Borrador`
+       (los nombres separados por `, `, o `ninguno`).
+    5. Muestra `Hasta luego`.
+  codigo_inicial: |
+    def buscar_producto(inventario, nombre):
+        """Devuelve la posición del producto (sin importar mayúsculas) o -1."""
+        pass
+
+
+    def valor_inventario(inventario):
+        """Devuelve la suma de cantidad × precio."""
+        pass
+
+
+    def por_agotarse(inventario, minimo):
+        """Devuelve los nombres de los productos con cantidad menor que minimo."""
+        pass
+
+
+    # Programa principal
+    inventario = [
+        ["Cuaderno", 20, 35.0],
+        ["Lápiz", 50, 6.5],
+        ["Borrador", 4, 8.0],
+    ]
+    opcion = ""
+    while opcion != "5":
+        print("1) Ver inventario")
+        print("2) Agregar producto")
+        print("3) Vender")
+        print("4) Reporte")
+        print("5) Salir")
+        opcion = input("Opción: ")
+        # Completa cada opción
+  pistas:
+    - Empieza por buscar_producto; la usarás en las opciones 2 y 3.
+    - "Para vender: i = buscar_producto(inventario, nombre) y luego inventario[i][1] -= cantidad"
+    - "Para unir los nombres: \", \".join(lista_de_nombres)"
+  pruebas:
+    - nombre: buscar_producto sin importar mayúsculas
+      funcion: buscar_producto
+      args: [[["Cuaderno", 20, 35.0], ["Lápiz", 50, 6.5]], "LÁPIZ"]
+      esperado: 1
+    - nombre: buscar_producto inexistente
+      funcion: buscar_producto
+      args: [[["Cuaderno", 20, 35.0]], "Regla"]
+      esperado: -1
+    - nombre: valor_inventario
+      funcion: valor_inventario
+      args: [[["Cuaderno", 20, 35.0], ["Lápiz", 50, 6.5], ["Borrador", 4, 8.0]]]
+      esperado: 1057.0
+    - nombre: por_agotarse
+      funcion: por_agotarse
+      args: [[["Cuaderno", 2, 35.0], ["Lápiz", 50, 6.5], ["Borrador", 4, 8.0]], 5]
+      esperado: ["Cuaderno", "Borrador"]
+    - nombre: Reporte inicial
+      entrada: "4\n5\n"
+      salida: ["Valor del inventario: $1057.00", "Por agotarse (menos de 5): Borrador", "Hasta luego"]
+    - nombre: Vender
+      entrada: "3\nlápiz\n10\n4\n5\n"
+      salida: ["Total a pagar: $65.00", "Valor del inventario: $992.00"]
+    - nombre: Errores al vender
+      entrada: "3\nregla\n3\nCuaderno\n100\n5\n"
+      salida: ["No existe ese producto", "No hay suficiente", "Hasta luego"]
+    - nombre: Agregar y ver
+      entrada: "2\nRegla\n3\n12.5\n2\ncuaderno\n1\n4\n5\n"
+      salida: ["Producto agregado", "Ese producto ya existe", "Regla", "Por agotarse (menos de 5): Borrador, Regla"]
+  solucion: |
+    def buscar_producto(inventario, nombre):
+        """Devuelve la posición del producto (sin importar mayúsculas) o -1."""
+        for i in range(len(inventario)):
+            if inventario[i][0].lower() == nombre.lower():
+                return i
+        return -1
+
+
+    def valor_inventario(inventario):
+        """Devuelve la suma de cantidad × precio."""
+        total = 0
+        for nombre, cantidad, precio in inventario:
+            total += cantidad * precio
+        return total
+
+
+    def por_agotarse(inventario, minimo):
+        """Devuelve los nombres de los productos con cantidad menor que minimo."""
+        return [nombre for nombre, cantidad, precio in inventario if cantidad < minimo]
+
+
+    # Programa principal
+    inventario = [
+        ["Cuaderno", 20, 35.0],
+        ["Lápiz", 50, 6.5],
+        ["Borrador", 4, 8.0],
+    ]
+    opcion = ""
+    while opcion != "5":
+        print("1) Ver inventario")
+        print("2) Agregar producto")
+        print("3) Vender")
+        print("4) Reporte")
+        print("5) Salir")
+        opcion = input("Opción: ")
+        if opcion == "1":
+            for nombre, cantidad, precio in inventario:
+                print(f"{nombre:<12}{cantidad:>6}{precio:>10.2f}")
+        elif opcion == "2":
+            nombre = input("Nombre: ")
+            if buscar_producto(inventario, nombre) != -1:
+                print("Ese producto ya existe")
+            else:
+                cantidad = int(input("Cantidad: "))
+                precio = float(input("Precio: "))
+                inventario.append([nombre, cantidad, precio])
+                print("Producto agregado")
+        elif opcion == "3":
+            i = buscar_producto(inventario, input("Producto: "))
+            if i == -1:
+                print("No existe ese producto")
+            else:
+                cantidad = int(input("Cantidad: "))
+                if cantidad > inventario[i][1]:
+                    print("No hay suficiente")
+                else:
+                    inventario[i][1] -= cantidad
+                    print(f"Total a pagar: ${cantidad * inventario[i][2]:.2f}")
+        elif opcion == "4":
+            print(f"Valor del inventario: ${valor_inventario(inventario):.2f}")
+            nombres = por_agotarse(inventario, 5)
+            texto = ", ".join(nombres) if nombres else "ninguno"
+            print(f"Por agotarse (menos de 5): {texto}")
+        elif opcion == "5":
+            print("Hasta luego")
+        else:
+            print("Opción no válida")

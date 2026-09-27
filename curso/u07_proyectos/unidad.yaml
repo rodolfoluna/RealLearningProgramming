@@ -1,0 +1,19 @@
+id: u7
+numero: 7
+titulo: Proyectos integradores
+descripcion: Programas completos de consola que combinan todo lo aprendido; cada uno se prueba por partes (funciones) y como programa completo.
+objetivos:
+  - Planear un programa antes de escribirlo; decidir qué datos guarda y qué funciones necesita.
+  - Combinar condiciones, ciclos, funciones, cadenas y listas en un solo programa.
+  - Validar los datos del usuario para que el programa no termine con errores.
+  - Probar cada función por separado y después el programa completo.
+  - Crear el ejecutable de tus programas para compartirlos.
+lecciones:
+  - l01_calificaciones
+  - l02_inventario
+  - l03_ahorcado
+  - l04_gato
+  - l05_agenda
+  - l06_piedra_papel_tijera
+  - l07_conversor_bases
+  - l08_punto_de_venta

@@ -1,0 +1,210 @@
+- id: u5-numero-control
+  titulo: Número de control válido
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    En esta escuela, un número de control es válido si cumple **una** de estas formas:
+
+    - 8 dígitos, por ejemplo `21240123`, o
+    - una letra mayúscula seguida de 8 dígitos, por ejemplo `C21240123`.
+
+    Escribe la función `numero_control_valido(texto)` que devuelva `True` o `False`.
+  codigo_inicial: |
+    def numero_control_valido(texto):
+        pass
+
+
+    print(numero_control_valido("21240123"))
+  pistas:
+    - Si la longitud es 8, basta con revisar isdigit().
+    - "Si la longitud es 9, revisa que texto[0] sea letra mayúscula (isalpha() e isupper()) y que texto[1:] sean dígitos."
+    - Cualquier otra longitud no es válida.
+  pruebas:
+    - nombre: 8 dígitos
+      funcion: numero_control_valido
+      args: ["21240123"]
+      esperado: true
+    - nombre: Letra y 8 dígitos
+      funcion: numero_control_valido
+      args: ["C21240123"]
+      esperado: true
+    - nombre: Muy corto
+      funcion: numero_control_valido
+      args: ["2124012"]
+      esperado: false
+    - nombre: Letra minúscula
+      funcion: numero_control_valido
+      args: ["c21240123"]
+      esperado: false
+    - nombre: Letra en medio
+      funcion: numero_control_valido
+      args: ["2124O123"]
+      esperado: false
+    - nombre: Dos letras
+      funcion: numero_control_valido
+      args: ["CC2124012"]
+      esperado: false
+      oculta: true
+    - nombre: Vacío
+      funcion: numero_control_valido
+      args: [""]
+      esperado: false
+      oculta: true
+  solucion: |
+    def numero_control_valido(texto):
+        if len(texto) == 8:
+            return texto.isdigit()
+        if len(texto) == 9:
+            return texto[0].isalpha() and texto[0].isupper() and texto[1:].isdigit()
+        return False
+
+
+    print(numero_control_valido("21240123"))
+
+- id: u5-contrasena-segura
+  titulo: Contraseña segura
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Escribe la función `revisar_contrasena(clave)` que devuelva un mensaje con el **primer**
+    problema que encuentre, revisando en este orden:
+
+    1. Menos de 8 caracteres → `"Muy corta"`
+    2. Sin mayúsculas → `"Falta una mayúscula"`
+    3. Sin minúsculas → `"Falta una minúscula"`
+    4. Sin dígitos → `"Falta un número"`
+    5. Si todo está bien → `"Segura"`
+
+    Después, en el programa principal, pide una contraseña y repite hasta que sea segura,
+    mostrando el problema cada vez. Al final muestra `Contraseña aceptada`.
+  codigo_inicial: |
+    def revisar_contrasena(clave):
+        pass
+
+
+    # Programa principal
+  pistas:
+    - Usa tres banderas (mayuscula, minuscula, digito) y un solo for para revisar cada carácter.
+    - "c.isupper(), c.islower(), c.isdigit()"
+    - "En el programa: while resultado != \"Segura\": ..."
+  pruebas:
+    - nombre: Muy corta
+      funcion: revisar_contrasena
+      args: ["Ab1"]
+      esperado: "Muy corta"
+    - nombre: Sin mayúsculas
+      funcion: revisar_contrasena
+      args: ["python2024"]
+      esperado: "Falta una mayúscula"
+    - nombre: Sin minúsculas
+      funcion: revisar_contrasena
+      args: ["PYTHON2024"]
+      esperado: "Falta una minúscula"
+    - nombre: Sin dígitos
+      funcion: revisar_contrasena
+      args: ["Programar"]
+      esperado: "Falta un número"
+    - nombre: Segura
+      funcion: revisar_contrasena
+      args: ["Python2024"]
+      esperado: "Segura"
+    - nombre: Programa completo
+      entrada: "hola\nholamundo1\nHolaMundo1\n"
+      salida: ["Muy corta", "Falta una mayúscula", "Contraseña aceptada"]
+  solucion: |
+    def revisar_contrasena(clave):
+        if len(clave) < 8:
+            return "Muy corta"
+        mayuscula = minuscula = digito = False
+        for c in clave:
+            if c.isupper():
+                mayuscula = True
+            elif c.islower():
+                minuscula = True
+            elif c.isdigit():
+                digito = True
+        if not mayuscula:
+            return "Falta una mayúscula"
+        if not minuscula:
+            return "Falta una minúscula"
+        if not digito:
+            return "Falta un número"
+        return "Segura"
+
+
+    resultado = revisar_contrasena(input("Contraseña: "))
+    while resultado != "Segura":
+        print(resultado)
+        resultado = revisar_contrasena(input("Contraseña: "))
+    print("Contraseña aceptada")
+
+- id: u5-correo-valido
+  titulo: Correo electrónico
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Escribe la función `correo_valido(correo)` con estas reglas (simplificadas):
+
+    - Tiene exactamente **un** `@`.
+    - Antes del `@` hay al menos un carácter.
+    - Después del `@` hay un punto `.` que no está ni al principio ni al final de esa parte.
+    - No tiene espacios.
+
+    ```python
+    correo_valido("ana@escuela.edu.mx")   # True
+    correo_valido("ana@escuela")          # False
+    ```
+  codigo_inicial: |
+    def correo_valido(correo):
+        pass
+
+
+    print(correo_valido("ana@escuela.edu.mx"))
+  pistas:
+    - "Revisa primero correo.count(\"@\") == 1 y que \" \" not in correo."
+    - "usuario, dominio = correo.split(\"@\") separa las dos partes."
+    - "En el dominio: \".\" in dominio, y que no empiece ni termine con punto (startswith / endswith)."
+  pruebas:
+    - nombre: Correo correcto
+      funcion: correo_valido
+      args: ["ana@escuela.edu.mx"]
+      esperado: true
+    - nombre: Sin punto en el dominio
+      funcion: correo_valido
+      args: ["ana@escuela"]
+      esperado: false
+    - nombre: Dos arrobas
+      funcion: correo_valido
+      args: ["ana@@escuela.mx"]
+      esperado: false
+    - nombre: Sin usuario
+      funcion: correo_valido
+      args: ["@escuela.mx"]
+      esperado: false
+    - nombre: Con espacios
+      funcion: correo_valido
+      args: ["ana lopez@escuela.mx"]
+      esperado: false
+    - nombre: Punto al final
+      funcion: correo_valido
+      args: ["ana@escuela."]
+      esperado: false
+      oculta: true
+    - nombre: Punto justo después de la arroba
+      funcion: correo_valido
+      args: ["ana@.mx"]
+      esperado: false
+      oculta: true
+  solucion: |
+    def correo_valido(correo):
+        if correo.count("@") != 1 or " " in correo:
+            return False
+        usuario, dominio = correo.split("@")
+        if len(usuario) == 0:
+            return False
+        if "." not in dominio or dominio.startswith(".") or dominio.endswith("."):
+            return False
+        return True
+
+
+    print(correo_valido("ana@escuela.edu.mx"))

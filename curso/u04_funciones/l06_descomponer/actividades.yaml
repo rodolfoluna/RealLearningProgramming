@@ -1,0 +1,218 @@
+- id: u4-pedir-entero
+  titulo: Pedir un entero válido
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Escribe la función `pedir_entero(mensaje, minimo, maximo)` que pida un número con
+    `input(mensaje)` y lo repita hasta que el dato sea válido:
+
+    - Si no es un número entero, muestra `Escribe un número entero.`
+    - Si está fuera del rango, muestra `Debe estar entre <minimo> y <maximo>.`
+    - Cuando sea válido, **devuelve** el número (como `int`).
+
+    Ejemplo con `pedir_entero("Edad: ", 0, 120)`:
+
+    ```texto
+    Edad: abc
+    Escribe un número entero.
+    Edad: 150
+    Debe estar entre 0 y 120.
+    Edad: 17
+    ```
+
+    Devuelve `17`.
+  codigo_inicial: |
+    def pedir_entero(mensaje, minimo, maximo):
+        pass  # Reemplaza esta línea
+
+
+    edad = pedir_entero("Edad: ", 0, 120)
+    print("Tu edad es", edad)
+  pistas:
+    - Usa while True y dentro un try/except ValueError alrededor de int(input(mensaje)).
+    - Si el número está en el rango, haz return; si no, muestra el mensaje y el ciclo se repite.
+    - "print(f\"Debe estar entre {minimo} y {maximo}.\")"
+  pruebas:
+    - nombre: Dato válido a la primera
+      funcion: pedir_entero
+      args: ["Edad: ", 0, 120]
+      entrada: "17\n"
+      esperado: 17
+    - nombre: Repite con datos inválidos
+      funcion: pedir_entero
+      args: ["Edad: ", 0, 120]
+      entrada: "abc\n150\n17\n"
+      esperado: 17
+      salida: ["Escribe un número entero.", "Debe estar entre 0 y 120."]
+    - nombre: Límites del rango
+      funcion: pedir_entero
+      args: ["Opción: ", 1, 5]
+      entrada: "0\n6\n5\n"
+      esperado: 5
+      salida: ["Debe estar entre 1 y 5.", "Debe estar entre 1 y 5."]
+    - nombre: Decimales no son enteros
+      funcion: pedir_entero
+      args: ["N: ", 1, 10]
+      entrada: "2.5\n3\n"
+      esperado: 3
+      salida: ["Escribe un número entero."]
+      oculta: true
+  solucion: |
+    def pedir_entero(mensaje, minimo, maximo):
+        while True:
+            try:
+                numero = int(input(mensaje))
+            except ValueError:
+                print("Escribe un número entero.")
+                continue
+            if minimo <= numero <= maximo:
+                return numero
+            print(f"Debe estar entre {minimo} y {maximo}.")
+
+
+    edad = pedir_entero("Edad: ", 0, 120)
+    print("Tu edad es", edad)
+
+- id: u4-temperaturas
+  titulo: Convertidor de temperaturas
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Escribe dos funciones y un programa con menú:
+
+    - `c_a_f(c)` devuelve la temperatura en Fahrenheit: `c * 9 / 5 + 32`.
+    - `f_a_c(f)` devuelve la temperatura en Celsius: `(f - 32) * 5 / 9`.
+
+    El programa repite este menú hasta elegir `3`:
+
+    ```texto
+    1) Celsius a Fahrenheit
+    2) Fahrenheit a Celsius
+    3) Salir
+    ```
+
+    Pide la temperatura y muestra el resultado con un decimal: `Resultado: 212.0 °F` o
+    `Resultado: 10.0 °C`. Al salir muestra `Adiós`.
+  codigo_inicial: |
+    def c_a_f(c):
+        pass
+
+
+    def f_a_c(f):
+        pass
+
+
+    # Programa principal
+  pistas:
+    - Primero haz las dos funciones con return; luego el menú (como la calculadora de la unidad 3).
+    - "print(f\"Resultado: {c_a_f(temp):.1f} °F\")"
+  pruebas:
+    - nombre: c_a_f(100)
+      funcion: c_a_f
+      args: [100]
+      esperado: 212.0
+    - nombre: c_a_f(-40)
+      funcion: c_a_f
+      args: [-40]
+      esperado: -40.0
+    - nombre: f_a_c(212)
+      funcion: f_a_c
+      args: [212]
+      esperado: 100.0
+    - nombre: f_a_c(50)
+      funcion: f_a_c
+      args: [50]
+      esperado: 10.0
+    - nombre: Programa completo
+      entrada: "1\n100\n2\n50\n3\n"
+      salida: ["Resultado: 212.0 °F", "Resultado: 10.0 °C", "Adiós"]
+  solucion: |
+    def c_a_f(c):
+        return c * 9 / 5 + 32
+
+
+    def f_a_c(f):
+        return (f - 32) * 5 / 9
+
+
+    opcion = ""
+    while opcion != "3":
+        print("1) Celsius a Fahrenheit")
+        print("2) Fahrenheit a Celsius")
+        print("3) Salir")
+        opcion = input("Opción: ")
+        if opcion == "1":
+            temp = float(input("Temperatura en °C: "))
+            print(f"Resultado: {c_a_f(temp):.1f} °F")
+        elif opcion == "2":
+            temp = float(input("Temperatura en °F: "))
+            print(f"Resultado: {f_a_c(temp):.1f} °C")
+        elif opcion != "3":
+            print("Opción no válida")
+    print("Adiós")
+
+- id: u4-primos
+  titulo: Números primos
+  tipo: codigo
+  dificultad: 3
+  enunciado: |
+    1. Escribe la función `es_primo(n)` que devuelva `True` si `n` es primo. Recuerda: un primo
+       es mayor que 1 y solo se divide exactamente entre 1 y sí mismo.
+    2. En el programa principal pide `N` y muestra en una sola línea los primos del 2 al N,
+       **usando tu función**:
+
+    ```texto
+    N: 20
+    Primos: 2 3 5 7 11 13 17 19
+    ```
+  codigo_inicial: |
+    def es_primo(n):
+        pass
+
+
+    n = int(input("N: "))
+  pistas:
+    - "Si n < 2, devuelve False. Luego prueba los divisores desde 2 hasta n - 1: si alguno divide exacto, devuelve False."
+    - Si el ciclo termina sin encontrar divisores, devuelve True.
+    - "Para mostrar en una línea: print(\"Primos:\", end=\"\") y luego print(\" \" + str(i), end=\"\")"
+  pruebas:
+    - nombre: es_primo(2)
+      funcion: es_primo
+      args: [2]
+      esperado: true
+    - nombre: es_primo(9)
+      funcion: es_primo
+      args: [9]
+      esperado: false
+    - nombre: es_primo(97)
+      funcion: es_primo
+      args: [97]
+      esperado: true
+    - nombre: es_primo(1)
+      funcion: es_primo
+      args: [1]
+      esperado: false
+    - nombre: es_primo(91)
+      funcion: es_primo
+      args: [91]
+      esperado: false
+      oculta: true
+    - nombre: Primos hasta 20
+      entrada: "20"
+      salida: "Primos: 2 3 5 7 11 13 17 19"
+  solucion: |
+    def es_primo(n):
+        if n < 2:
+            return False
+        for divisor in range(2, n):
+            if n % divisor == 0:
+                return False
+        return True
+
+
+    n = int(input("N: "))
+    print("Primos:", end="")
+    for i in range(2, n + 1):
+        if es_primo(i):
+            print(" " + str(i), end="")
+    print()

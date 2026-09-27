@@ -2,8 +2,8 @@
 
 Apps **sin conexión** para aprender y enseñar programación en Python, en español:
 
-- **RLP Alumno**: curso con lecciones y 53 actividades (fundamentos, condiciones, ciclos y
-  programas con menú), editor con el pegado bloqueado, consola con `input()`, pruebas automáticas,
+- **RLP Alumno**: curso con 42 lecciones y 118 actividades (fundamentos, condiciones, ciclos,
+  funciones, cadenas, listas y 8 proyectos integradores), editor con el pegado bloqueado, consola con `input()`, pruebas automáticas,
   errores explicados en español, pistas, generación de `.exe` y entregas cifradas.
 - **RLP Profesor**: importa entregas, verifica que no se hayan modificado fuera de la app
   (reconstruye el código tecla a tecla), muestra avance y estadísticas (copias, intentos de pegar,

@@ -1,0 +1,176 @@
+- id: u7-ahorcado-funciones
+  titulo: "Ahorcado, parte 1: las funciones"
+  tipo: codigo
+  dificultad: 2
+  puntos: 15
+  enunciado: |
+    Escribe las dos funciones que necesita el juego. `letras` es la lista de letras que ya dijo
+    el jugador.
+
+    - `mostrar_palabra(palabra, letras)`: devuelve la palabra con las letras adivinadas y `_` en
+      las demás, **separadas por un espacio**.
+    - `palabra_completa(palabra, letras)`: devuelve `True` si todas las letras de la palabra ya
+      fueron adivinadas.
+
+    ```python
+    mostrar_palabra("python", ["p", "o"])       # "p _ _ _ o _"
+    palabra_completa("sol", ["s", "o", "l"])    # True
+    palabra_completa("sol", ["s", "l"])         # False
+    ```
+  codigo_inicial: |
+    def mostrar_palabra(palabra, letras):
+        pass
+
+
+    def palabra_completa(palabra, letras):
+        pass
+
+
+    print(mostrar_palabra("python", ["p", "o"]))
+  pistas:
+    - "En mostrar_palabra, arma una lista de partes (la letra o \"_\") y únelas con \" \".join(partes)."
+    - "En palabra_completa, recorre la palabra: si alguna letra no está en letras, devuelve False."
+  pruebas:
+    - nombre: Algunas letras
+      funcion: mostrar_palabra
+      args: ["python", ["p", "o"]]
+      esperado: "p _ _ _ o _"
+    - nombre: Ninguna letra
+      funcion: mostrar_palabra
+      args: ["sol", []]
+      esperado: "_ _ _"
+    - nombre: Letras repetidas
+      funcion: mostrar_palabra
+      args: ["programa", ["a", "r"]]
+      esperado: "_ r _ _ r a _ a"
+    - nombre: Completa
+      funcion: palabra_completa
+      args: ["sol", ["s", "o", "l"]]
+      esperado: true
+    - nombre: Incompleta
+      funcion: palabra_completa
+      args: ["sol", ["s", "l"]]
+      esperado: false
+    - nombre: Con letras de más
+      funcion: palabra_completa
+      args: ["oso", ["x", "s", "o"]]
+      esperado: true
+  solucion: |
+    def mostrar_palabra(palabra, letras):
+        partes = []
+        for letra in palabra:
+            if letra in letras:
+                partes.append(letra)
+            else:
+                partes.append("_")
+        return " ".join(partes)
+
+
+    def palabra_completa(palabra, letras):
+        for letra in palabra:
+            if letra not in letras:
+                return False
+        return True
+
+
+    print(mostrar_palabra("python", ["p", "o"]))
+
+- id: u7-ahorcado-juego
+  titulo: "Ahorcado, parte 2: el juego"
+  tipo: codigo
+  dificultad: 3
+  puntos: 30
+  enunciado: |
+    Ya tienes las funciones de la parte 1. Ahora escribe el juego con la palabra secreta
+    `"programa"` y **6 vidas**. En cada turno:
+
+    1. Muestra `mostrar_palabra(...)` y `Vidas: <n>`.
+    2. Pide `Letra: ` (conviértela a minúsculas).
+    3. Si no es **una sola letra**, muestra `Escribe una sola letra`.
+    4. Si ya la había dicho, muestra `Ya usaste esa letra`.
+    5. Si está en la palabra muestra `¡Bien!`; si no, muestra `No está` y pierde una vida.
+
+    El juego termina al adivinar la palabra (`¡Ganaste! La palabra era programa`) o al quedarse
+    sin vidas (`Perdiste. La palabra era programa`). Las entradas inválidas o repetidas no
+    quitan vidas.
+  codigo_inicial: |
+    def mostrar_palabra(palabra, letras):
+        partes = []
+        for letra in palabra:
+            if letra in letras:
+                partes.append(letra)
+            else:
+                partes.append("_")
+        return " ".join(partes)
+
+
+    def palabra_completa(palabra, letras):
+        for letra in palabra:
+            if letra not in letras:
+                return False
+        return True
+
+
+    # Programa principal
+    PALABRA = "programa"
+    letras = []
+    vidas = 6
+  pistas:
+    - "while vidas > 0 and not palabra_completa(PALABRA, letras):"
+    - "Una sola letra: len(letra) == 1 and letra.isalpha()"
+    - Después del ciclo, usa palabra_completa para saber si ganó o perdió.
+  pruebas:
+    - nombre: Gana sin errores
+      entrada: "p\nr\no\ng\na\nm\n"
+      salida: ["_ _ _ _ _ _ _ _", "Vidas: 6", "¡Bien!", "¡Ganaste! La palabra era programa"]
+    - nombre: Pierde
+      entrada: "x\nz\nw\nq\nk\nj\n"
+      salida: ["No está", "Vidas: 1", "Perdiste. La palabra era programa"]
+    - nombre: Entradas inválidas y repetidas
+      entrada: "P\np\nxy\ne\nr\no\ng\na\nm\n"
+      salida: ["¡Bien!", "Ya usaste esa letra", "Escribe una sola letra", "No está", "Vidas: 5", "p r o g r a m a", "¡Ganaste!"]
+    - nombre: Muestra el avance
+      entrada: "a\nx\nx\nr\np\no\ng\nm\n"
+      salida: ["_ _ _ _ _ a _ a", "Vidas: 5", "Ya usaste esa letra", "_ r _ _ r a _ a", "¡Ganaste!"]
+  solucion: |
+    def mostrar_palabra(palabra, letras):
+        partes = []
+        for letra in palabra:
+            if letra in letras:
+                partes.append(letra)
+            else:
+                partes.append("_")
+        return " ".join(partes)
+
+
+    def palabra_completa(palabra, letras):
+        for letra in palabra:
+            if letra not in letras:
+                return False
+        return True
+
+
+    # Programa principal
+    PALABRA = "programa"
+    letras = []
+    vidas = 6
+    while vidas > 0 and not palabra_completa(PALABRA, letras):
+        print(mostrar_palabra(PALABRA, letras))
+        print("Vidas:", vidas)
+        letra = input("Letra: ").lower()
+        if len(letra) != 1 or not letra.isalpha():
+            print("Escribe una sola letra")
+        elif letra in letras:
+            print("Ya usaste esa letra")
+        else:
+            letras.append(letra)
+            if letra in PALABRA:
+                print("¡Bien!")
+            else:
+                print("No está")
+                vidas -= 1
+    if palabra_completa(PALABRA, letras):
+        print(mostrar_palabra(PALABRA, letras))
+        print(f"¡Ganaste! La palabra era {PALABRA}")
+    else:
+        print(f"Perdiste. La palabra era {PALABRA}")
