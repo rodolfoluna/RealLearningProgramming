@@ -1,0 +1,120 @@
+- id: u1-saludo-personalizado
+  titulo: Saludo personalizado
+  tipo: codigo
+  enunciado: |
+    Pide el nombre del usuario y salúdalo. Por ejemplo, si escribe `Ana`, el programa muestra:
+
+    ```texto
+    ¿Cómo te llamas? Ana
+    Hola, Ana
+    ```
+  codigo_inicial: |
+    # Pide el nombre con input()
+  pistas:
+    - Guarda lo que devuelve input() en una variable.
+    - "Para unir texto y variable puedes usar: print(\"Hola,\", nombre)"
+  pruebas:
+    - nombre: Saluda a Ana
+      entrada: "Ana"
+      salida: ["Hola, Ana"]
+    - nombre: Saluda a Luis
+      entrada: "Luis"
+      salida: ["Hola, Luis"]
+  solucion: |
+    nombre = input("¿Cómo te llamas? ")
+    print("Hola,", nombre)
+
+- id: u1-suma-dos-numeros
+  titulo: Suma de dos números
+  tipo: codigo
+  enunciado: |
+    Pide dos números enteros y muestra su suma con el formato:
+
+    ```texto
+    Primer número: 3
+    Segundo número: 4
+    La suma es 7
+    ```
+  codigo_inicial: |
+    # Pide los dos números y conviértelos a entero
+  pistas:
+    - input() devuelve texto; conviértelo con int().
+    - "a = int(input(\"Primer número: \"))"
+  pruebas:
+    - nombre: 3 + 4
+      entrada: "3\n4\n"
+      salida: ["La suma es 7"]
+    - nombre: Con negativos
+      entrada: "-10\n25\n"
+      salida: ["La suma es 15"]
+    - nombre: Números grandes
+      entrada: "12345\n54321\n"
+      salida: ["La suma es 66666"]
+  solucion: |
+    a = int(input("Primer número: "))
+    b = int(input("Segundo número: "))
+    print("La suma es", a + b)
+
+- id: u1-corrige-edad
+  titulo: El próximo año
+  tipo: codigo
+  enunciado: |
+    Este programa debería decir qué edad tendrá el usuario el próximo año, pero falla.
+    Ejecútalo, lee el error y corrígelo. Con `15` debe mostrar:
+
+    ```texto
+    El próximo año tendrás 16 años
+    ```
+  codigo_inicial: |
+    edad = input("¿Cuántos años tienes? ")
+    print("El próximo año tendrás", edad + 1, "años")
+  pistas:
+    - El error dice que no se puede sumar texto (str) con un número (int).
+    - Convierte lo que devuelve input() con int().
+  pruebas:
+    - nombre: Con 15
+      entrada: "15"
+      salida: ["El próximo año tendrás 16 años"]
+    - nombre: Con 40
+      entrada: "40"
+      salida: ["tendrás 41 años"]
+  solucion: |
+    edad = int(input("¿Cuántos años tienes? "))
+    print("El próximo año tendrás", edad + 1, "años")
+
+- id: u1-promedio-tres
+  titulo: Promedio de tres calificaciones
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Pide tres calificaciones (pueden tener decimales) y muestra el promedio redondeado a
+    **2 decimales** con `round()`:
+
+    ```texto
+    Calificación 1: 8
+    Calificación 2: 9
+    Calificación 3: 9
+    Promedio: 8.67
+    ```
+  codigo_inicial: |
+    # Pide las tres calificaciones como float
+  pistas:
+    - Usa float() porque las calificaciones pueden tener decimales.
+    - El promedio es la suma entre 3. ¡Cuidado con los paréntesis!
+    - round(valor, 2) redondea a dos decimales.
+  pruebas:
+    - nombre: 8, 9, 9
+      entrada: "8\n9\n9\n"
+      salida: ["Promedio: 8.67"]
+    - nombre: Con decimales
+      entrada: "7.5\n8.5\n10\n"
+      salida: ["Promedio: 8.67"]
+    - nombre: Todos iguales
+      entrada: "6\n6\n6\n"
+      salida: ["Promedio: 6.0"]
+  solucion: |
+    c1 = float(input("Calificación 1: "))
+    c2 = float(input("Calificación 2: "))
+    c3 = float(input("Calificación 3: "))
+    promedio = (c1 + c2 + c3) / 3
+    print("Promedio:", round(promedio, 2))

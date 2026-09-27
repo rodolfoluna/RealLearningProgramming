@@ -1,0 +1,125 @@
+- id: u2-signo
+  titulo: Positivo, negativo o cero
+  tipo: codigo
+  enunciado: |
+    Pide un número (puede tener decimales) y muestra si es `positivo`, `negativo` o `cero`:
+
+    ```texto
+    Número: -4.5
+    El número es negativo
+    ```
+  codigo_inicial: |
+    n = float(input("Número: "))
+  pistas:
+    - Necesitas tres casos: if, elif y else.
+  pruebas:
+    - nombre: Negativo
+      entrada: "-4.5"
+      salida: ["El número es negativo"]
+    - nombre: Positivo
+      entrada: "3"
+      salida: ["El número es positivo"]
+    - nombre: Cero
+      entrada: "0"
+      salida: ["El número es cero"]
+  solucion: |
+    n = float(input("Número: "))
+    if n > 0:
+        print("El número es positivo")
+    elif n < 0:
+        print("El número es negativo")
+    else:
+        print("El número es cero")
+
+- id: u2-letra
+  titulo: Calificación con letra
+  tipo: codigo
+  enunciado: |
+    Convierte una calificación numérica (0 a 100) a letra:
+
+    | Calificación | Letra |
+    |--------------|-------|
+    | 90 o más     | A     |
+    | 80 a 89      | B     |
+    | 70 a 79      | C     |
+    | menos de 70  | NA    |
+
+    ```texto
+    Calificación: 83
+    Tu calificación es B
+    ```
+  codigo_inicial: |
+    calificacion = int(input("Calificación: "))
+  pistas:
+    - Empieza por la condición más alta (>= 90).
+    - Gracias al elif, en el segundo caso basta con preguntar >= 80.
+  pruebas:
+    - nombre: "83"
+      entrada: "83"
+      salida: ["Tu calificación es B"]
+    - nombre: "90 exacto"
+      entrada: "90"
+      salida: ["Tu calificación es A"]
+    - nombre: "70 exacto"
+      entrada: "70"
+      salida: ["Tu calificación es C"]
+    - nombre: "69"
+      entrada: "69"
+      salida: ["Tu calificación es NA"]
+  solucion: |
+    calificacion = int(input("Calificación: "))
+    if calificacion >= 90:
+        letra = "A"
+    elif calificacion >= 80:
+        letra = "B"
+    elif calificacion >= 70:
+        letra = "C"
+    else:
+        letra = "NA"
+    print("Tu calificación es", letra)
+
+- id: u2-cine
+  titulo: Boletos del cine
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    El cine cobra según la edad: menores de 12 años pagan **$50**, personas de 60 años o más
+    pagan **$45** y todos los demás **$80**. Pide la edad y la cantidad de boletos y muestra el
+    total:
+
+    ```texto
+    Edad: 65
+    Boletos: 2
+    Precio por boleto: $45
+    Total a pagar: $90
+    ```
+  codigo_inicial: |
+    edad = int(input("Edad: "))
+    boletos = int(input("Boletos: "))
+  pistas:
+    - Primero decide el precio con if/elif/else y guárdalo en una variable.
+    - Luego multiplica el precio por el número de boletos.
+  pruebas:
+    - nombre: Adulto mayor
+      entrada: "65\n2\n"
+      salida: ["Precio por boleto: $45", "Total a pagar: $90"]
+    - nombre: Niño
+      entrada: "8\n3\n"
+      salida: ["Precio por boleto: $50", "Total a pagar: $150"]
+    - nombre: Adulto
+      entrada: "30\n1\n"
+      salida: ["Precio por boleto: $80", "Total a pagar: $80"]
+    - nombre: "Justo 12 años"
+      entrada: "12\n1\n"
+      salida: ["Precio por boleto: $80"]
+  solucion: |
+    edad = int(input("Edad: "))
+    boletos = int(input("Boletos: "))
+    if edad < 12:
+        precio = 50
+    elif edad >= 60:
+        precio = 45
+    else:
+        precio = 80
+    print(f"Precio por boleto: ${precio}")
+    print(f"Total a pagar: ${precio * boletos}")

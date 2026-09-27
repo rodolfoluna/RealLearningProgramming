@@ -1,0 +1,81 @@
+- id: u3-primer-multiplo
+  titulo: Primer múltiplo de 7
+  tipo: codigo
+  enunciado: |
+    Pide un número `n` y encuentra el primer número **mayor o igual que n** que sea múltiplo
+    de 7. Usa un ciclo con `break`:
+
+    ```texto
+    Desde: 30
+    El primer múltiplo de 7 desde 30 es 35
+    ```
+  codigo_inicial: |
+    n = int(input("Desde: "))
+  pistas:
+    - "Un ciclo while True: con un if que haga break cuando i % 7 == 0."
+    - Empieza en n y aumenta de uno en uno.
+  pruebas:
+    - nombre: Desde 30
+      entrada: "30"
+      salida: ["El primer múltiplo de 7 desde 30 es 35"]
+    - nombre: Desde un múltiplo
+      entrada: "49"
+      salida: ["El primer múltiplo de 7 desde 49 es 49"]
+    - nombre: Desde 1
+      entrada: "1"
+      salida: ["El primer múltiplo de 7 desde 1 es 7"]
+  solucion: |
+    n = int(input("Desde: "))
+    i = n
+    while True:
+        if i % 7 == 0:
+            break
+        i += 1
+    print(f"El primer múltiplo de 7 desde {n} es {i}")
+
+- id: u3-es-primo
+  titulo: ¿Es primo?
+  tipo: codigo
+  dificultad: 3
+  enunciado: |
+    Un número primo es mayor que 1 y solo es divisible entre 1 y sí mismo. Pide un número y
+    di si es primo:
+
+    ```texto
+    Número: 13
+    13 es primo
+    ```
+  codigo_inicial: |
+    n = int(input("Número: "))
+  pistas:
+    - Los números menores que 2 no son primos.
+    - Busca un divisor entre 2 y n - 1; si encuentras uno, ya no es primo (break).
+    - Puedes usar una variable es_primo = True que cambias a False al encontrar un divisor.
+  pruebas:
+    - nombre: "13"
+      entrada: "13"
+      salida: ["13 es primo"]
+    - nombre: "12"
+      entrada: "12"
+      salida: ["12 no es primo"]
+    - nombre: "1"
+      entrada: "1"
+      salida: ["1 no es primo"]
+    - nombre: "2"
+      entrada: "2"
+      salida: ["2 es primo"]
+    - nombre: "97"
+      entrada: "97"
+      salida: ["97 es primo"]
+      oculta: true
+  solucion: |
+    n = int(input("Número: "))
+    es_primo = n >= 2
+    for d in range(2, n):
+        if n % d == 0:
+            es_primo = False
+            break
+    if es_primo:
+        print(n, "es primo")
+    else:
+        print(n, "no es primo")

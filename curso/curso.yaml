@@ -1,0 +1,14 @@
+# Curso incluido en la App Alumno.
+# Cada unidad es una carpeta con unidad.yaml; cada lección, una carpeta con leccion.md
+# (explicación) y actividades.yaml (ejercicios). Compila con: pnpm curso
+id: python-desde-cero
+titulo: Programación en Python desde cero
+version: "1.0"
+descripcion: >
+  Curso práctico de fundamentos de programación en modo consola: salida y entrada de datos,
+  variables, operadores, condiciones, ciclos y programas completos.
+unidades:
+  - u00_introduccion
+  - u01_fundamentos
+  - u02_condiciones
+  - u03_ciclos

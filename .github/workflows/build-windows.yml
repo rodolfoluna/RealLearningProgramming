@@ -1,0 +1,87 @@
+name: Build Windows
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    name: Apps portables para Windows
+    runs-on: windows-latest
+    timeout-minutes: 90
+    env:
+      # Llave de firma de la App Alumno (secreto). Sin ella se usa la llave de desarrollo.
+      RLP_CLAVE_APP: ${{ secrets.RLP_CLAVE_APP }}
+      RLP_CLAVE_APP_PUBLICA: ${{ vars.RLP_CLAVE_APP_PUBLICA }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm preparar
+
+      - name: Python portátil + PyInstaller (runtime\)
+        shell: pwsh
+        run: ./scripts/preparar-runtime.ps1
+
+      - name: Probar que el runtime genera un .exe
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path prueba-exe | Out-Null
+          Set-Content prueba-exe\hola.py 'n = input("Nombre: ")' , 'print("Hola,", n)' -Encoding utf8
+          runtime\python.exe -m PyInstaller --onefile --console --noconfirm --distpath prueba-exe\dist --workpath prueba-exe\build --specpath prueba-exe prueba-exe\hola.py
+          $salida = "Ana" | prueba-exe\dist\hola.exe
+          Write-Host $salida
+          if (-not ($salida -match "Hola, Ana")) { throw "El ejecutable generado no funcionó" }
+
+      # Cada app se compila por separado: así la App Profesor NO incluye la llave de firma.
+      - name: Compilar App Alumno
+        run: pnpm --filter @rlp/alumno tauri build --no-bundle
+      - name: Compilar App Profesor
+        run: pnpm --filter @rlp/profesor tauri build --no-bundle
+
+      - name: Empaquetar carpetas portables
+        shell: pwsh
+        run: ./scripts/empaquetar.ps1 -Version "${{ github.ref_type == 'tag' && github.ref_name || github.sha }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rlp-windows-portable
+          path: dist-portable/*.zip
+
+  autoprueba-windows:
+    name: Autoprueba en WebView2
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm preparar
+      - run: pnpm --filter @rlp/alumno build
+      - run: pnpm --filter @rlp/profesor build
+      - run: cargo build -p rlp-alumno -p rlp-profesor --features tauri/custom-protocol
+      - name: Python portátil + PyInstaller (runtime\)
+        shell: pwsh
+        run: ./scripts/preparar-runtime.ps1
+      - name: Flujo profesor → alumno → profesor (incluye crear un .exe)
+        shell: pwsh
+        env:
+          RLP_AUTOPRUEBA_EXE: "1"
+        run: |
+          $env:RLP_PYTHON = (Resolve-Path runtime\python.exe).Path
+          ./scripts/autoprueba.ps1

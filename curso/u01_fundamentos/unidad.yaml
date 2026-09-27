@@ -1,0 +1,15 @@
+id: u1
+numero: 1
+titulo: Fundamentos
+descripcion: Variables, tipos de datos, operadores, entrada de datos, cadenas de texto y funciones matemáticas.
+objetivos:
+  - Guardar datos en variables y reconocer sus tipos (int, float, str, bool).
+  - Hacer cálculos con operadores aritméticos.
+  - Pedir datos al usuario con input() y convertirlos al tipo correcto.
+  - Dar formato a la salida con f-strings.
+lecciones:
+  - l01_variables
+  - l02_operadores
+  - l03_entrada
+  - l04_cadenas
+  - l05_math

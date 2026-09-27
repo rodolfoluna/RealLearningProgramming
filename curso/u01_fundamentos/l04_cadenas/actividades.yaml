@@ -1,0 +1,100 @@
+- id: u1-iniciales
+  titulo: Iniciales
+  tipo: codigo
+  enunciado: |
+    Pide el nombre y el apellido del usuario y muestra sus iniciales en mayúsculas, cada una
+    seguida de un punto:
+
+    ```texto
+    Nombre: ana
+    Apellido: lópez
+    Tus iniciales son A.L.
+    ```
+  codigo_inicial: |
+    nombre = input("Nombre: ")
+    apellido = input("Apellido: ")
+  pistas:
+    - La primera letra de una cadena es cadena[0].
+    - .upper() convierte a mayúsculas.
+    - "Con f-string: f\"Tus iniciales son {nombre[0].upper()}.{...}.\""
+  pruebas:
+    - nombre: ana lópez
+      entrada: "ana\nlópez\n"
+      salida: ["Tus iniciales son A.L."]
+    - nombre: Luis Pérez
+      entrada: "Luis\nPérez\n"
+      salida: ["Tus iniciales son L.P."]
+  solucion: |
+    nombre = input("Nombre: ")
+    apellido = input("Apellido: ")
+    print(f"Tus iniciales son {nombre[0].upper()}.{apellido[0].upper()}.")
+
+- id: u1-predice-cadenas
+  titulo: Explorando una cadena
+  tipo: prediccion
+  enunciado: ¿Qué muestra este programa?
+  codigo: |
+    s = "Python"
+    print(len(s), s[0], s[-1])
+    print(s.upper())
+    print(s[1:4])
+    print(s * 2)
+  salida_esperada: |
+    6 P n
+    PYTHON
+    yth
+    PythonPython
+  explicacion: |
+    `len` cuenta 6 caracteres; `s[0]` es la primera letra y `s[-1]` la última.
+    `s[1:4]` toma las posiciones 1, 2 y 3 (el 4 no se incluye): "yth".
+
+- id: u1-ticket
+  titulo: Ticket de compra
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Pide el nombre de un producto, su precio (con decimales) y la cantidad (entero). Muestra el
+    total con **dos decimales** usando una f-string:
+
+    ```texto
+    Producto: Cuaderno
+    Precio: 34.5
+    Cantidad: 3
+    Total: 3 x Cuaderno = $103.50
+    ```
+  codigo_inicial: |
+    # Pide producto, precio y cantidad
+  pistas:
+    - El precio se convierte con float() y la cantidad con int().
+    - "Dentro de una f-string: {total:.2f} muestra dos decimales."
+  pruebas:
+    - nombre: Cuadernos
+      entrada: "Cuaderno\n34.5\n3\n"
+      salida: ["Total: 3 x Cuaderno = $103.50"]
+    - nombre: Plumas
+      entrada: "Pluma\n12.25\n4\n"
+      salida: ["Total: 4 x Pluma = $49.00"]
+  solucion: |
+    producto = input("Producto: ")
+    precio = float(input("Precio: "))
+    cantidad = int(input("Cantidad: "))
+    total = precio * cantidad
+    print(f"Total: {cantidad} x {producto} = ${total:.2f}")
+
+- id: u1-formato-dos-decimales
+  titulo: Formato con f-strings
+  tipo: opcion_multiple
+  enunciado: "Si `x = 2.0 / 3`, ¿qué muestra `print(f\"{x:.2f}\")`?"
+  opciones:
+    - texto: "`0.6666666666666666`"
+      correcta: false
+      explicacion: Eso mostraría print(x) sin formato.
+    - texto: "`0.67`"
+      correcta: true
+      explicacion: "`.2f` redondea a dos decimales."
+    - texto: "`0.66`"
+      correcta: false
+      explicacion: El formato redondea, no corta.
+    - texto: "`{x:.2f}`"
+      correcta: false
+      explicacion: Sin la `f` antes de las comillas sí se vería así, pero aquí hay f-string.

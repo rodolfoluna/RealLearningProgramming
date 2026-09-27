@@ -1,0 +1,14 @@
+{
+  "name": "@rlp/curso",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/tipos.ts",
+    "./alumno.json": "./generado/curso-alumno.json",
+    "./profesor.json": "./generado/curso-profesor.json"
+  },
+  "dependencies": {
+    "@rlp/python-worker": "workspace:*"
+  }
+}

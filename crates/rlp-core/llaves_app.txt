@@ -1,0 +1,4 @@
+# Llaves públicas (Ed25519, base64) de las versiones publicadas de la App Alumno.
+# La App Profesor acepta como íntegras las entregas firmadas con cualquiera de ellas.
+# Formato: <llave-publica-base64> <descripción>
+# Genera un par nuevo con: cargo run -p rlp-core --example generar_llave_app

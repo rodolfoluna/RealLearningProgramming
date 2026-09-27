@@ -1,0 +1,26 @@
+{
+  "name": "@rlp/ui-comun",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "svelte": "./src/index.ts",
+  "exports": {
+    ".": {
+      "svelte": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./tema.css": "./src/tema.css"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  },
+  "dependencies": {
+    "@lezer/highlight": "^1.2.0",
+    "@lezer/python": "^1.1.0",
+    "markdown-it": "^14.1.0"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.0",
+    "svelte": "^5.39.0"
+  }
+}

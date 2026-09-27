@@ -1,0 +1,74 @@
+- id: u1-area-rectangulo
+  titulo: Área de un rectángulo
+  tipo: codigo
+  enunciado: |
+    El programa ya tiene la base y la altura de un rectángulo. Calcula el área
+    (base × altura), guárdala en la variable `area` y muestra:
+
+    ```texto
+    El área es 40
+    ```
+  codigo_inicial: |
+    base = 8
+    altura = 5
+    # Calcula el área y muéstrala
+  pistas:
+    - La multiplicación se escribe con *.
+    - "area = base * altura"
+  pruebas:
+    - nombre: Muestra el área
+      salida: El área es 40
+      modo: normalizada
+  solucion: |
+    base = 8
+    altura = 5
+    area = base * altura
+    print("El área es", area)
+
+- id: u1-predice-operadores
+  titulo: División, cociente y residuo
+  tipo: prediccion
+  enunciado: ¿Qué muestra este programa?
+  codigo: |
+    print(7 / 2)
+    print(7 // 2, 7 % 2)
+    print(2 ** 3 + 1)
+    print((2 + 3) * 2)
+  salida_esperada: |
+    3.5
+    3 1
+    9
+    10
+  explicacion: |
+    `/` da decimales (3.5); `//` da el cociente entero (3) y `%` el residuo (1).
+    La potencia se calcula antes que la suma: 2³ + 1 = 9. Los paréntesis se resuelven primero: 5 × 2 = 10.
+
+- id: u1-segundos-a-minutos
+  titulo: Segundos a minutos
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    La variable `segundos` guarda una duración. Usa `//` y `%` para mostrar cuántos minutos
+    completos y cuántos segundos sobran. Con 150 segundos debe mostrar:
+
+    ```texto
+    150 segundos son 2 minutos y 30 segundos
+    ```
+
+    Usa las variables en tus cálculos (no escribas 2 y 30 directamente): si cambias el valor de
+    `segundos`, tu programa debe seguir funcionando.
+  codigo_inicial: |
+    segundos = 150
+    # Calcula los minutos y los segundos que sobran
+  pistas:
+    - Un minuto tiene 60 segundos.
+    - "minutos = segundos // 60 y resto = segundos % 60"
+  pruebas:
+    - nombre: Con 150 segundos
+      salida: 150 segundos son 2 minutos y 30 segundos
+      modo: normalizada
+  solucion: |
+    segundos = 150
+    minutos = segundos // 60
+    resto = segundos % 60
+    print(segundos, "segundos son", minutos, "minutos y", resto, "segundos")

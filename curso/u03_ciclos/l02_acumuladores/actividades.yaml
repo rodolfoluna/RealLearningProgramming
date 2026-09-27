@@ -1,0 +1,108 @@
+- id: u3-suma-1-a-n
+  titulo: Suma de 1 a N
+  tipo: codigo
+  enunciado: |
+    Pide un número `n` y muestra la suma 1 + 2 + … + n usando un ciclo (no la fórmula):
+
+    ```texto
+    N: 10
+    La suma es 55
+    ```
+  codigo_inicial: |
+    n = int(input("N: "))
+  pistas:
+    - Necesitas un acumulador (suma = 0) y un contador (i = 1).
+    - Dentro del ciclo, suma += i y luego i += 1.
+  pruebas:
+    - nombre: N = 10
+      entrada: "10"
+      salida: ["La suma es 55"]
+    - nombre: N = 100
+      entrada: "100"
+      salida: ["La suma es 5050"]
+    - nombre: N = 1
+      entrada: "1"
+      salida: ["La suma es 1"]
+  solucion: |
+    n = int(input("N: "))
+    suma = 0
+    i = 1
+    while i <= n:
+        suma += i
+        i += 1
+    print("La suma es", suma)
+
+- id: u3-promedio-n
+  titulo: Promedio de N calificaciones
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Pide cuántas calificaciones se van a capturar, luego pide cada una y muestra el promedio
+    con dos decimales:
+
+    ```texto
+    ¿Cuántas calificaciones? 3
+    Calificación 1: 80
+    Calificación 2: 95
+    Calificación 3: 70
+    Promedio: 81.67
+    ```
+  codigo_inicial: |
+    cantidad = int(input("¿Cuántas calificaciones? "))
+  pistas:
+    - Usa un contador para numerar cada calificación en el mensaje del input.
+    - "El mensaje puede ser f\"Calificación {i}: \""
+    - Acumula las calificaciones y divide entre la cantidad al final.
+  pruebas:
+    - nombre: Tres calificaciones
+      entrada: "3\n80\n95\n70\n"
+      salida: ["Promedio: 81.67"]
+    - nombre: Cinco calificaciones
+      entrada: "5\n100\n90\n80\n70\n60\n"
+      salida: ["Promedio: 80.00"]
+    - nombre: Una calificación
+      entrada: "1\n88.5\n"
+      salida: ["Promedio: 88.50"]
+  solucion: |
+    cantidad = int(input("¿Cuántas calificaciones? "))
+    total = 0
+    i = 1
+    while i <= cantidad:
+        total += float(input(f"Calificación {i}: "))
+        i += 1
+    print(f"Promedio: {total / cantidad:.2f}")
+
+- id: u3-contar-pares
+  titulo: Contar pares
+  tipo: codigo
+  enunciado: |
+    Pide un número `n` y cuenta cuántos números pares hay entre 1 y `n` (incluido), usando un ciclo:
+
+    ```texto
+    N: 9
+    Entre 1 y 9 hay 4 números pares
+    ```
+  codigo_inicial: |
+    n = int(input("N: "))
+  pistas:
+    - Recorre de 1 a n con un contador.
+    - Usa otro contador para los pares; súmale 1 solo cuando i % 2 == 0.
+  pruebas:
+    - nombre: N = 9
+      entrada: "9"
+      salida: ["Entre 1 y 9 hay 4 números pares"]
+    - nombre: N = 10
+      entrada: "10"
+      salida: ["Entre 1 y 10 hay 5 números pares"]
+    - nombre: N = 1
+      entrada: "1"
+      salida: ["Entre 1 y 1 hay 0 números pares"]
+  solucion: |
+    n = int(input("N: "))
+    pares = 0
+    i = 1
+    while i <= n:
+        if i % 2 == 0:
+            pares += 1
+        i += 1
+    print(f"Entre 1 y {n} hay {pares} números pares")

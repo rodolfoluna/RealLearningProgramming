@@ -1,0 +1,91 @@
+- id: u3-suma-hasta-cero
+  titulo: Suma hasta cero
+  tipo: codigo
+  enunciado: |
+    Pide números enteros hasta que el usuario escriba `0`. Al final muestra cuántos números
+    capturó (sin contar el 0) y su suma:
+
+    ```texto
+    Número: 5
+    Número: 3
+    Número: 10
+    Número: 0
+    Capturaste 3 números que suman 18
+    ```
+  codigo_inicial: |
+    # Usa 0 como centinela
+  pistas:
+    - Pide el primer número antes del while.
+    - "while numero != 0: acumula, cuenta y pide el siguiente número."
+  pruebas:
+    - nombre: Tres números
+      entrada: "5\n3\n10\n0\n"
+      salida: ["Capturaste 3 números que suman 18"]
+    - nombre: Con negativos
+      entrada: "-4\n4\n7\n0\n"
+      salida: ["Capturaste 3 números que suman 7"]
+    - nombre: Ninguno
+      entrada: "0\n"
+      salida: ["Capturaste 0 números que suman 0"]
+  solucion: |
+    suma = 0
+    cantidad = 0
+    numero = int(input("Número: "))
+    while numero != 0:
+        suma += numero
+        cantidad += 1
+        numero = int(input("Número: "))
+    print(f"Capturaste {cantidad} números que suman {suma}")
+
+- id: u3-adivina
+  titulo: Adivina el número
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Haz el juego "Adivina el número". El número secreto es **37** (ya está en el código).
+    Pide intentos hasta que el usuario acierte; en cada intento di `Es más grande` o
+    `Es más chico`. Al acertar, muestra en cuántos intentos lo logró:
+
+    ```texto
+    Adivina el número (1 a 100): 50
+    Es más chico
+    Adivina el número (1 a 100): 30
+    Es más grande
+    Adivina el número (1 a 100): 37
+    ¡Correcto! Lo adivinaste en 3 intentos
+    ```
+
+    Cuando termines, cambia `secreto = 37` por `secreto = random.randint(1, 100)` para jugar de
+    verdad (las pruebas usan 37).
+  codigo_inicial: |
+    import random
+
+    secreto = 37
+  pistas:
+    - Usa un contador de intentos.
+    - "Repite mientras intento != secreto."
+    - Compara el intento con el secreto para saber qué pista dar.
+  pruebas:
+    - nombre: Tres intentos
+      entrada: "50\n30\n37\n"
+      salida: ["Es más chico", "Es más grande", "¡Correcto! Lo adivinaste en 3 intentos"]
+    - nombre: A la primera
+      entrada: "37\n"
+      salida: ["¡Correcto! Lo adivinaste en 1 intentos"]
+    - nombre: Muchos intentos
+      entrada: "1\n100\n36\n38\n37\n"
+      salida: ["Es más grande", "Es más chico", "Es más grande", "Es más chico", "en 5 intentos"]
+  solucion: |
+    import random
+
+    secreto = 37
+    intentos = 0
+    intento = 0
+    while intento != secreto:
+        intento = int(input("Adivina el número (1 a 100): "))
+        intentos += 1
+        if intento < secreto:
+            print("Es más grande")
+        elif intento > secreto:
+            print("Es más chico")
+    print(f"¡Correcto! Lo adivinaste en {intentos} intentos")

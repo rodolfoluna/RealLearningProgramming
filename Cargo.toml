@@ -1,0 +1,23 @@
+[workspace]
+resolver = "2"
+members = ["crates/rlp-core", "crates/rlp-puente", "apps/alumno/src-tauri", "apps/profesor/src-tauri"]
+# Las apps Tauri requieren WebView del sistema para compilar; `cargo test` sin
+# argumentos solo compila y prueba el núcleo.
+default-members = ["crates/rlp-core"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Rodolfo Luna"]
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
+
+# La criptografía sin optimizar es muy lenta: se optimizan las dependencias también en desarrollo.
+[profile.dev.package."*"]
+opt-level = 2

@@ -1,0 +1,18 @@
+id: u3
+numero: 3
+titulo: Ciclos
+descripcion: Repetir instrucciones con while y for; contadores, acumuladores, centinelas, figuras y programas con menú.
+objetivos:
+  - Repetir instrucciones con while mientras se cumpla una condición.
+  - Usar contadores y acumuladores.
+  - Recorrer rangos de números con for y range().
+  - Controlar ciclos con break y continue, y anidarlos.
+  - Construir programas completos con menús.
+lecciones:
+  - l01_while
+  - l02_acumuladores
+  - l03_centinela
+  - l04_for_range
+  - l05_break_continue
+  - l06_anidados
+  - l07_menus

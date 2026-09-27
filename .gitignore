@@ -1,0 +1,49 @@
+# Dependencias y compilados
+node_modules/
+target/
+dist/
+build/
+.svelte-kit/
+*.tsbuildinfo
+
+# Curso compilado (se genera con `pnpm curso`)
+packages/curso/generado/
+
+# Assets de Pyodide copiados desde node_modules
+apps/*/public/pyodide/
+tests/banco/public/pyodide/
+
+# Runtime de Python para generar ejecutables (se prepara en CI Windows)
+runtime/
+apps/alumno/src-tauri/runtime/
+
+# Datos locales de pruebas manuales
+datos/
+datos_profesor/
+mis_ejecutables/
+
+# Empaquetado
+dist-portable/
+prueba-exe/
+
+# Playwright
+test-results/
+playwright-report/
+tests/e2e/capturas/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.venv-*/
+.pytest_cache/
+
+# Editor/SO
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Esquemas generados por tauri-build
+apps/*/src-tauri/gen/

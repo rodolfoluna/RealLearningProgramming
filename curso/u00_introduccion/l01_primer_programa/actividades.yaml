@@ -1,0 +1,118 @@
+- id: u0-hola-mundo
+  titulo: Hola, mundo
+  tipo: codigo
+  dificultad: 1
+  enunciado: |
+    Escribe un programa que muestre exactamente este mensaje:
+
+    ```texto
+    Hola, mundo
+    ```
+  codigo_inicial: |
+    # Escribe tu programa debajo de esta línea
+  pistas:
+    - Usa la instrucción print().
+    - El texto va entre comillas dentro de los paréntesis.
+    - "Así se ve la línea completa: print(\"Hola, mundo\")"
+  pruebas:
+    - nombre: Muestra el saludo
+      salida: Hola, mundo
+      modo: normalizada
+  solucion: |
+    print("Hola, mundo")
+
+- id: u0-bienvenida
+  titulo: Mensaje de bienvenida
+  tipo: codigo
+  dificultad: 1
+  enunciado: |
+    Escribe un programa que muestre estas tres líneas, exactamente así:
+
+    ```texto
+    Bienvenido al curso
+    Python es divertido
+    ¡Vamos a programar!
+    ```
+  codigo_inicial: |
+    # Muestra las tres líneas
+  pistas:
+    - Necesitas un print() por cada línea.
+    - Revisa mayúsculas, acentos y signos de admiración.
+  pruebas:
+    - nombre: Tres líneas exactas
+      salida: |
+        Bienvenido al curso
+        Python es divertido
+        ¡Vamos a programar!
+      modo: normalizada
+  solucion: |
+    print("Bienvenido al curso")
+    print("Python es divertido")
+    print("¡Vamos a programar!")
+
+- id: u0-que-hace-print
+  titulo: ¿Qué hace print()?
+  tipo: opcion_multiple
+  enunciado: ¿Qué hace la instrucción `print("Hola")`?
+  opciones:
+    - texto: Guarda la palabra Hola en un archivo.
+      correcta: false
+      explicacion: print() no guarda nada; solo muestra.
+    - texto: Muestra la palabra Hola en la consola.
+      correcta: true
+      explicacion: ¡Exacto! print() muestra en la consola lo que está entre paréntesis.
+    - texto: Imprime la palabra Hola en la impresora.
+      correcta: false
+      explicacion: Aunque se llama "print", muestra el texto en la pantalla, no en papel.
+    - texto: Pide al usuario que escriba Hola.
+      correcta: false
+      explicacion: Para pedir datos se usa input(), que veremos después.
+
+- id: u0-corrige-errores
+  titulo: Corrige los errores
+  tipo: codigo
+  dificultad: 1
+  enunciado: |
+    Este programa tiene **dos errores**. Ejecútalo, lee el mensaje de error y corrígelo
+    hasta que muestre:
+
+    ```texto
+    Me gusta programar
+    Python distingue mayúsculas
+    ```
+  codigo_inicial: |
+    print("Me gusta programar)
+    Print("Python distingue mayúsculas")
+  pistas:
+    - Ejecuta el programa y fíjate en qué línea dice el error.
+    - En la línea 1 falta cerrar las comillas.
+    - En la línea 2, la instrucción se escribe en minúsculas.
+  pruebas:
+    - nombre: Muestra las dos líneas
+      salida: |
+        Me gusta programar
+        Python distingue mayúsculas
+      modo: normalizada
+  solucion: |
+    print("Me gusta programar")
+    print("Python distingue mayúsculas")
+
+- id: u0-predice-comentarios
+  titulo: Predice la salida
+  tipo: prediccion
+  enunciado: Sin ejecutarlo, escribe exactamente lo que mostrará este programa.
+  codigo: |
+    # print("Uno")
+    print("Dos")
+    print("Tres", "Cuatro")  # print("Cinco")
+    print()
+    print("Seis")
+  salida_esperada: |
+    Dos
+    Tres Cuatro
+
+    Seis
+  explicacion: |
+    La primera línea es un comentario, así que no se ejecuta. `print("Tres", "Cuatro")` separa
+    los valores con un espacio y lo que va después de `#` se ignora. `print()` sin nada deja una
+    línea en blanco.

@@ -1,0 +1,542 @@
+/* Tema visual compartido por la App Alumno y la App Profesor. Claro y oscuro. */
+
+:root {
+  --fuente: "Segoe UI", system-ui, -apple-system, "Noto Sans", Roboto, Ubuntu, sans-serif;
+  --fuente-codigo: "Cascadia Mono", "Cascadia Code", Consolas, "DejaVu Sans Mono", "Roboto Mono", monospace;
+  --radio: 10px;
+  --radio-chico: 6px;
+  --sombra: 0 1px 2px rgb(15 23 42 / 0.06), 0 4px 16px rgb(15 23 42 / 0.06);
+
+  --fondo: #f4f6f9;
+  --superficie: #ffffff;
+  --superficie-2: #eef1f5;
+  --borde: #d9dee6;
+  --texto: #1b2230;
+  --texto-suave: #5a6576;
+  --primario: #2458c6;
+  --primario-texto: #ffffff;
+  --primario-suave: #e3ebfb;
+  --acento: #f2c230;
+  --exito: #177a3c;
+  --exito-suave: #dff3e6;
+  --aviso: #a55a00;
+  --aviso-suave: #fcefd9;
+  --peligro: #b42323;
+  --peligro-suave: #fbe3e3;
+  --foco: #2458c6;
+
+  --editor-fondo: #ffffff;
+  --editor-texto: #1b2230;
+  --editor-margen: #f4f6f9;
+  --editor-numeros: #8a94a6;
+  --editor-linea-activa: #f2f6fd;
+  --editor-seleccion: #cfdcf7;
+  --editor-cursor: #1b2230;
+  --editor-pareja: #d8e6c6;
+  --consola-fondo: #10161f;
+  --consola-texto: #e3e8ef;
+  --consola-error: #ff9c9c;
+  --consola-entrada: #9fd4ff;
+
+  --sx-palabra: #8a2bb9;
+  --sx-cadena: #1c7a36;
+  --sx-numero: #b35c00;
+  --sx-comentario: #7a8494;
+  --sx-funcion: #2458c6;
+  --sx-definicion: #0f6f86;
+  --sx-clase: #a32b62;
+  --sx-operador: #3d4757;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --fondo: #0e131a;
+    --superficie: #151c26;
+    --superficie-2: #1c2531;
+    --borde: #2a3544;
+    --texto: #e6ebf2;
+    --texto-suave: #9aa6b7;
+    --primario: #6ea2ff;
+    --primario-texto: #0b1220;
+    --primario-suave: #1b2a45;
+    --exito: #5fd38a;
+    --exito-suave: #16311f;
+    --aviso: #f0b45a;
+    --aviso-suave: #362814;
+    --peligro: #ff7b7b;
+    --peligro-suave: #3a1a1a;
+    --foco: #6ea2ff;
+    --editor-fondo: #121923;
+    --editor-texto: #e6ebf2;
+    --editor-margen: #121923;
+    --editor-numeros: #5f6b7d;
+    --editor-linea-activa: #18212d;
+    --editor-seleccion: #29406a;
+    --editor-cursor: #e6ebf2;
+    --editor-pareja: #2e4a2a;
+    --sx-palabra: #d49bff;
+    --sx-cadena: #8fd694;
+    --sx-numero: #ffb870;
+    --sx-comentario: #7d8899;
+    --sx-funcion: #7fb2ff;
+    --sx-definicion: #6fd3e8;
+    --sx-clase: #ff8fc0;
+    --sx-operador: #c0c9d6;
+    color-scheme: dark;
+  }
+}
+
+:root[data-tema="oscuro"] {
+  --fondo: #0e131a;
+  --superficie: #151c26;
+  --superficie-2: #1c2531;
+  --borde: #2a3544;
+  --texto: #e6ebf2;
+  --texto-suave: #9aa6b7;
+  --primario: #6ea2ff;
+  --primario-texto: #0b1220;
+  --primario-suave: #1b2a45;
+  --exito: #5fd38a;
+  --exito-suave: #16311f;
+  --aviso: #f0b45a;
+  --aviso-suave: #362814;
+  --peligro: #ff7b7b;
+  --peligro-suave: #3a1a1a;
+  --foco: #6ea2ff;
+  --editor-fondo: #121923;
+  --editor-texto: #e6ebf2;
+  --editor-margen: #121923;
+  --editor-numeros: #5f6b7d;
+  --editor-linea-activa: #18212d;
+  --editor-seleccion: #29406a;
+  --editor-cursor: #e6ebf2;
+  --editor-pareja: #2e4a2a;
+  --sx-palabra: #d49bff;
+  --sx-cadena: #8fd694;
+  --sx-numero: #ffb870;
+  --sx-comentario: #7d8899;
+  --sx-funcion: #7fb2ff;
+  --sx-definicion: #6fd3e8;
+  --sx-clase: #ff8fc0;
+  --sx-operador: #c0c9d6;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--fuente);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  height: 100%;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: 1.25;
+  margin: 0 0 0.5em;
+}
+
+a {
+  color: var(--primario);
+}
+
+:focus-visible {
+  outline: 2px solid var(--foco);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------ controles */
+
+button,
+.boton {
+  font: inherit;
+  border: 1px solid var(--borde);
+  background: var(--superficie);
+  color: var(--texto);
+  border-radius: var(--radio-chico);
+  padding: 0.45em 0.95em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+button:hover:not(:disabled) {
+  background: var(--superficie-2);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+button.primario {
+  background: var(--primario);
+  border-color: var(--primario);
+  color: var(--primario-texto);
+  font-weight: 600;
+}
+
+button.primario:hover:not(:disabled) {
+  filter: brightness(1.08);
+  background: var(--primario);
+}
+
+button.exito {
+  background: var(--exito);
+  border-color: var(--exito);
+  color: #fff;
+  font-weight: 600;
+}
+
+button.peligro {
+  color: var(--peligro);
+  border-color: color-mix(in srgb, var(--peligro) 40%, var(--borde));
+}
+
+button.fantasma {
+  background: transparent;
+  border-color: transparent;
+}
+
+button.chico {
+  padding: 0.25em 0.6em;
+  font-size: 0.9em;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  color: var(--texto);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  padding: 0.5em 0.7em;
+  width: 100%;
+}
+
+textarea {
+  font-family: var(--fuente-codigo);
+  resize: vertical;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.92em;
+  margin-bottom: 0.3em;
+}
+
+.campo {
+  margin-bottom: 1em;
+}
+
+.ayuda {
+  color: var(--texto-suave);
+  font-size: 0.88em;
+  margin-top: 0.25em;
+}
+
+.tarjeta {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  padding: 1.25rem;
+}
+
+.aviso,
+.error,
+.exito-msg,
+.info {
+  border-radius: var(--radio-chico);
+  padding: 0.65em 0.85em;
+  margin: 0.5em 0;
+  border: 1px solid transparent;
+}
+
+.error {
+  background: var(--peligro-suave);
+  color: var(--peligro);
+  border-color: color-mix(in srgb, var(--peligro) 30%, transparent);
+}
+
+.aviso {
+  background: var(--aviso-suave);
+  color: var(--aviso);
+  border-color: color-mix(in srgb, var(--aviso) 30%, transparent);
+}
+
+.exito-msg {
+  background: var(--exito-suave);
+  color: var(--exito);
+  border-color: color-mix(in srgb, var(--exito) 30%, transparent);
+}
+
+.info {
+  background: var(--primario-suave);
+  color: var(--texto);
+}
+
+.fila {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.espaciador {
+  flex: 1;
+}
+
+.suave {
+  color: var(--texto-suave);
+}
+
+kbd {
+  font-family: var(--fuente-codigo);
+  font-size: 0.82em;
+  border: 1px solid var(--borde);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0 0.35em;
+  background: var(--superficie-2);
+}
+
+.insignia {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  border-radius: 999px;
+  padding: 0.1em 0.6em;
+  font-size: 0.82em;
+  background: var(--superficie-2);
+  border: 1px solid var(--borde);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ modal */
+
+dialog.modal {
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie);
+  color: var(--texto);
+  padding: 0;
+  width: calc(100% - 2rem);
+  box-shadow: 0 20px 60px rgb(0 0 0 / 0.3);
+}
+
+dialog.modal::backdrop {
+  background: rgb(10 15 25 / 0.55);
+}
+
+dialog.modal header {
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.25rem 0.5rem;
+}
+
+dialog.modal header h2 {
+  font-size: 1.15rem;
+  margin: 0;
+  flex: 1;
+}
+
+dialog.modal .cuerpo {
+  padding: 0.5rem 1.25rem 1rem;
+}
+
+dialog.modal footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem 1rem;
+  border-top: 1px solid var(--borde);
+}
+
+dialog.modal .cerrar {
+  border: none;
+  background: transparent;
+  font-size: 1.1rem;
+  padding: 0.2em 0.5em;
+}
+
+/* ------------------------------------------------------------------ markdown */
+
+.markdown {
+  line-height: 1.6;
+}
+
+.markdown h1 {
+  font-size: 1.55rem;
+}
+
+.markdown h2 {
+  font-size: 1.2rem;
+  margin-top: 1.4em;
+}
+
+.markdown h3 {
+  font-size: 1.05rem;
+  margin-top: 1.2em;
+}
+
+.markdown p,
+.markdown ul,
+.markdown ol {
+  margin: 0.6em 0;
+}
+
+.markdown code {
+  font-family: var(--fuente-codigo);
+  font-size: 0.92em;
+  background: var(--superficie-2);
+  border-radius: 4px;
+  padding: 0.05em 0.35em;
+}
+
+.markdown blockquote {
+  margin: 0.8em 0;
+  padding: 0.6em 0.9em;
+  border-left: 4px solid var(--acento);
+  background: color-mix(in srgb, var(--acento) 10%, var(--superficie));
+  border-radius: 0 var(--radio-chico) var(--radio-chico) 0;
+}
+
+.markdown blockquote p {
+  margin: 0.2em 0;
+}
+
+.markdown table {
+  border-collapse: collapse;
+  margin: 0.8em 0;
+}
+
+.markdown th,
+.markdown td {
+  border: 1px solid var(--borde);
+  padding: 0.3em 0.7em;
+}
+
+.bloque-codigo {
+  position: relative;
+  margin: 0.8em 0;
+}
+
+.bloque-codigo pre {
+  margin: 0;
+  background: var(--editor-fondo);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  padding: 0.75em 1em;
+  overflow-x: auto;
+}
+
+.bloque-codigo.texto pre {
+  background: var(--superficie-2);
+}
+
+.bloque-codigo pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.92em;
+  line-height: 1.55;
+}
+
+.bloque-codigo .probar {
+  position: absolute;
+  top: 0.4em;
+  right: 0.4em;
+  font-size: 0.8em;
+  padding: 0.2em 0.6em;
+  background: var(--primario-suave);
+  border-color: transparent;
+  color: var(--primario);
+  font-weight: 600;
+}
+
+.tok-keyword { color: var(--sx-palabra); font-weight: 600; }
+.tok-string, .tok-string2 { color: var(--sx-cadena); }
+.tok-number, .tok-bool, .tok-atom { color: var(--sx-numero); }
+.tok-comment { color: var(--sx-comentario); font-style: italic; }
+.tok-definition { color: var(--sx-definicion); }
+.tok-className { color: var(--sx-clase); }
+.tok-operator, .tok-punctuation { color: var(--sx-operador); }
+.tok-propertyName { color: var(--sx-funcion); }
+
+/* ------------------------------------------------------------------ semáforo */
+
+.semaforo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: 0.86em;
+  font-weight: 600;
+}
+
+.semaforo .punto {
+  width: 0.7em;
+  height: 0.7em;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.semaforo.verde { color: var(--exito); }
+.semaforo.verde .punto { background: var(--exito); }
+.semaforo.amarillo { color: var(--aviso); }
+.semaforo.amarillo .punto { background: var(--aviso); }
+.semaforo.rojo { color: var(--peligro); }
+.semaforo.rojo .punto { background: var(--peligro); }
+
+/* ------------------------------------------------------------------ menú contextual del editor */
+
+.rlp-menu-contextual {
+  position: fixed;
+  z-index: 1000;
+  min-width: 210px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-chico);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.rlp-menu-contextual button {
+  border: none;
+  background: transparent;
+  justify-content: space-between;
+  padding: 0.4em 0.7em;
+  border-radius: 4px;
+}
+
+.rlp-menu-contextual button kbd {
+  border: none;
+  background: none;
+  color: var(--texto-suave);
+}
+
+.cm-tooltip-lint {
+  font-family: var(--fuente);
+}

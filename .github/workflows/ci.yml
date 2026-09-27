@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruebas:
+    name: Pruebas (Linux)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - name: Dependencias del sistema (WebKitGTK para compilar Tauri, Xvfb)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libsoup-3.0-dev librsvg2-dev libayatana-appindicator3-dev xvfb
+      - run: pnpm install --frozen-lockfile
+      - name: Compilar el curso y copiar Pyodide
+        run: pnpm preparar
+      - name: Validar el curso (CPython)
+        run: python3 scripts/validar_curso.py
+      - name: Validar el curso (Pyodide)
+        run: node scripts/validar-curso-pyodide.mjs
+      - name: Formato y lint de Rust
+        run: |
+          cargo fmt --all --check
+          cargo clippy --workspace --all-targets -- -D warnings
+      - name: Pruebas del núcleo (Rust)
+        run: cargo test -p rlp-core
+      - name: Pruebas unitarias (TypeScript)
+        run: pnpm vitest run
+      - name: Revisión de tipos (Svelte)
+        run: |
+          pnpm --filter @rlp/alumno check
+          pnpm --filter @rlp/profesor check
+      - name: Pruebas de interfaz (Playwright, Chromium)
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          pnpm exec playwright test
+      - name: Autoprueba con las apps reales (Tauri + WebKitGTK + PyInstaller)
+        run: |
+          python3 -m venv .venv-pyinstaller
+          .venv-pyinstaller/bin/pip install --quiet pyinstaller
+          pnpm --filter @rlp/alumno build
+          pnpm --filter @rlp/profesor build
+          cargo build -p rlp-alumno -p rlp-profesor --features tauri/custom-protocol
+          RLP_AUTOPRUEBA_EXE=1 RLP_PYTHON="$PWD/.venv-pyinstaller/bin/python" ./scripts/autoprueba.sh
+      - name: Capturas de pantalla
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas
+          path: |
+            tests/e2e/capturas/
+            test-results/
+          if-no-files-found: ignore

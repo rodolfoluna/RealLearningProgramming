@@ -1,0 +1,14 @@
+id: u2
+numero: 2
+titulo: Condiciones
+descripcion: Tomar decisiones con if, elif y else; comparaciones, operadores lógicos y validación de datos.
+objetivos:
+  - Escribir expresiones booleanas con operadores de comparación y lógicos.
+  - Controlar el flujo de un programa con if, elif y else.
+  - Validar datos de entrada con try/except.
+lecciones:
+  - l01_comparaciones
+  - l02_if_else
+  - l03_elif
+  - l04_logicos
+  - l05_validacion

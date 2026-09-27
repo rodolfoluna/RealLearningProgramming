@@ -1,0 +1,57 @@
+.centro {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.aviso-flotante {
+  position: fixed;
+  left: 50%;
+  top: 64px;
+  transform: translateX(-50%);
+  z-index: 2000;
+  background: var(--texto);
+  color: var(--fondo);
+  padding: 0.6em 1.1em;
+  border-radius: 999px;
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.25);
+  max-width: calc(100% - 2rem);
+}
+
+table.datos {
+  border-collapse: collapse;
+  width: 100%;
+  background: var(--superficie);
+  font-size: 0.92em;
+}
+
+table.datos th,
+table.datos td {
+  text-align: left;
+  padding: 0.5em 0.7em;
+  border-bottom: 1px solid var(--borde);
+  white-space: nowrap;
+}
+
+table.datos th {
+  background: var(--superficie-2);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+table.datos tbody tr:hover {
+  background: var(--primario-suave);
+}
+
+.num {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.alerta {
+  color: var(--aviso);
+  font-weight: 700;
+}
