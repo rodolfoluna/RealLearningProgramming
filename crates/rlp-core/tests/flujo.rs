@@ -545,3 +545,40 @@ fn desincronizacion_del_editor_se_corrige() {
         .registrar_evento("base", Some("u1-a1"), json!({}))
         .is_err());
 }
+
+/// Un semestre de trabajo: miles de lotes de edición. Abrir, exportar y verificar debe ser rápido.
+#[test]
+fn historial_grande_se_verifica_rapido() {
+    let dir = TempDir::new().unwrap();
+    let (profe, grupo) = profesor_y_grupo();
+    let (mut s, _) = SesionAlumno::registrar(
+        dir.path(),
+        "21340007",
+        "Gil Soto",
+        "clave-gil1",
+        Some(&grupo),
+        kdf(),
+    )
+    .unwrap();
+    let mut texto = s.abrir_actividad("u1-a1", INICIAL).unwrap().codigo;
+    for i in 0..3000 {
+        let linea = format!("x{i} = {i}\n");
+        let mut lote = teclear(&texto, &linea);
+        lote.t0 += i as i64 * 3_000; // un lote cada 3 s, como al teclear de verdad
+        texto.push_str(&linea);
+        assert!(s.guardar_edicion("u1-a1", &lote, &texto).unwrap().ok);
+    }
+    let inicio = std::time::Instant::now();
+    let (_, bytes) = s.exportar().unwrap();
+    let e = abrir_entrega(&bytes, &profe, &ctx()).unwrap();
+    let transcurrido = inicio.elapsed();
+    integra(&e);
+    assert!(
+        transcurrido.as_secs() < 20,
+        "exportar y verificar tardó {transcurrido:?}"
+    );
+    eprintln!(
+        "3000 lotes: exportar + verificar en {transcurrido:?} ({} KB)",
+        bytes.len() / 1024
+    );
+}

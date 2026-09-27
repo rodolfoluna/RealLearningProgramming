@@ -17,3 +17,7 @@ lto = true
 opt-level = "s"
 panic = "abort"
 strip = true
+
+# La criptografía sin optimizar es muy lenta: se optimizan las dependencias también en desarrollo.
+[profile.dev.package."*"]
+opt-level = 2

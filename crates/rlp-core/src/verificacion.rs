@@ -240,15 +240,13 @@ fn verificar_contenido(
     }
     // Recalcular hashes y firmas en orden.
     let mut firmas_invalidas = 0;
+    let por_hash: HashMap<&str, &crate::eventos::EventoFirmado> =
+        firmados.iter().map(|f| (f.hash.as_str(), f)).collect();
     for (disp, lista) in por_disp.iter_mut() {
         lista.sort_by_key(|(e, _)| e.seq);
         let mut anterior = [0u8; 32];
-        let mut seq_esperado = 1;
-        for (e, hash_declarado) in lista.iter() {
-            let ef = firmados
-                .iter()
-                .find(|f| &f.hash == hash_declarado)
-                .expect("existe");
+        for (seq_esperado, (e, hash_declarado)) in (1..).zip(lista.iter()) {
+            let ef = por_hash[hash_declarado.as_str()];
             let h = hash_encadenado(&anterior, &ef.json);
             if e.seq != seq_esperado {
                 problemas_cadena.push(format!(
@@ -272,7 +270,6 @@ fn verificar_contenido(
                 firmas_invalidas += 1;
             }
             anterior = h;
-            seq_esperado += 1;
         }
         let cabeza = m.cabezas.get(disp);
         let ultimo = lista.last().map(|(e, h)| (e.seq, h.clone()));
