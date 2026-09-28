@@ -8,10 +8,15 @@ name: Build Android
 
 on:
   push:
-    branches: [main, "claude/**"]
+    branches: [main]
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+
+# Compilar para Android tarda: una sola corrida por rama o PR (la más reciente).
+concurrency:
+  group: android-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 env:
   PAQUETE: mx.reallearningprogramming.alumno

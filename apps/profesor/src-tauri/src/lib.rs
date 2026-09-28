@@ -531,7 +531,9 @@ fn consola_depuracion<R: tauri::Runtime>() -> tauri::plugin::TauriPlugin<R> {
 })();"#
                 .to_string(),
         )
-        .on_page_load(|w, p| eprintln!("[webview] {:?} {}", p.event(), w.url().map(|u| u.to_string()).unwrap_or_default()))
+        // La URL sale del evento: pedírsela al webview (`w.url()`) bloquea el hilo principal en
+        // Android, porque este callback ya corre en él.
+        .on_page_load(|_, p| eprintln!("[webview] {:?} {}", p.event(), p.url()))
         .build()
 }
 

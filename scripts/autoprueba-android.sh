@@ -27,9 +27,14 @@ for _ in $(seq 1 150); do
   sleep 4
 done
 
+registro() {
+  # Salida de Rust (println!/eprintln!, incluida la consola del WebView en depuración) y errores.
+  adb logcat -d | grep -E "RustStdoutStderr|RustPanic|Tauri|chromium|AndroidRuntime|DEBUG   :" | tail -250
+}
+
 if [ -z "$resultado" ]; then
   echo "La app no terminó la autoprueba. Registro del sistema:"
-  adb logcat -d | grep -iE "rlp|tauri|chromium|console|panic|fatal|AndroidRuntime" | tail -200
+  registro
   exit 1
 fi
 
@@ -39,7 +44,7 @@ r = json.load(sys.stdin)
 for p in r["pasos"]:
     print(("  ✔ " if p["ok"] else "  ✖ ") + p["paso"] + ("" if p["ok"] else ": " + str(p.get("detalle"))))
 sys.exit(0 if r["ok"] else 1)' || {
-  adb logcat -d | grep -iE "rlp|tauri|chromium|console|panic" | tail -120
+  registro
   exit 1
 }
 echo "Autoprueba en Android: OK"
