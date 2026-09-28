@@ -2,6 +2,7 @@
 // RLP_AUTOPRUEBA="alumno:<carpeta compartida>"). La usa scripts/autoprueba.sh.
 // Fase final "alumno-retro@<contraseña temporal>@<archivo .rlpr>:<carpeta>": entra con el
 // archivo de acceso del profesor e importa su retroalimentación.
+// En Android (emulador de CI): "alumno-android:<carpeta>", activada con el archivo autoprueba.txt.
 
 import { ubicar } from "@rlp/curso";
 import { invoke } from "@tauri-apps/api/core";
@@ -67,7 +68,10 @@ export async function autoprueba(fase: string) {
         if (r.estado !== "ok" || !salida.includes("Hola, Ana")) throw new Error(`salida: ${salida}`);
         return python.version;
       });
-      await paso("importar grupo", () => b.importarGrupo(`${compartida}/grupo_Autoprueba.rlpg`));
+      // En Android no hay App Profesor en el emulador: el alumno practica sin grupo.
+      if (!fase.startsWith("alumno-android")) {
+        await paso("importar grupo", () => b.importarGrupo(`${compartida}/grupo_Autoprueba.rlpg`));
+      }
       await paso("registrar alumno", async () => (await b.registrar("21349999", "Alumna de Prueba", "clave-de-prueba")).codigo.length);
       const { actividad } = ubicar(curso, "u1-suma-dos-numeros")!;
       const inicial = actividad.codigo_inicial ?? "";

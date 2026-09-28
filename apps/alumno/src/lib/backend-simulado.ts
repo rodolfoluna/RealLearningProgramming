@@ -123,8 +123,8 @@ export function crearBackendSimulado(): Backend {
 
   return {
     estadoApp: async () => ({
-      version: "0.1.0-navegador",
-      plataforma: "navegador",
+      version: "0.2.0-navegador",
+      plataforma: new URLSearchParams(location.search).has("android") ? "android" : "navegador",
       carpeta_datos: "(memoria del navegador)",
       escribible: true,
       grupo,
@@ -134,6 +134,11 @@ export function crearBackendSimulado(): Backend {
     }),
     elegirArchivo: async () => "simulado://archivo",
     elegirCarpeta: async () => "simulado://carpeta",
+    elegirDestino: async (_t, nombre) => `simulado://descargas/${nombre}`,
+    escanearQr: async () => "RLPG1:demo",
+    importarGrupoQr: async () => (grupo = GRUPO_DEMO),
+    unirseGrupoQr: async () => (grupo = GRUPO_DEMO),
+    exportarA: async () => `${sesion().local.perfil.numero_control}.rlp`,
     abrirCarpeta: async () => undefined,
     importarGrupo: async () => (grupo = GRUPO_DEMO),
     async registrar(numeroControl, nombre, contrasena) {

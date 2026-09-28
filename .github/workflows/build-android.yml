@@ -1,0 +1,136 @@
+name: Build Android
+
+# APK de la App Alumno. El proyecto de Android se genera en cada compilación con
+# `tauri android init` (apps/alumno/src-tauri/gen/ no se versiona).
+#  - APK de depuración x86_64: se instala en un emulador y corre la autoprueba.
+#  - APK para celulares (arm64 y armv7): firmado si existen los secretos ANDROID_KEYSTORE
+#    (base64 del .jks), ANDROID_KEYSTORE_PASSWORD y ANDROID_KEY_ALIAS; si no, uno de prueba.
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  PAQUETE: mx.reallearningprogramming.alumno
+
+jobs:
+  apk:
+    name: APK de la App Alumno
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    env:
+      # Llave de firma de las entregas (la misma de Windows). Sin ella se usa la de desarrollo.
+      RLP_CLAVE_APP: ${{ secrets.RLP_CLAVE_APP }}
+      ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: android
+      - name: Android SDK y NDK del runner
+        run: |
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+          echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
+          ls "$ANDROID_NDK_LATEST_HOME" | head -3
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm preparar
+
+      - name: Proyecto de Android (tauri android init)
+        working-directory: apps/alumno
+        run: |
+          pnpm tauri android init --ci
+          pnpm tauri icon src-tauri/icons/icon.png
+
+      - name: APK de depuración para el emulador (x86_64)
+        working-directory: apps/alumno
+        run: pnpm tauri android build --debug --apk --target x86_64
+      - name: Guardar el APK del emulador
+        run: |
+          mkdir -p dist-android
+          cp "$(find apps/alumno/src-tauri/gen/android/app/build/outputs/apk -name '*debug*.apk' | head -1)" dist-android/rlp-alumno-emulador.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rlp-android-emulador
+          path: dist-android/rlp-alumno-emulador.apk
+
+      - name: APK para celulares (arm64 y armv7)
+        working-directory: apps/alumno
+        run: |
+          if [ -n "$ANDROID_KEYSTORE" ]; then
+            pnpm tauri android build --apk --target aarch64 --target armv7
+          else
+            echo "::warning::Sin ANDROID_KEYSTORE: se genera un APK de prueba (firma de depuración que cambia en cada compilación; para actualizar habría que desinstalar y se perderían los datos)."
+            pnpm tauri android build --debug --apk --target aarch64 --target armv7
+          fi
+      - name: Firmar y nombrar el APK
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          [ "$GITHUB_REF_TYPE" = "tag" ] || version="$(node -p 'require("./apps/alumno/package.json").version')-${GITHUB_SHA::7}"
+          salida="apps/alumno/src-tauri/gen/android/app/build/outputs/apk"
+          if [ -n "$ANDROID_KEYSTORE" ]; then
+            herramientas="$ANDROID_SDK_ROOT/build-tools/$(ls "$ANDROID_SDK_ROOT/build-tools" | sort -V | tail -1)"
+            sin_firmar="$(find "$salida" -name '*release-unsigned.apk' | head -1)"
+            echo "$ANDROID_KEYSTORE" | base64 -d > "$RUNNER_TEMP/rlp.jks"
+            "$herramientas/zipalign" -f 4 "$sin_firmar" "$RUNNER_TEMP/alineado.apk"
+            "$herramientas/apksigner" sign --ks "$RUNNER_TEMP/rlp.jks" --ks-pass env:ANDROID_KEYSTORE_PASSWORD \
+              --ks-key-alias "$ANDROID_KEY_ALIAS" --out "dist-android/RLP-Alumno-$version-android.apk" "$RUNNER_TEMP/alineado.apk"
+            "$herramientas/apksigner" verify "dist-android/RLP-Alumno-$version-android.apk"
+            rm -f "$RUNNER_TEMP/rlp.jks"
+          else
+            cp "$(find "$salida" -name '*debug*.apk' -newer dist-android/rlp-alumno-emulador.apk | head -1)" \
+              "dist-android/RLP-Alumno-$version-android-prueba.apk"
+          fi
+          ls -la dist-android
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rlp-android
+          path: dist-android/RLP-Alumno-*.apk
+      - name: Agregar el APK al Release
+        if: github.ref_type == 'tag' && env.ANDROID_KEYSTORE != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist-android/RLP-Alumno-*-android.apk
+
+  emulador:
+    name: Autoprueba en emulador Android
+    needs: apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: rlp-android-emulador
+          path: apk
+      - name: Habilitar KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash scripts/autoprueba-android.sh apk/rlp-alumno-emulador.apk

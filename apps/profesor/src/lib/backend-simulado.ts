@@ -157,6 +157,12 @@ export function crearBackendSimulado(): Backend {
     grupos: async () => grupos,
     exportarGrupo: async (id) => `simulado://carpeta/grupo_${id}.rlpg`,
     instalarGrupo: async () => "simulado://App Alumno/config/grupo.rlpg",
+    // Cuadrícula de demostración (el QR real lo genera Rust con el grupo firmado).
+    qrGrupo: async () =>
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21" width="360" height="360" data-qr-demo><rect width="21" height="21" fill="#fff"/>${Array.from(
+        { length: 120 },
+        (_, i) => `<rect x="${(i * 7) % 21}" y="${Math.floor((i * 7) / 21) % 21}" width="1" height="1"/>`,
+      ).join("")}</svg>`,
     importarEntregas: async () =>
       filas.map((f) => ({ archivo: `${f.numero_control}_20261015-1200.rlp`, error: null, registro: { entrega_id: f.entrega_id, nueva: true, nombre: f.nombre, numero_control: f.numero_control, nivel: f.nivel } })),
     importarCarpeta: async () => [{ archivo: "archivo_danado.rlp", error: "Formato no reconocido: no es un archivo .rlp", registro: null }],

@@ -22,6 +22,8 @@ export interface Backend {
   grupos(): Promise<GrupoInfo[]>;
   exportarGrupo(grupoId: string, carpeta: string): Promise<string>;
   instalarGrupo(grupoId: string, carpetaApp: string): Promise<string>;
+  /** Código QR (SVG) del grupo para unirse desde la App Alumno en el celular. */
+  qrGrupo(grupoId: string): Promise<string>;
   importarEntregas(rutas: string[], codigosIniciales: Record<string, string>): Promise<ResultadoImportacion[]>;
   importarCarpeta(carpeta: string, codigosIniciales: Record<string, string>): Promise<ResultadoImportacion[]>;
   tablero(grupoId: string | null): Promise<FilaTablero[]>;

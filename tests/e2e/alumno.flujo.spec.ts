@@ -152,3 +152,39 @@ test("diseño en pantalla de celular", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Enunciado" })).toBeVisible();
   await page.screenshot({ path: `${capturas}/alumno-09-celular.png` });
 });
+
+test.describe("celular (Android)", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  test("QR del grupo, barra de teclas y exportar con Guardar como", async ({ page }) => {
+    await page.goto("/?android&sin-grupo");
+    await page.getByRole("button", { name: /Escanear QR del grupo/ }).click();
+    await expect(page.getByText("Grupo de demostración")).toBeVisible();
+    await page.getByRole("tab", { name: "Soy nuevo" }).click();
+    await page.getByLabel("Número de control").fill("21340077");
+    await page.getByLabel("Nombre completo").fill("Luis Celular");
+    await page.getByLabel("Contraseña", { exact: true }).fill("contraseña-segura");
+    await page.getByLabel("Repite la contraseña").fill("contraseña-segura");
+    await page.getByRole("button", { name: "Crear mi perfil" }).click();
+    await page.getByLabel("Ya lo anoté en un lugar seguro").check();
+    await page.getByRole("button", { name: "Empezar el curso" }).click();
+
+    await page.getByRole("button", { name: "Temario" }).click();
+    await page.locator('[data-actividad="u0-hola-mundo"]').click();
+    const barra = page.locator("[data-barra-teclas]");
+    await expect(barra).toBeVisible();
+    const editor = page.locator("[data-editor] .cm-content");
+    await editor.click();
+    await page.keyboard.press("Control+End");
+    await page.keyboard.type("print", { delay: 10 });
+    for (const t of ["(", '"']) await barra.getByRole("button", { name: t, exact: true }).tap();
+    await page.keyboard.type("Hola, mundo", { delay: 10 });
+    for (const t of ['"', ")"]) await barra.getByRole("button", { name: t, exact: true }).tap();
+    await expect(editor).toContainText('print("Hola, mundo")');
+    await page.screenshot({ path: `${capturas}/alumno-11-barra-teclas.png` });
+
+    await page.getByRole("button", { name: /Luis Celular|^L/ }).first().click();
+    await page.getByRole("menuitem", { name: /Exportar entrega/ }).click();
+    await expect(page.getByText(/21340077_\d{8}-\d{4}\.rlp/)).toBeVisible();
+  });
+});

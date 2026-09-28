@@ -1,5 +1,6 @@
 //! App Alumno: comandos que la interfaz invoca. Toda la lógica vive en `rlp-core`.
 
+mod archivos;
 mod ejecutable;
 mod rutas;
 
@@ -12,7 +13,7 @@ use rlp_core::alumno::{
 };
 use rlp_core::crypto::ParametrosKdf;
 use rlp_core::estadisticas::Estadisticas;
-use rlp_core::grupo::{leer_grupo, verificar_grupo};
+use rlp_core::grupo::{desde_texto_qr, leer_grupo, verificar_grupo};
 use rlp_core::modelo::{EstadoActividad, GrupoFirmado, GrupoInfo};
 use rlp_core::replay::LoteOps;
 use rlp_core::retroalimentacion::Retroalimentacion;
@@ -65,6 +66,11 @@ impl Estado {
         Ok(est)
     }
 
+    fn instalar_grupo(&self, bytes: &[u8]) -> R<()> {
+        std::fs::create_dir_all(&self.rutas.config).map_err(texto)?;
+        std::fs::write(self.rutas.archivo_grupo(), bytes).map_err(texto)
+    }
+
     fn grupo_app(&self) -> Option<(GrupoFirmado, GrupoInfo)> {
         let bytes = std::fs::read(self.rutas.archivo_grupo()).ok()?;
         leer_grupo(&bytes).ok()
@@ -89,20 +95,29 @@ struct EstadoApp {
     autoprueba: Option<String>,
 }
 
-/// Autoprueba de extremo a extremo: solo existe en compilaciones de desarrollo.
-fn fase_autoprueba() -> Option<String> {
-    if cfg!(debug_assertions) {
-        std::env::var("RLP_AUTOPRUEBA")
-            .ok()
-            .filter(|s| !s.is_empty())
-    } else {
-        None
+/// Autoprueba de extremo a extremo: solo existe en compilaciones de desarrollo. Se activa con la
+/// variable RLP_AUTOPRUEBA o, en Android, con el archivo `autoprueba.txt` en la carpeta de datos
+/// de la app (lo escribe CI con `adb shell run-as`).
+fn fase_autoprueba(app: &tauri::AppHandle) -> Option<String> {
+    if !cfg!(debug_assertions) {
+        return None;
     }
+    if let Some(fase) = std::env::var("RLP_AUTOPRUEBA")
+        .ok()
+        .filter(|s| !s.is_empty())
+    {
+        return Some(fase);
+    }
+    let archivo = app.path().data_dir().ok()?.join("autoprueba.txt");
+    std::fs::read_to_string(archivo)
+        .ok()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
 }
 
 #[tauri::command]
 fn autoprueba_fin(app: tauri::AppHandle, resultado: Value) -> R<()> {
-    if fase_autoprueba().is_none() {
+    if fase_autoprueba(&app).is_none() {
         return Err("No disponible.".into());
     }
     let ok = resultado
@@ -110,12 +125,16 @@ fn autoprueba_fin(app: tauri::AppHandle, resultado: Value) -> R<()> {
         .and_then(Value::as_bool)
         .unwrap_or(false);
     println!("AUTOPRUEBA {}", resultado);
+    // En Android la salida estándar no se ve: el resultado queda también en un archivo.
+    if let Ok(dir) = app.path().data_dir() {
+        let _ = std::fs::write(dir.join("autoprueba_resultado.json"), resultado.to_string());
+    }
     app.exit(if ok { 0 } else { 1 });
     Ok(())
 }
 
 #[tauri::command]
-fn estado_app(estado: State<Estado>) -> R<EstadoApp> {
+fn estado_app(app: tauri::AppHandle, estado: State<Estado>) -> R<EstadoApp> {
     let r = &estado.rutas;
     Ok(EstadoApp {
         version: env!("CARGO_PKG_VERSION").into(),
@@ -126,17 +145,30 @@ fn estado_app(estado: State<Estado>) -> R<EstadoApp> {
         perfiles: listar_perfiles(&r.perfiles),
         puede_generar_exe: ejecutable::disponible(r),
         dev: rlp_core::llave_app::llave_app().dev,
-        autoprueba: fase_autoprueba(),
+        autoprueba: fase_autoprueba(&app),
     })
 }
 
 #[tauri::command]
-fn importar_grupo(estado: State<Estado>, ruta: String) -> R<GrupoInfo> {
-    let bytes = std::fs::read(&ruta).map_err(texto)?;
+fn importar_grupo(app: tauri::AppHandle, estado: State<Estado>, ruta: String) -> R<GrupoInfo> {
+    let bytes = archivos::leer(&app, &ruta)?;
     let (_, info) = leer_grupo(&bytes).map_err(texto)?;
-    std::fs::create_dir_all(&estado.rutas.config).map_err(texto)?;
-    std::fs::write(estado.rutas.archivo_grupo(), bytes).map_err(texto)?;
+    estado.instalar_grupo(&bytes)?;
     Ok(info)
+}
+
+/// Grupo leído del código QR que muestra la App Profesor.
+#[tauri::command]
+fn importar_grupo_qr(estado: State<Estado>, contenido: String) -> R<GrupoInfo> {
+    let (grupo, info) = desde_texto_qr(&contenido).map_err(texto)?;
+    estado.instalar_grupo(&serde_json::to_vec_pretty(&grupo).map_err(texto)?)?;
+    Ok(info)
+}
+
+#[tauri::command]
+fn unirse_grupo_qr(estado: State<Estado>, contenido: String) -> R<GrupoInfo> {
+    let (grupo, _) = desde_texto_qr(&contenido).map_err(texto)?;
+    estado.con_sesion(|s| s.unirse_grupo(&grupo))
 }
 
 #[derive(Serialize)]
@@ -181,8 +213,13 @@ fn iniciar_sesion(estado: State<Estado>, carpeta: String, secreto: Secreto) -> R
 }
 
 #[tauri::command]
-fn restaurar(estado: State<Estado>, ruta: String, secreto: Secreto) -> R<EstadoAlumno> {
-    let bytes = std::fs::read(&ruta).map_err(texto)?;
+fn restaurar(
+    app: tauri::AppHandle,
+    estado: State<Estado>,
+    ruta: String,
+    secreto: Secreto,
+) -> R<EstadoAlumno> {
+    let bytes = archivos::leer(&app, &ruta)?;
     let sesion =
         SesionAlumno::restaurar(&estado.rutas.perfiles, &bytes, &secreto, kdf()).map_err(texto)?;
     estado.activar(sesion)
@@ -199,8 +236,8 @@ struct InfoAcceso {
 }
 
 #[tauri::command]
-fn leer_acceso(estado: State<Estado>, ruta: String) -> R<InfoAcceso> {
-    let bytes = std::fs::read(&ruta).map_err(texto)?;
+fn leer_acceso(app: tauri::AppHandle, estado: State<Estado>, ruta: String) -> R<InfoAcceso> {
+    let bytes = archivos::leer(&app, &ruta)?;
     let a = rlp_core::acceso::leer(&bytes).map_err(texto)?;
     Ok(InfoAcceso {
         perfil_local: listar_perfiles(&estado.rutas.perfiles)
@@ -216,13 +253,14 @@ fn leer_acceso(estado: State<Estado>, ruta: String) -> R<InfoAcceso> {
 /// carpeta, restaurando el último `.rlp` del alumno.
 #[tauri::command]
 fn entrar_con_acceso(
+    app: tauri::AppHandle,
     estado: State<Estado>,
     ruta_acceso: String,
     temporal: String,
     nueva: String,
     ruta_entrega: Option<String>,
 ) -> R<EstadoAlumno> {
-    let archivo = std::fs::read_to_string(&ruta_acceso).map_err(texto)?;
+    let archivo = archivos::leer_texto(&app, &ruta_acceso)?;
     let a = rlp_core::acceso::leer(archivo.as_bytes()).map_err(texto)?;
     let secreto = Secreto::Acceso {
         archivo,
@@ -235,7 +273,7 @@ fn entrar_con_acceso(
     let sesion = match (local, ruta_entrega) {
         (Some(p), _) => SesionAlumno::abrir(&PathBuf::from(p.carpeta), &secreto, kdf()),
         (None, Some(ruta)) => {
-            let bytes = std::fs::read(&ruta).map_err(texto)?;
+            let bytes = archivos::leer(&app, &ruta)?;
             SesionAlumno::restaurar(&estado.rutas.perfiles, &bytes, &secreto, kdf())
         }
         (None, None) => {
@@ -249,8 +287,12 @@ fn entrar_con_acceso(
 }
 
 #[tauri::command]
-fn importar_retroalimentacion(estado: State<Estado>, ruta: String) -> R<Retroalimentacion> {
-    let bytes = std::fs::read(&ruta).map_err(texto)?;
+fn importar_retroalimentacion(
+    app: tauri::AppHandle,
+    estado: State<Estado>,
+    ruta: String,
+) -> R<Retroalimentacion> {
+    let bytes = archivos::leer(&app, &ruta)?;
     estado.con_sesion(|s| s.importar_retroalimentacion(&bytes))
 }
 
@@ -340,15 +382,28 @@ fn registrar_evento(
 #[tauri::command]
 fn exportar(estado: State<Estado>, carpeta: String) -> R<String> {
     let (nombre, bytes) = estado.con_sesion(|s| s.exportar())?;
+    let _ = std::fs::create_dir_all(&carpeta);
     let destino = PathBuf::from(carpeta).join(nombre);
     std::fs::write(&destino, bytes)
         .map_err(|e| format!("No se pudo guardar en esa carpeta: {e}"))?;
     Ok(destino.to_string_lossy().into_owned())
 }
 
+/// Exporta la entrega a un archivo elegido con el diálogo de guardar (Android: URI `content://`).
 #[tauri::command]
-fn importar_avances(estado: State<Estado>, ruta: String) -> R<ResumenImportacion> {
-    let bytes = std::fs::read(&ruta).map_err(texto)?;
+fn exportar_a(app: tauri::AppHandle, estado: State<Estado>, destino: String) -> R<String> {
+    let (nombre, bytes) = estado.con_sesion(|s| s.exportar())?;
+    archivos::escribir(&app, &destino, &bytes)?;
+    Ok(nombre)
+}
+
+#[tauri::command]
+fn importar_avances(
+    app: tauri::AppHandle,
+    estado: State<Estado>,
+    ruta: String,
+) -> R<ResumenImportacion> {
+    let bytes = archivos::leer(&app, &ruta)?;
     estado.con_sesion(|s| s.importar(&bytes))
 }
 
@@ -358,8 +413,8 @@ fn cambiar_contrasena(estado: State<Estado>, actual: String, nueva: String) -> R
 }
 
 #[tauri::command]
-fn unirse_grupo(estado: State<Estado>, ruta: String) -> R<GrupoInfo> {
-    let bytes = std::fs::read(&ruta).map_err(texto)?;
+fn unirse_grupo(app: tauri::AppHandle, estado: State<Estado>, ruta: String) -> R<GrupoInfo> {
+    let bytes = archivos::leer(&app, &ruta)?;
     let (grupo, _) = leer_grupo(&bytes).map_err(texto)?;
     let info = estado.con_sesion(|s| s.unirse_grupo(&grupo))?;
     // Si la carpeta aún no tiene grupo, este queda como el de la app.
@@ -447,6 +502,11 @@ pub fn run() {
     if cfg!(debug_assertions) {
         constructor = constructor.plugin(consola_depuracion());
     }
+    #[cfg(mobile)]
+    {
+        // Unirse al grupo escaneando el QR que muestra la App Profesor.
+        constructor = constructor.plugin(tauri_plugin_barcode_scanner::init());
+    }
     constructor
         .manage(rlp_puente::Puente::default())
         .register_asynchronous_uri_scheme_protocol(
@@ -458,6 +518,7 @@ pub fn run() {
             },
         )
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let rutas = Rutas::resolver(app.handle());
@@ -493,6 +554,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             estado_app,
             importar_grupo,
+            importar_grupo_qr,
+            unirse_grupo_qr,
+            exportar_a,
             registrar,
             iniciar_sesion,
             restaurar,

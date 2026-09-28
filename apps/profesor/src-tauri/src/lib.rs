@@ -376,6 +376,25 @@ fn nombre_seguro(texto: &str) -> String {
     s.trim_matches('_').to_string()
 }
 
+/// Código QR (SVG) con el grupo firmado, para que los alumnos se unan desde el celular.
+#[tauri::command]
+fn qr_grupo(estado: State<Estado>, grupo_id: String) -> R<String> {
+    use qrcode::render::svg;
+    let (grupo, _) = estado
+        .con_bd(|bd| bd.grupo(&grupo_id))?
+        .ok_or("Grupo no encontrado.")?;
+    let contenido = rlp_core::grupo::a_texto_qr(&grupo).map_err(texto)?;
+    let codigo =
+        qrcode::QrCode::with_error_correction_level(contenido.as_bytes(), qrcode::EcLevel::L)
+            .map_err(|e| format!("No se pudo crear el código QR: {e}"))?;
+    Ok(codigo
+        .render::<svg::Color>()
+        .min_dimensions(360, 360)
+        .dark_color(svg::Color("#000000"))
+        .light_color(svg::Color("#ffffff"))
+        .build())
+}
+
 /// Un archivo `.rlpr` con la calificación y el comentario de cada actividad para cada alumno
 /// del grupo; cada alumno solo puede leer su parte.
 #[tauri::command]
@@ -565,6 +584,7 @@ pub fn run() {
             exportar_csv,
             exportar_xlsx,
             exportar_retroalimentacion,
+            qr_grupo,
             crear_acceso,
             autoprueba_fin,
             consola_log,

@@ -68,13 +68,30 @@ de cada clase deben **exportar su entrega**, que también les sirve de respaldo.
    el `.rlpr` con todo el grupo (cada alumno solo puede abrir lo suyo) y cada quien lo importa
    desde el menú con su nombre.
 
-## 5. Continuar en casa
+## 5. Celulares Android
+
+Para quien no tiene computadora en casa hay un **APK** de la App Alumno (en el Release, si el
+repositorio tiene configurada su llave de firma de Android; si no, en los artefactos del workflow
+"Build Android" como versión de prueba).
+
+1. En el celular, abre el APK y permite "instalar apps de origen desconocido" para el navegador o
+   el administrador de archivos.
+2. En la App Profesor, en **Grupos → QR para celulares**, proyecta el código; cada alumno toca
+   **📷 Escanear QR del grupo** antes de registrarse (o después, desde el menú con su nombre).
+3. Para entregar, **Exportar entrega** abre "Guardar como": se puede guardar en Descargas o en
+   Drive y compartir desde ahí.
+
+> **Importante**: en Android los datos viven dentro de la app. **Desinstalarla los borra**:
+> exporta tu entrega antes. Las actualizaciones conservan los datos siempre que el APK esté firmado
+> con la misma llave.
+
+## 6. Continuar en casa
 
 El alumno exporta su `.rlp` y, en otra computadora con la App Alumno, elige
 **"Tengo mis avances en un archivo"** e ingresa su contraseña. Para volver, exporta allá e
 importa acá con **"Importar avances de otro equipo"**.
 
-## 6. Actualizar a una versión nueva
+## 7. Actualizar a una versión nueva
 
 Los datos viven en la carpeta de cada app, así que al actualizar **no borres**:
 
@@ -85,7 +102,7 @@ Pasos: descomprime la versión nueva y copia encima **solo** el `.exe`, `runtime
 o copia las carpetas `datos`/`config` (o `datos_profesor`) de la instalación anterior a la nueva.
 Las entregas de versiones anteriores se siguen verificando.
 
-## 7. Olvidé mi contraseña
+## 8. Olvidé mi contraseña
 
 - **Alumno**: en la pantalla de inicio, "Olvidé mi contraseña" con su código de recuperación.
   Si también lo perdió: en la App Profesor, en el detalle del alumno, **Archivo de acceso** crea un

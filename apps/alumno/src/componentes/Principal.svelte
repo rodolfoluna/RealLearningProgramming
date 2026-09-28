@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Modal, mensajeError } from "@rlp/ui-comun";
   import { backend } from "../lib/backend";
-  import { app, aplicarTema, avisar, cargarEstadoApp, curso, salir } from "../lib/app.svelte";
+  import { app, aplicarTema, avisar, cargarEstadoApp, curso, esMovil, fechaArchivo, salir } from "../lib/app.svelte";
   import Temario from "./Temario.svelte";
   import Bienvenida from "./Bienvenida.svelte";
   import Leccion from "./Leccion.svelte";
@@ -40,6 +40,15 @@
     menuAbierto = false;
     try {
       const b = await backend();
+      if (esMovil()) {
+        const nombre = `${alumno.perfil.numero_control.replace(/[^\p{L}\p{N}]/gu, "")}_${fechaArchivo()}.rlp`;
+        const destino = await b.elegirDestino("Guardar mi entrega", nombre);
+        if (!destino) return;
+        exportando = true;
+        await b.exportarA(destino);
+        exportado = nombre;
+        return;
+      }
       const carpeta = await b.elegirCarpeta("¿Dónde guardo tu entrega? (por ejemplo, tu memoria USB)");
       if (!carpeta) return;
       exportando = true;
@@ -101,6 +110,21 @@
     }
   }
 
+  async function unirseConQr() {
+    menuAbierto = false;
+    try {
+      const b = await backend();
+      const texto = await b.escanearQr();
+      if (!texto) return;
+      const info = await b.unirseGrupoQr(texto);
+      app.alumno = await b.estado();
+      await cargarEstadoApp();
+      avisar(`Ahora perteneces al grupo ${info.nombre}.`);
+    } catch (e) {
+      avisar(mensajeError(e), 6000);
+    }
+  }
+
   async function cambiarClave() {
     errorModal = "";
     try {
@@ -145,6 +169,9 @@
           <button role="menuitem" onclick={importarRetroalimentacion}>📬 Importar retroalimentación del profesor</button>
           <button role="menuitem" onclick={() => { menuAbierto = false; ir({ tipo: "estadisticas" }); }}>📊 Mis estadísticas</button>
           <button role="menuitem" onclick={unirseGrupo}>👥 {alumno.grupo ? "Cambiar de grupo" : "Unirme a un grupo"}</button>
+          {#if esMovil()}
+            <button role="menuitem" onclick={unirseConQr}>📷 Unirme con el QR del grupo</button>
+          {/if}
           <button role="menuitem" onclick={() => { menuAbierto = false; modalClave = true; }}>🔑 Cambiar contraseña</button>
           <button role="menuitem" onclick={() => aplicarTema(app.tema === "oscuro" ? "claro" : "oscuro")}>
             🌓 Tema {app.tema === "oscuro" ? "claro" : "oscuro"}

@@ -10,7 +10,7 @@ Apps **sin conexión** para aprender y enseñar programación en Python, en espa
   salidas de ventana), **reproduce cómo se escribió** cada código, vuelve a correr las pruebas,
   exporta a Excel y envía **retroalimentación firmada** a los alumnos.
 
-Windows ahora; Android (app del alumno) en la fase 2. El diseño completo está en
+Windows (ambas apps) y Android (App Alumno, APK). El diseño completo está en
 [`docs/DISENO.md`](docs/DISENO.md).
 
 ## Stack

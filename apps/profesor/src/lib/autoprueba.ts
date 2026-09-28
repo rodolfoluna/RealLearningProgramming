@@ -37,6 +37,11 @@ export async function autoprueba(fase: string) {
         coprofesores: [],
       });
       await paso("exportar grupo", () => b.exportarGrupo(g.grupo_id, compartida));
+      await paso("QR del grupo", async () => {
+        const svg = await b.qrGrupo(g.grupo_id);
+        if (!svg.includes("<svg")) throw new Error(svg.slice(0, 80));
+        return `${svg.length} caracteres de SVG`;
+      });
     } else {
       await paso("desbloquear", () => b.desbloquear(CLAVE));
       const r = await b.importarCarpeta(compartida, codigosIniciales);

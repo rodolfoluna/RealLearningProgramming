@@ -23,6 +23,7 @@ export function crearBackendTauri(): Backend {
     grupos: () => invoke("grupos"),
     exportarGrupo: (grupoId, carpeta) => invoke("exportar_grupo", { grupoId, carpeta }),
     instalarGrupo: (grupoId, carpetaApp) => invoke("instalar_grupo", { grupoId, carpetaApp }),
+    qrGrupo: (grupoId) => invoke("qr_grupo", { grupoId }),
     importarEntregas: (rutas, codigosIniciales) => invoke("importar_entregas", { rutas, codigosIniciales }),
     importarCarpeta: (carpeta, codigosIniciales) => invoke("importar_carpeta", { carpeta, codigosIniciales }),
     tablero: (grupoId) => invoke("tablero", { grupoId }),

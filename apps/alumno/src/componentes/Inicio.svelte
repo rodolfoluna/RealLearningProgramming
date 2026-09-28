@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Modal, mensajeError } from "@rlp/ui-comun";
   import { backend } from "../lib/backend";
-  import { app, cargarEstadoApp, curso, entrar } from "../lib/app.svelte";
+  import { app, cargarEstadoApp, curso, entrar, esMovil } from "../lib/app.svelte";
   import type { EstadoAlumno, InfoAcceso, PerfilLocal } from "../lib/tipos";
 
   type Modo = "entrar" | "registro" | "restaurar" | "acceso";
@@ -133,6 +133,15 @@
       await cargarEstadoApp();
     });
 
+  const escanearGrupo = () =>
+    accion(async () => {
+      const b = await backend();
+      const texto = await b.escanearQr();
+      if (!texto) return;
+      await b.importarGrupoQr(texto);
+      await cargarEstadoApp();
+    });
+
   function continuar() {
     if (estadoPendiente) entrar(estadoPendiente);
   }
@@ -154,6 +163,9 @@
         <strong>Sin grupo.</strong> Para entregar tus avances, importa el archivo de grupo (.rlpg) que te dio tu profesor.
         Mientras tanto puedes practicar.
         <div class="fila" style="margin-top: 0.5em">
+          {#if esMovil()}
+            <button class="primario" onclick={escanearGrupo} disabled={ocupado}>📷 Escanear QR del grupo</button>
+          {/if}
           <button onclick={importarGrupo} disabled={ocupado}>Importar archivo de grupo</button>
         </div>
       </div>

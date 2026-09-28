@@ -297,6 +297,28 @@ Ambos: `{"contenido": "<JSON exacto>", "firma": "<Ed25519 del profesor>"}`.
 - **Exportar entrega**, **importar avances** de otro equipo, **cambiar contraseña**, **unirse a un
   grupo**, tema claro/oscuro.
 
+### Android (APK de la App Alumno)
+
+- Mismo código que en Windows (Tauri 2). Los datos viven en la carpeta privada de la app
+  (`/data/user/0/mx.reallearningprogramming.alumno`); **desinstalar la app los borra**, así que el
+  alumno debe exportar su entrega con frecuencia (también le sirve de respaldo).
+- **Archivos**: el selector de Android devuelve URIs `content://`; los comandos de Rust los abren
+  con el plugin fs (`archivos.rs`). Exportar usa "Guardar como" (Descargas, Drive…), porque en
+  Android no se puede elegir una carpeta.
+- **Unirse al grupo por QR**: la App Profesor muestra el `.rlpg` firmado como QR
+  (`RLPG1:` + deflate + base64 URL, ~1 KB); la App Alumno lo escanea con la cámara
+  (plugin barcode-scanner) y verifica la firma igual que con el archivo.
+- **Barra de teclas de código** en pantallas táctiles (Tab, `:`, paréntesis, corchetes, comillas,
+  operadores, flechas, deshacer): inserta como tecleo normal, así cuenta en el historial.
+- Cambiar de app (`visibilitychange`) cuenta como salida de la ventana.
+- Sin `.exe` (no hay PyInstaller en el celular).
+- **CI** (`build-android.yml`): genera el proyecto con `tauri android init`, compila un APK de
+  depuración x86_64 que se instala en un **emulador** y corre la autoprueba (activada con
+  `autoprueba.txt` en la carpeta privada vía `adb shell run-as`; el resultado queda en
+  `autoprueba_resultado.json`), y el APK para celulares (arm64 y armv7), firmado con el keystore de
+  los secretos `ANDROID_KEYSTORE`, `ANDROID_KEYSTORE_PASSWORD` y `ANDROID_KEY_ALIAS`. La firma debe
+  ser siempre la misma: Android solo actualiza una app (conservando sus datos) si coincide.
+
 ### Ejecución de Python
 
 - Pyodide corre en un Web Worker. Con `SharedArrayBuffer` (WebView2 en Windows), `input()` espera
@@ -386,9 +408,10 @@ Los diccionarios quedan como posible unidad opcional en una versión posterior.
 - **Fase 2 (en curso)**: unidades 4–7 del curso (**hecho**: funciones, cadenas, listas y
   proyectos); versión publicable (llave de firma de producción, Releases); **reproductor visual
   del historial**, **retroalimentación firmada** profesor → alumno, **archivo de acceso** y
-  exportar a **Excel** (**hechos**); **APK Android** (barra de teclas de código, teclado sin sugerencias, heurísticas de IME,
-  unirse al grupo por **QR**, compartir `.rlp`, pausa de la app como salida). Después: problemas
-  de Parsons, historial de versiones, consola interactiva.
+  exportar a **Excel** (**hechos**); **APK Android** (barra de teclas de código, unirse al grupo por
+  **QR**, exportar con "Guardar como", pausa de la app como salida, autoprueba en emulador;
+  **hecho**, pendiente afinar las heurísticas de IME con teclados reales). Después: problemas de
+  Parsons, historial de versiones, consola interactiva.
 - **Fase 3**: **detección de similitud** entre alumnos (huellas de tokens/AST); visualizador paso a
   paso (tipo Python Tutor); editor del curso y paquetes `.curso` firmados; insignias y rachas;
   tablero de dificultades por actividad.

@@ -75,6 +75,28 @@ export async function salir() {
   await cargarEstadoApp();
 }
 
+/** Celular o tableta: exportar con "Guardar como", unirse al grupo por QR, barra de teclas. */
+export function esMovil(): boolean {
+  const p = app.estadoApp?.plataforma;
+  return p === "android" || p === "ios";
+}
+
+/** Pantalla táctil sin teclado físico (muestra la barra de teclas de código). */
+export function esTactil(): boolean {
+  if (esMovil()) return true;
+  try {
+    return matchMedia("(pointer: coarse)").matches;
+  } catch {
+    return false;
+  }
+}
+
+/** Fecha para nombres de archivo, igual que en Rust: AAAAMMDD-HHMM. */
+export function fechaArchivo(d = new Date()): string {
+  const dos = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}${dos(d.getMonth() + 1)}${dos(d.getDate())}-${dos(d.getHours())}${dos(d.getMinutes())}`;
+}
+
 export function politicaPegado(): PoliticaPegado {
   return app.alumno?.grupo?.politicas.pegado ?? app.estadoApp?.grupo?.politicas.pegado ?? "bloquear";
 }

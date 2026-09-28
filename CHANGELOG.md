@@ -34,6 +34,13 @@ siguen [SemVer](https://semver.org/lang/es/). El curso tiene su propia versión 
 - "Tengo un archivo de acceso de mi profesor" en la pantalla de inicio: contraseña nueva y código
   de recuperación nuevo.
 
+### Android
+
+- **APK de la App Alumno** (arm64 y armv7) generado en CI; autoprueba en un emulador.
+- Unirse al grupo escaneando el **QR** que muestra la App Profesor (Grupos → "QR para celulares").
+- **Barra de teclas de código** en pantallas táctiles; exportar con "Guardar como"; cambiar de
+  app cuenta como salida.
+
 ### Distribución
 
 - Guía de instalación para laboratorios (`docs/INSTALACION.md`).
