@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { open } from "@tauri-apps/plugin-dialog";
+import { open, save } from "@tauri-apps/plugin-dialog";
 import type { Backend } from "./backend";
 import { conDialogo } from "./dialogos";
 
@@ -17,6 +17,24 @@ export function crearBackendTauri(): Backend {
       const r = await conDialogo(() => open({ title: titulo, multiple: false, directory: true }));
       return typeof r === "string" ? r : null;
     },
+    async elegirDestino(titulo, nombre) {
+      const r = await conDialogo(() => save({ title: titulo, defaultPath: nombre }));
+      return typeof r === "string" ? r : null;
+    },
+    async escanearQr() {
+      const qr = await import("@tauri-apps/plugin-barcode-scanner");
+      let permiso = await qr.checkPermissions();
+      if (permiso !== "granted") permiso = await qr.requestPermissions();
+      if (permiso !== "granted") throw new Error("Permite el uso de la cámara para escanear el código del grupo.");
+      try {
+        return (await conDialogo(() => qr.scan({ windowed: false, formats: [qr.Format.QRCode] }))).content;
+      } catch {
+        return null; // cancelado
+      }
+    },
+    importarGrupoQr: (contenido) => invoke("importar_grupo_qr", { contenido }),
+    unirseGrupoQr: (contenido) => invoke("unirse_grupo_qr", { contenido }),
+    exportarA: (destino) => invoke("exportar_a", { destino }),
     abrirCarpeta: (ruta) => invoke("abrir_carpeta", { ruta }),
     importarGrupo: (ruta) => invoke("importar_grupo", { ruta }),
     registrar: (numeroControl, nombre, contrasena) => invoke("registrar", { numeroControl, nombre, contrasena }),
@@ -35,6 +53,10 @@ export function crearBackendTauri(): Backend {
     registrarEvento: (tipo, actividad, datos) => invoke("registrar_evento", { tipo, actividad, datos }),
     exportar: (carpeta) => invoke("exportar", { carpeta }),
     importarAvances: (ruta) => invoke("importar_avances", { ruta }),
+    importarRetroalimentacion: (ruta) => invoke("importar_retroalimentacion", { ruta }),
+    leerAcceso: (ruta) => invoke("leer_acceso", { ruta }),
+    entrarConAcceso: (rutaAcceso, temporal, nueva, rutaEntrega) =>
+      invoke("entrar_con_acceso", { rutaAcceso, temporal, nueva, rutaEntrega }),
     cambiarContrasena: (actual, nueva) => invoke("cambiar_contrasena", { actual, nueva }),
     unirseGrupo: (ruta) => invoke("unirse_grupo", { ruta }),
     async generarEjecutable(nombre, codigo, alProgreso) {

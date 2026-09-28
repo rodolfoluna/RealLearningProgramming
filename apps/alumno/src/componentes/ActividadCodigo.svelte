@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Actividad } from "@rlp/curso";
-  import { EditorCodigo, type LoteOperaciones } from "@rlp/editor";
+  import { EditorCodigo, type AccionTecla, type LoteOperaciones } from "@rlp/editor";
   import type { ResultadoPrueba, ResultadoPruebas } from "@rlp/python-worker";
   import { Markdown, Modal, mensajeError } from "@rlp/ui-comun";
   import { onDestroy, onMount } from "svelte";
@@ -11,6 +11,7 @@
     alCerrar,
     app,
     avisar,
+    esTactil,
     politicaPegado,
     python,
     refrescarEstadisticas,
@@ -51,6 +52,32 @@
   let colaGuardado: Promise<unknown> = Promise.resolve();
   let temporizadorSintaxis: ReturnType<typeof setTimeout> | null = null;
   let salidaDesde = 0;
+
+  // Barra de teclas para pantallas táctiles: símbolos difíciles de alcanzar en el teclado del
+  // celular. Se insertan como tecleo normal (cuentan en el historial).
+  const tactil = esTactil();
+  const TECLAS: { etiqueta: string; texto?: string; accion?: AccionTecla; titulo?: string }[] = [
+    { etiqueta: "⇥", accion: "tab", titulo: "Sangría" },
+    ...[":", "(", ")", "[", "]", "{", "}", '"', "'", "=", "<", ">", "+", "-", "*", "/", "%", "#", "_", ",", "."].map((t) => ({ etiqueta: t, texto: t })),
+    { etiqueta: "←", accion: "izquierda", titulo: "Izquierda" },
+    { etiqueta: "→", accion: "derecha", titulo: "Derecha" },
+    { etiqueta: "↑", accion: "arriba", titulo: "Arriba" },
+    { etiqueta: "↓", accion: "abajo", titulo: "Abajo" },
+    { etiqueta: "↶", accion: "deshacer", titulo: "Deshacer" },
+  ];
+
+  function tecla(t: (typeof TECLAS)[number]) {
+    if (!editor) return;
+    if (t.texto) editor.teclear(t.texto);
+    else if (t.accion) editor.accion(t.accion);
+  }
+
+  /** En el celular, cambiar de app no siempre quita el foco a la ventana: cuenta como salida. */
+  function cambioDeVisibilidad() {
+    guardarPendiente();
+    if (document.hidden) alSalir();
+    else alVolver();
+  }
 
   function leer(clave: string) {
     try {
@@ -123,7 +150,7 @@
     window.addEventListener("focus", alVolver);
     window.addEventListener("keydown", teclas);
     window.addEventListener("pagehide", guardarPendiente);
-    document.addEventListener("visibilitychange", guardarPendiente);
+    document.addEventListener("visibilitychange", cambioDeVisibilidad);
   });
 
   function guardarPendiente() {
@@ -142,7 +169,7 @@
     window.removeEventListener("keydown", teclas);
     window.removeEventListener("pagehide", guardarPendiente);
     alCerrar.delete(antesDeCerrar);
-    document.removeEventListener("visibilitychange", guardarPendiente);
+    document.removeEventListener("visibilitychange", cambioDeVisibilidad);
     if (temporizadorSintaxis) clearTimeout(temporizadorSintaxis);
     if (python.ocupado) python.detener();
     editor?.destruir();
@@ -304,6 +331,15 @@
     <div class="editor" bind:this={contenedor} style:--editor-fuente="{fuente}px" data-editor>
       {#if errorCarga}<p class="error">{errorCarga}</p>{/if}
     </div>
+    {#if tactil}
+      <div class="barra-teclas" role="toolbar" aria-label="Teclas de código" data-barra-teclas>
+        {#each TECLAS as t (t.etiqueta)}
+          <!-- pointerdown sin foco: el teclado del celular sigue abierto -->
+          <button type="button" title={t.titulo ?? t.etiqueta} aria-label={t.titulo ?? t.etiqueta}
+            onpointerdown={(e) => e.preventDefault()} onmousedown={(e) => e.preventDefault()} onclick={() => tecla(t)}>{t.etiqueta}</button>
+        {/each}
+      </div>
+    {/if}
     <div class="inferior">
       <div class="tabs" role="tablist">
         <button role="tab" class:activa={pestana === "consola"} onclick={() => (pestana = "consola")}>Consola</button>
@@ -396,6 +432,24 @@
   .editor :global(.cm-editor) {
     height: 100%;
   }
+  .barra-teclas {
+    display: flex;
+    gap: 0.3rem;
+    overflow-x: auto;
+    padding: 0.1rem 0;
+    scrollbar-width: none;
+    flex: none;
+  }
+  .barra-teclas button {
+    flex: none;
+    min-width: 2.6rem;
+    min-height: 2.4rem;
+    padding: 0 0.5rem;
+    font-family: var(--fuente-codigo);
+    font-size: 1.05rem;
+    justify-content: center;
+    touch-action: manipulation;
+  }
   .inferior {
     flex: 2;
     min-height: 150px;
@@ -478,7 +532,8 @@
     [data-panel="codigo"] .inferior {
       display: none;
     }
-    [data-panel="salida"] .editor {
+    [data-panel="salida"] .editor,
+    [data-panel="salida"] .barra-teclas {
       display: none;
     }
   }

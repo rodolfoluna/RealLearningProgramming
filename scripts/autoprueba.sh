@@ -25,7 +25,7 @@ correr() {
     echo "FALLÓ: $app $fase"
     exit 1
   fi
-  echo "$salida" | grep '^AUTOPRUEBA' | sed 's/^AUTOPRUEBA //' | python3 -c '
+  echo "$salida" | grep '^AUTOPRUEBA' | sed 's/^AUTOPRUEBA //' | tee "$DIR/${fase%%@*}.json" | python3 -c '
 import json, sys
 r = json.load(sys.stdin)
 for p in r["pasos"]:
@@ -45,4 +45,12 @@ else
   correr rlp-alumno "$DIR/alumno" alumno
 fi
 correr rlp-profesor "$DIR/profesor" profesor-importar
+# El alumno entra con el archivo de acceso y lee la retroalimentación que exportó el profesor.
+siguiente=$(python3 -c '
+import json, os, sys
+r = json.load(open(sys.argv[1]))
+d = {p["paso"]: p.get("detalle") for p in r["pasos"]}
+print(d["archivo de acceso"]["temporal"] + "@" + os.path.basename(d["retroalimentación para el grupo"]["ruta"]))
+' "$DIR/profesor-importar.json")
+correr rlp-alumno "$DIR/alumno" "alumno-retro@$siguiente"
 echo "Autoprueba completa: OK"

@@ -15,6 +15,15 @@
     coprofesores: [],
   });
   let coprofes = $state("");
+  let qr = $state<{ grupo: GrupoInfo; svg: string } | null>(null);
+
+  async function mostrarQr(g: GrupoInfo) {
+    try {
+      qr = { grupo: g, svg: await (await backend()).qrGrupo(g.grupo_id) };
+    } catch (e) {
+      avisar(mensajeError(e), 6000);
+    }
+  }
 
   async function crear() {
     error = "";
@@ -80,6 +89,7 @@
         <div class="fila">
           <button onclick={() => exportar(g)}>💾 Guardar archivo de grupo</button>
           <button onclick={() => instalar(g)}>📁 Instalar en carpeta de la App Alumno</button>
+          <button onclick={() => mostrarQr(g)}>📱 QR para celulares</button>
           <button onclick={() => ((app.grupoId = g.grupo_id), (app.vista = { tipo: "tablero" }))}>📊 Ver tablero</button>
         </div>
       </div>
@@ -89,6 +99,20 @@
     <p class="suave llave">Tu llave pública (compártela con otro profesor para que te agregue a sus grupos):<br /><code>{app.estado.llave_cifrado}</code></p>
   {/if}
 </div>
+
+<Modal titulo={qr ? `QR del grupo ${qr.grupo.nombre}` : "QR del grupo"} abierto={qr !== null} cerrar={() => (qr = null)} ancho="520px">
+  {#if qr}
+    <!-- SVG generado por la App Profesor (Rust) a partir del grupo firmado. -->
+    <div class="qr" data-qr>{@html qr.svg}</div>
+    <p class="suave">
+      Proyecta este código en el salón. En la App Alumno del celular: <strong>📷 Escanear QR del grupo</strong> (o en el menú,
+      "Unirme con el QR del grupo"). El código contiene el mismo grupo firmado que el archivo <code>.rlpg</code>.
+    </p>
+  {/if}
+  {#snippet acciones()}
+    <button class="primario" onclick={() => (qr = null)}>Cerrar</button>
+  {/snippet}
+</Modal>
 
 <Modal titulo="Nuevo grupo" abierto={nuevo} cerrar={() => (nuevo = false)} ancho="600px">
   <form id="form-grupo" onsubmit={(e) => { e.preventDefault(); crear(); }}>
@@ -123,6 +147,17 @@
 </Modal>
 
 <style>
+  .qr {
+    display: flex;
+    justify-content: center;
+    background: #fff;
+    padding: 1rem;
+    border-radius: var(--radio);
+  }
+  .qr :global(svg) {
+    width: min(360px, 80vw);
+    height: auto;
+  }
   .grupos {
     padding: 1.2rem;
     max-width: 1100px;

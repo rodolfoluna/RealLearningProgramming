@@ -16,8 +16,18 @@ Revisar
     Verde    la entrega es íntegra: el código se reconstruye tecla a tecla desde su historial.
     Amarillo revisar: ráfagas de escritura imposibles, reloj alterado, compilación de desarrollo...
     Rojo     alterada o no verificable (historial roto, código que no sale de lo escrito, etc.).
-  En el detalle de cada alumno puedes ver su código, volver a correr las pruebas, calificar y
-  comentar. "Exportar CSV" genera una hoja para Excel.
+  En el detalle de cada alumno puedes ver su código, "Ver cómo lo escribió" (reproduce su
+  escritura tecla a tecla), volver a correr las pruebas, calificar y comentar.
+  "Exportar a Excel" genera un libro con Resumen, Actividades y Calificaciones.
+
+Retroalimentación para los alumnos
+  En el tablero, "Retroalimentación" crea un archivo .rlpr con las calificaciones y comentarios
+  de todo el grupo. Compártelo con todos: cada alumno solo puede abrir lo suyo (menú de su nombre
+  > "Importar retroalimentación del profesor").
+
+Alumno que olvidó su contraseña y su código de recuperación
+  En su detalle, "Archivo de acceso" crea un .rlpa y muestra una contraseña temporal. Dáselos al
+  alumno: en su app elige "Tengo un archivo de acceso de mi profesor".
 
 Datos
   Todo se guarda en la carpeta "datos_profesor" junto a la app. Funciona sin internet.

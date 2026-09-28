@@ -42,3 +42,47 @@ test("desbloquear, tablero, detalle con integridad y grupos", async ({ page }) =
   await page.getByRole("button", { name: "Crear grupo" }).click();
   await expect(page.getByRole("heading", { name: "Programación 1B" })).toBeVisible();
 });
+
+test("reproducir cómo se escribió el código", async ({ page }) => {
+  await page.goto("/?desbloqueado");
+  // Bruno tiene intentos de pegar: aparecen como marcas en la línea de tiempo.
+  await page.locator('tr[data-alumno="21340002"]').click();
+  await page.getByRole("tab", { name: /Actividades/ }).click();
+  await page.getByRole("button", { name: /Suma de dos números/ }).click();
+  await page.locator("[data-ver-reproduccion]").click();
+  const dialogo = page.getByRole("dialog");
+  await expect(dialogo.getByRole("heading", { name: /Cómo escribió: Suma de dos números/ })).toBeVisible();
+  await expect(dialogo.locator(".marca.pegado")).toHaveCount(1);
+  await dialogo.getByLabel("Velocidad").selectOption("100");
+  await dialogo.locator("[data-reproducir]").click();
+  await expect(dialogo.locator("[data-coincide]")).toBeVisible({ timeout: 30_000 });
+  await expect(dialogo.locator("[data-reproductor-visor] .cm-content")).toContainText("La suma es");
+  await page.screenshot({ path: `${capturas}/profesor-06-reproductor.png` });
+
+  // Saltar a la mitad reconstruye el texto parcial.
+  await dialogo.getByLabel("Posición en el historial").fill("0");
+  await expect(dialogo.locator("[data-coincide]")).toHaveCount(0);
+});
+
+test("retroalimentación para el grupo y archivo de acceso", async ({ page }) => {
+  await page.goto("/?desbloqueado");
+  await page.getByRole("button", { name: /Retroalimentación/ }).click();
+  await expect(page.getByText(/Aún no has calificado/)).toBeVisible();
+
+  await page.locator('tr[data-alumno="21340001"]').click();
+  await page.getByRole("tab", { name: /Actividades/ }).click();
+  await page.getByRole("button", { name: /Suma de dos números/ }).click();
+  await page.getByLabel("Calificación").fill("9");
+  await page.getByRole("button", { name: "Guardar" }).click();
+  await expect(page.getByText("Calificación guardada.")).toBeVisible();
+
+  await page.getByRole("button", { name: /Archivo de acceso/ }).click();
+  await page.getByRole("button", { name: "Crear archivo" }).click();
+  await expect(page.locator("[data-temporal]")).toHaveText("ABCD-EFGH-JKMN");
+  await page.screenshot({ path: `${capturas}/profesor-07-acceso.png` });
+  await page.getByRole("button", { name: "Listo" }).click();
+
+  await page.getByRole("button", { name: "← Tablero" }).click();
+  await page.getByRole("button", { name: /Retroalimentación/ }).click();
+  await expect(page.getByText(/Retroalimentación para 1 alumno/)).toBeVisible();
+});

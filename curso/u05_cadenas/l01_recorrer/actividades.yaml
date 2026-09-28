@@ -1,0 +1,176 @@
+- id: u5-contar-vocales
+  titulo: Contar vocales
+  tipo: codigo
+  enunciado: |
+    Escribe la función `contar_vocales(texto)` que devuelva cuántas vocales tiene el texto.
+    Cuenta mayúsculas, minúsculas y vocales con acento (`áéíóú`).
+
+    ```python
+    contar_vocales("Murciélago")   # 5
+    contar_vocales("Python")       # 1
+    ```
+  codigo_inicial: |
+    def contar_vocales(texto):
+        pass
+
+
+    print(contar_vocales("Murciélago"))
+  pistas:
+    - Recorre el texto con for y usa un contador.
+    - "Para no escribir todas las variantes: if letra.lower() in \"aeiouáéíóú\":"
+  pruebas:
+    - nombre: Murciélago
+      funcion: contar_vocales
+      args: ["Murciélago"]
+      esperado: 5
+    - nombre: Python
+      funcion: contar_vocales
+      args: ["Python"]
+      esperado: 1
+    - nombre: Mayúsculas
+      funcion: contar_vocales
+      args: ["HOLA MUNDO"]
+      esperado: 4
+    - nombre: Sin vocales
+      funcion: contar_vocales
+      args: ["xyz 123"]
+      esperado: 0
+    - nombre: Texto vacío
+      funcion: contar_vocales
+      args: [""]
+      esperado: 0
+      oculta: true
+  solucion: |
+    def contar_vocales(texto):
+        contador = 0
+        for letra in texto:
+            if letra.lower() in "aeiouáéíóú":
+                contador += 1
+        return contador
+
+
+    print(contar_vocales("Murciélago"))
+
+- id: u5-invertir
+  titulo: Texto al revés
+  tipo: codigo
+  enunciado: |
+    Escribe la función `invertir(texto)` que devuelva el texto al revés, **construyéndolo con
+    un ciclo**.
+
+    ```python
+    invertir("roma")     # "amor"
+    invertir("Python")   # "nohtyP"
+    ```
+  codigo_inicial: |
+    def invertir(texto):
+        pass
+
+
+    print(invertir("roma"))
+  pistas:
+    - Empieza con resultado = "".
+    - "Agrega cada letra al principio: resultado = letra + resultado"
+  pruebas:
+    - nombre: roma
+      funcion: invertir
+      args: ["roma"]
+      esperado: "amor"
+    - nombre: Python
+      funcion: invertir
+      args: ["Python"]
+      esperado: "nohtyP"
+    - nombre: Con espacios
+      funcion: invertir
+      args: ["hola mundo"]
+      esperado: "odnum aloh"
+    - nombre: Vacío
+      funcion: invertir
+      args: [""]
+      esperado: ""
+  solucion: |
+    def invertir(texto):
+        resultado = ""
+        for letra in texto:
+            resultado = letra + resultado
+        return resultado
+
+
+    print(invertir("roma"))
+
+- id: u5-palindromo
+  titulo: ¿Es palíndromo?
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Un **palíndromo** se lee igual al derecho y al revés. Escribe la función
+    `es_palindromo(frase)` que devuelva `True` si la frase es palíndromo, **sin importar
+    mayúsculas ni espacios**.
+
+    ```python
+    es_palindromo("Oso")                          # True
+    es_palindromo("Anita lava la tina")           # True
+    es_palindromo("Python")                       # False
+    ```
+  codigo_inicial: |
+    def es_palindromo(frase):
+        pass
+
+
+    print(es_palindromo("Anita lava la tina"))
+  pistas:
+    - Primero construye una versión "limpia" en minúsculas y sin espacios.
+    - "Compara la versión limpia con su inversa. limpia[::-1] da la cadena al revés."
+  pruebas:
+    - nombre: Oso
+      funcion: es_palindromo
+      args: ["Oso"]
+      esperado: true
+    - nombre: Anita lava la tina
+      funcion: es_palindromo
+      args: ["Anita lava la tina"]
+      esperado: true
+    - nombre: Python
+      funcion: es_palindromo
+      args: ["Python"]
+      esperado: false
+    - nombre: Casi palíndromo
+      funcion: es_palindromo
+      args: ["Anita lava la tinas"]
+      esperado: false
+    - nombre: Otra frase
+      funcion: es_palindromo
+      args: ["Luz azul"]
+      esperado: true
+      oculta: true
+  solucion: |
+    def es_palindromo(frase):
+        limpia = ""
+        for letra in frase.lower():
+            if letra != " ":
+                limpia += letra
+        return limpia == limpia[::-1]
+
+
+    print(es_palindromo("Anita lava la tina"))
+
+- id: u5-predice-recorrido
+  titulo: Recorrido con posiciones
+  tipo: prediccion
+  enunciado: ¿Qué muestra este programa?
+  codigo: |
+    palabra = "casa"
+    resultado = ""
+    for i in range(len(palabra)):
+        if i % 2 == 0:
+            resultado += palabra[i].upper()
+        else:
+            resultado += palabra[i]
+    print(resultado)
+    print("s" in palabra, "z" in palabra)
+  salida_esperada: |
+    CaSa
+    True False
+  explicacion: |
+    Las posiciones pares (0 y 2) se agregan en mayúscula y las impares (1 y 3) igual. Luego `in`
+    revisa si cada letra aparece en la palabra.

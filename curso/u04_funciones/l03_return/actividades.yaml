@@ -1,0 +1,201 @@
+- id: u4-area-circulo
+  titulo: Área de un círculo
+  tipo: codigo
+  enunciado: |
+    Escribe la función `area_circulo(radio)` que **devuelva** el área de un círculo
+    (π × radio²). Usa `math.pi`. No muestres nada: solo devuelve el valor.
+
+    Por ejemplo, `area_circulo(1)` devuelve `3.141592653589793`.
+  codigo_inicial: |
+    import math
+
+
+    def area_circulo(radio):
+        pass  # Reemplaza esta línea
+
+
+    print(area_circulo(2))
+  pistas:
+    - "return math.pi * radio ** 2"
+  pruebas:
+    - nombre: Radio 1
+      funcion: area_circulo
+      args: [1]
+      esperado: 3.141592653589793
+    - nombre: Radio 2.5
+      funcion: area_circulo
+      args: [2.5]
+      esperado: 19.634954084936208
+    - nombre: Radio 0
+      funcion: area_circulo
+      args: [0]
+      esperado: 0.0
+  solucion: |
+    import math
+
+
+    def area_circulo(radio):
+        return math.pi * radio ** 2
+
+
+    print(area_circulo(2))
+
+- id: u4-es-par
+  titulo: ¿Es par?
+  tipo: codigo
+  enunciado: |
+    Escribe la función `es_par(n)` que devuelva `True` si `n` es par y `False` si no lo es.
+
+    ```python
+    es_par(4)    # True
+    es_par(7)    # False
+    ```
+  codigo_inicial: |
+    def es_par(n):
+        pass  # Reemplaza esta línea
+
+
+    if es_par(10):
+        print("10 es par")
+  pistas:
+    - Un número es par si el residuo de dividirlo entre 2 es 0.
+    - "La comparación n % 2 == 0 ya es True o False: puedes devolverla directamente."
+  pruebas:
+    - nombre: 4 es par
+      funcion: es_par
+      args: [4]
+      esperado: true
+    - nombre: 7 no es par
+      funcion: es_par
+      args: [7]
+      esperado: false
+    - nombre: 0 es par
+      funcion: es_par
+      args: [0]
+      esperado: true
+    - nombre: Negativos
+      funcion: es_par
+      args: [-3]
+      esperado: false
+      oculta: true
+  solucion: |
+    def es_par(n):
+        return n % 2 == 0
+
+
+    if es_par(10):
+        print("10 es par")
+
+- id: u4-corrige-print-return
+  titulo: Corrige el promedio
+  tipo: codigo
+  enunciado: |
+    Este programa debería mostrar `Aprobado`, pero termina con un error:
+    `TypeError: '>=' not supported between instances of 'NoneType' and 'int'`.
+
+    Corrige la función `promedio(a, b, c)` para que **devuelva** el promedio de los tres números
+    en lugar de mostrarlo.
+  codigo_inicial: |
+    def promedio(a, b, c):
+        print((a + b + c) / 3)
+
+
+    resultado = promedio(80, 90, 100)
+    if resultado >= 70:
+        print("Aprobado")
+  pistas:
+    - "El error dice que resultado es None: la función no devuelve nada."
+    - Cambia print(...) por return ...
+  pruebas:
+    - nombre: Promedio de 80, 90 y 100
+      funcion: promedio
+      args: [80, 90, 100]
+      esperado: 90.0
+    - nombre: Promedio de 70, 80 y 60
+      funcion: promedio
+      args: [70, 80, 60]
+      esperado: 70.0
+    - nombre: El programa muestra Aprobado
+      salida: "Aprobado"
+  solucion: |
+    def promedio(a, b, c):
+        return (a + b + c) / 3
+
+
+    resultado = promedio(80, 90, 100)
+    if resultado >= 70:
+        print("Aprobado")
+
+- id: u4-mayor-de-tres
+  titulo: El mayor de tres
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Escribe la función `mayor(a, b, c)` que devuelva el mayor de los tres números **sin usar**
+    la función `max()`.
+  codigo_inicial: |
+    def mayor(a, b, c):
+        pass  # Reemplaza esta línea
+
+
+    print(mayor(3, 9, 5))
+  pistas:
+    - Empieza suponiendo que el mayor es a; luego compara con b y con c.
+    - "mayor_hasta_ahora = a; if b > mayor_hasta_ahora: mayor_hasta_ahora = b ..."
+  pruebas:
+    - nombre: El mayor en medio
+      funcion: mayor
+      args: [3, 9, 5]
+      esperado: 9
+    - nombre: El mayor al principio
+      funcion: mayor
+      args: [10, 2, 7]
+      esperado: 10
+    - nombre: El mayor al final
+      funcion: mayor
+      args: [1, 2, 3]
+      esperado: 3
+    - nombre: Negativos
+      funcion: mayor
+      args: [-5, -2, -9]
+      esperado: -2
+    - nombre: Repetidos
+      funcion: mayor
+      args: [4, 4, 1]
+      esperado: 4
+      oculta: true
+  solucion: |
+    def mayor(a, b, c):
+        resultado = a
+        if b > resultado:
+            resultado = b
+        if c > resultado:
+            resultado = c
+        return resultado
+
+
+    print(mayor(3, 9, 5))
+
+- id: u4-predice-none
+  titulo: ¿Devuelve o muestra?
+  tipo: prediccion
+  enunciado: ¿Qué muestra este programa?
+  codigo: |
+    def doble(x):
+        return x * 2
+
+    def mostrar_doble(x):
+        print(x * 2)
+
+    a = doble(4)
+    b = mostrar_doble(4)
+    print(a, b)
+    print(doble(doble(3)))
+  salida_esperada: |
+    8
+    8 None
+    12
+  explicacion: |
+    `doble(4)` no muestra nada: devuelve 8 y se guarda en `a`. `mostrar_doble(4)` **muestra**
+    8 pero no devuelve nada, así que `b` vale `None`. En la última línea, `doble(3)` devuelve 6 y
+    `doble(6)` devuelve 12.

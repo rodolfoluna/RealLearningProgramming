@@ -8,7 +8,9 @@ import type {
   EstadoApp,
   Estadisticas,
   GrupoInfo,
+  InfoAcceso,
   ResultadoGuardado,
+  Retroalimentacion,
   ResumenImportacion,
   Secreto,
 } from "./tipos";
@@ -18,8 +20,14 @@ export interface Backend {
   /** Abre un diálogo para elegir un archivo; devuelve la ruta o null. */
   elegirArchivo(titulo: string, extension: string, nombreFiltro: string): Promise<string | null>;
   elegirCarpeta(titulo: string): Promise<string | null>;
+  /** Diálogo "Guardar como" (en Android devuelve una URI content://). */
+  elegirDestino(titulo: string, nombre: string): Promise<string | null>;
+  /** Escanea un código QR con la cámara (solo celular). */
+  escanearQr(): Promise<string | null>;
   abrirCarpeta(ruta: string): Promise<void>;
   importarGrupo(ruta: string): Promise<GrupoInfo>;
+  importarGrupoQr(contenido: string): Promise<GrupoInfo>;
+  unirseGrupoQr(contenido: string): Promise<GrupoInfo>;
   registrar(numeroControl: string, nombre: string, contrasena: string): Promise<{ estado: EstadoAlumno; codigo: string }>;
   iniciarSesion(carpeta: string, secreto: Secreto): Promise<EstadoAlumno>;
   restaurar(ruta: string, secreto: Secreto): Promise<EstadoAlumno>;
@@ -34,7 +42,14 @@ export interface Backend {
   registrarPista(id: string, numero: number): Promise<EstadoActividad>;
   registrarEvento(tipo: string, actividad: string | null, datos: Record<string, unknown>): Promise<void>;
   exportar(carpeta: string): Promise<string>;
+  /** Exporta al archivo elegido con `elegirDestino`; devuelve el nombre de la entrega. */
+  exportarA(destino: string): Promise<string>;
   importarAvances(ruta: string): Promise<ResumenImportacion>;
+  importarRetroalimentacion(ruta: string): Promise<Retroalimentacion>;
+  /** Lee un archivo de acceso del profesor (comprueba su firma). */
+  leerAcceso(ruta: string): Promise<InfoAcceso>;
+  /** Entra con el archivo de acceso; `rutaEntrega` solo si el perfil no está en esta carpeta. */
+  entrarConAcceso(rutaAcceso: string, temporal: string, nueva: string, rutaEntrega: string | null): Promise<EstadoAlumno>;
   cambiarContrasena(actual: string, nueva: string): Promise<void>;
   unirseGrupo(ruta: string): Promise<GrupoInfo>;
   generarEjecutable(nombre: string, codigo: string, alProgreso: (linea: string) => void): Promise<string>;

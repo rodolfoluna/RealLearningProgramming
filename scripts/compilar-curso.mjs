@@ -51,6 +51,14 @@ function actividad(a, donde) {
       if (p.funcion === undefined && p.salida === undefined) errores.push(`${d}: prueba ${i + 1} sin "salida" ni "funcion"`);
       if (p.modo && !MODOS.has(p.modo)) errores.push(`${d}: prueba ${i + 1} con modo inválido "${p.modo}"`);
       if (p.entrada !== undefined) p.entrada = String(p.entrada);
+      if (p.funcion !== undefined) {
+        if (p.args !== undefined && !Array.isArray(p.args)) errores.push(`${d}: prueba ${i + 1}: "args" debe ser una lista`);
+        if (p.kwargs !== undefined && (typeof p.kwargs !== "object" || Array.isArray(p.kwargs) || p.kwargs === null)) {
+          errores.push(`${d}: prueba ${i + 1}: "kwargs" debe ser un diccionario`);
+        }
+      } else if (p.args !== undefined || p.kwargs !== undefined || p.esperado !== undefined) {
+        errores.push(`${d}: prueba ${i + 1}: "args", "kwargs" y "esperado" solo van en pruebas de función`);
+      }
     }
   } else if (a.tipo === "prediccion") {
     act.codigo = a.codigo;

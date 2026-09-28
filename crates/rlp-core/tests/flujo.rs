@@ -317,6 +317,245 @@ fn continuar_en_otro_dispositivo_y_volver() {
     assert!(SesionAlumno::restaurar(otro.path(), &archivo3, &contrasena("mala"), kdf()).is_err());
 }
 
+#[test]
+fn reproduccion_de_la_escritura_en_varios_dispositivos() {
+    let pc = TempDir::new().unwrap();
+    let cel = TempDir::new().unwrap();
+    let (profe, grupo) = profesor_y_grupo();
+    let (mut s, _) = SesionAlumno::registrar(
+        pc.path(),
+        "21340006",
+        "Eva Ríos",
+        "clave-eva",
+        Some(&grupo),
+        kdf(),
+    )
+    .unwrap();
+    escribir(&mut s, "u1-a1", "n = 3\n");
+    s.registrar_evento("pegado", Some("u1-a1"), json!({"permitido": false}))
+        .unwrap();
+    s.registrar_evento("copia", Some("u1-a2"), json!({}))
+        .unwrap();
+    let (_, archivo1) = s.exportar().unwrap();
+    let mut c =
+        SesionAlumno::restaurar(cel.path(), &archivo1, &contrasena("clave-eva"), kdf()).unwrap();
+    escribir(&mut c, "u1-a1", "print(n * 2)\n");
+    let (_, archivo2) = c.exportar().unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(5));
+    s.importar(&archivo2).unwrap();
+    escribir(&mut s, "u1-a1", "# listo\n");
+    let (_, archivo3) = s.exportar().unwrap();
+    let e = abrir_entrega(&archivo3, &profe, &ctx()).unwrap();
+    let p = e.payload.unwrap();
+
+    let linea = rlp_core::reproduccion::linea_de_tiempo(&p, "u1-a1").unwrap();
+    assert!(linea.avisos.is_empty(), "{:?}", linea.avisos);
+    let motivos: Vec<&str> = linea.tramos.iter().map(|t| t.motivo.as_str()).collect();
+    assert_eq!(motivos, ["inicio", "continuacion", "continuacion"]);
+    assert_eq!(linea.tramos[0].texto_inicial.as_deref(), Some(INICIAL));
+    // Cada tramo, reproducido desde su texto inicial, termina donde empieza el siguiente.
+    let mut anterior: Option<String> = None;
+    for t in &linea.tramos {
+        let inicio = t.texto_inicial.clone().expect("texto inicial resuelto");
+        if let Some(a) = &anterior {
+            assert_eq!(&inicio, a);
+        }
+        let ops: Vec<_> = t
+            .ops
+            .iter()
+            .map(
+                |(_, desde, hasta, insertado, origen)| rlp_core::replay::OpEdicion {
+                    dt: 0,
+                    desde: *desde,
+                    hasta: *hasta,
+                    insertado: insertado.clone(),
+                    origen: *origen,
+                },
+            )
+            .collect();
+        anterior = Some(rlp_core::replay::aplicar(&inicio, &ops).unwrap());
+        assert!(
+            t.ops.windows(2).all(|w| w[0].0 <= w[1].0),
+            "tiempos en orden"
+        );
+    }
+    assert_eq!(anterior.as_deref(), Some(linea.codigo_final.as_str()));
+    assert_eq!(
+        linea.codigo_final,
+        format!("{INICIAL}n = 3\nprint(n * 2)\n# listo\n")
+    );
+    // Solo las marcas de esta actividad.
+    let tipos: Vec<&str> = linea.marcas.iter().map(|m| m.tipo.as_str()).collect();
+    assert_eq!(tipos, ["pegado"]);
+
+    let vacia = rlp_core::reproduccion::linea_de_tiempo(&p, "u1-a9").unwrap();
+    assert!(vacia.tramos.is_empty() && vacia.marcas.is_empty());
+}
+
+// ------------------------------------------------------------------ profesor → alumno
+
+fn alumno_con_entrega(
+    dir: &std::path::Path,
+    grupo: &GrupoFirmado,
+    control: &str,
+    nombre: &str,
+    clave: &str,
+) -> (SesionAlumno, Vec<u8>) {
+    let (mut s, _) =
+        SesionAlumno::registrar(dir, control, nombre, clave, Some(grupo), kdf()).unwrap();
+    escribir(&mut s, "u1-a1", "print('hola')\n");
+    let (_, bytes) = s.exportar().unwrap();
+    (s, bytes)
+}
+
+fn cambiar_contenido(archivo: &[u8], de: &str, a: &str) -> Vec<u8> {
+    let mut v: serde_json::Value = serde_json::from_slice(archivo).unwrap();
+    let c = v["contenido"].as_str().unwrap().replace(de, a);
+    v["contenido"] = serde_json::Value::String(c);
+    serde_json::to_vec(&v).unwrap()
+}
+
+#[test]
+fn retroalimentacion_firmada_y_cifrada_por_alumno() {
+    let dir = TempDir::new().unwrap();
+    let (profe, grupo) = profesor_y_grupo();
+    let (mut ana, entrega_ana) =
+        alumno_con_entrega(dir.path(), &grupo, "21340010", "Ana Paz", "clave-ana-1");
+    let (mut beto, entrega_beto) =
+        alumno_con_entrega(dir.path(), &grupo, "21340011", "Beto Luna", "clave-beto-1");
+    let bd = BdProfesor::abrir(&dir.path().join("profesor.db")).unwrap();
+    for archivo in [&entrega_ana, &entrega_beto] {
+        bd.registrar_entrega(&abrir_entrega(archivo, &profe, &ctx()).unwrap())
+            .unwrap();
+    }
+    let id_ana = ana.perfil().perfil_id.clone();
+    let id_beto = beto.perfil().perfil_id.clone();
+    bd.calificar(&id_ana, "u1-a1", Some(9.5), "¡Muy bien!")
+        .unwrap();
+    bd.calificar(&id_beto, "u1-a1", Some(7.0), "Revisa los nombres")
+        .unwrap();
+
+    let (archivo, n) = rlp_core::retroalimentacion::crear_desde_bd(&profe, &bd, None).unwrap();
+    assert_eq!(n, 2);
+    // El contenido firmado no trae calificaciones ni comentarios en claro.
+    let texto = String::from_utf8_lossy(&archivo);
+    assert!(!texto.contains("Muy bien") && !texto.contains("Revisa"));
+
+    let r = ana.importar_retroalimentacion(&archivo).unwrap();
+    assert_eq!(r.actividades["u1-a1"].calificacion, Some(9.5));
+    assert_eq!(r.actividades["u1-a1"].comentario, "¡Muy bien!");
+    let r = beto.importar_retroalimentacion(&archivo).unwrap();
+    assert_eq!(r.actividades["u1-a1"].comentario, "Revisa los nombres");
+    assert_eq!(
+        ana.estado().unwrap().retroalimentacion.unwrap().profesor,
+        "Profa. Martínez"
+    );
+
+    // Alterada: la firma ya no coincide.
+    let alterado = cambiar_contenido(&archivo, "Profa. Martínez", "Otra persona");
+    assert!(ana.importar_retroalimentacion(&alterado).is_err());
+
+    // Otro profesor (de otro grupo) no puede enviarle retroalimentación a Ana.
+    let (otro, _) = profesor_y_grupo();
+    let falsa = rlp_core::retroalimentacion::crear(&otro, None, &[]).unwrap();
+    let e = ana
+        .importar_retroalimentacion(&falsa)
+        .unwrap_err()
+        .to_string();
+    assert!(e.contains("profesor de tu grupo"), "{e}");
+
+    // Una retroalimentación vieja no reemplaza a una nueva.
+    std::thread::sleep(std::time::Duration::from_millis(5));
+    bd.calificar(&id_ana, "u1-a1", Some(10.0), "Corregido")
+        .unwrap();
+    let (nuevo, _) = rlp_core::retroalimentacion::crear_desde_bd(&profe, &bd, None).unwrap();
+    ana.importar_retroalimentacion(&nuevo).unwrap();
+    assert!(ana.importar_retroalimentacion(&archivo).is_err());
+
+    // Se conserva (cifrada) al volver a entrar.
+    let carpeta = ana.carpeta().to_path_buf();
+    ana.cerrar().unwrap();
+    let ana = SesionAlumno::abrir(&carpeta, &contrasena("clave-ana-1"), kdf()).unwrap();
+    let r = ana.retroalimentacion().unwrap().unwrap();
+    assert_eq!(r.actividades["u1-a1"].calificacion, Some(10.0));
+}
+
+#[test]
+fn archivo_de_acceso_del_profesor() {
+    let dir = TempDir::new().unwrap();
+    let (profe, grupo) = profesor_y_grupo();
+    let (s, entrega_bytes) =
+        alumno_con_entrega(dir.path(), &grupo, "21340012", "Caro Sol", "clave-olvidada");
+    let (_, otra_entrega) =
+        alumno_con_entrega(dir.path(), &grupo, "21340013", "Dani Mar", "clave-dani-1");
+    let carpeta = s.carpeta().to_path_buf();
+    s.cerrar().unwrap();
+    let e = abrir_entrega(&entrega_bytes, &profe, &ctx()).unwrap();
+    let (archivo, temporal) =
+        rlp_core::acceso::crear(&profe, &e.manifiesto, "21340012", "Caro Sol", &kdf()).unwrap();
+    let archivo = String::from_utf8(archivo).unwrap();
+    let acceso = |temporal: &str, archivo: &str| Secreto::Acceso {
+        archivo: archivo.to_string(),
+        temporal: temporal.to_string(),
+        nueva_contrasena: "clave-nueva-1".into(),
+    };
+
+    // Contraseña temporal equivocada o archivo alterado: no entra.
+    assert!(SesionAlumno::abrir(&carpeta, &acceso("AAAA-AAAA-AAAA", &archivo), kdf()).is_err());
+    let alterado =
+        String::from_utf8(cambiar_contenido(archivo.as_bytes(), "Caro Sol", "Otra")).unwrap();
+    assert!(SesionAlumno::abrir(&carpeta, &acceso(&temporal, &alterado), kdf()).is_err());
+
+    // No sirve para otro alumno.
+    let e_dani = abrir_entrega(&otra_entrega, &profe, &ctx()).unwrap();
+    let carpeta_dani = dir.path().join(&e_dani.manifiesto.perfil_id);
+    let err = SesionAlumno::abrir(&carpeta_dani, &acceso(&temporal, &archivo), kdf())
+        .err()
+        .unwrap()
+        .to_string();
+    assert!(err.contains("otro alumno"), "{err}");
+
+    // Con el archivo correcto entra, fija contraseña nueva y recibe un código nuevo.
+    let temporal_minusculas = temporal.to_lowercase().replace('-', " ");
+    let mut s =
+        SesionAlumno::abrir(&carpeta, &acceso(&temporal_minusculas, &archivo), kdf()).unwrap();
+    let codigo = s
+        .tomar_codigo_nuevo()
+        .expect("código de recuperación nuevo");
+    assert!(s.tomar_codigo_nuevo().is_none(), "se entrega una sola vez");
+    s.cerrar().unwrap();
+    assert!(SesionAlumno::abrir(&carpeta, &contrasena("clave-olvidada"), kdf()).is_err());
+    SesionAlumno::abrir(&carpeta, &contrasena("clave-nueva-1"), kdf())
+        .unwrap()
+        .cerrar()
+        .unwrap();
+    SesionAlumno::abrir(
+        &carpeta,
+        &Secreto::Codigo {
+            codigo,
+            nueva_contrasena: "clave-nueva-2".into(),
+        },
+        kdf(),
+    )
+    .unwrap();
+
+    // En otro equipo: restaurar su entrega con el mismo archivo de acceso.
+    let otro_equipo = TempDir::new().unwrap();
+    let mut r = SesionAlumno::restaurar(
+        otro_equipo.path(),
+        &entrega_bytes,
+        &acceso(&temporal, &archivo),
+        kdf(),
+    )
+    .unwrap();
+    assert!(r.tomar_codigo_nuevo().is_some());
+    assert_eq!(r.perfil().numero_control, "21340012");
+
+    // Un profesor que no puede abrir la entrega tampoco puede crear un acceso.
+    let (otro, _) = profesor_y_grupo();
+    assert!(rlp_core::acceso::crear(&otro, &e.manifiesto, "21340012", "Caro Sol", &kdf()).is_err());
+}
+
 // ------------------------------------------------------------------ manipulaciones
 
 fn reescribir_zip(bytes: &[u8], cambiar: impl Fn(&str, Vec<u8>) -> Vec<u8>) -> Vec<u8> {
@@ -581,4 +820,42 @@ fn historial_grande_se_verifica_rapido() {
         "3000 lotes: exportar + verificar en {transcurrido:?} ({} KB)",
         bytes.len() / 1024
     );
+}
+
+#[cfg(feature = "excel")]
+#[test]
+fn exportar_a_excel() {
+    let (dir, profe, _s, archivo) = entrega_base();
+    let e = abrir_entrega(&archivo, &profe, &ctx()).unwrap();
+    let bd = BdProfesor::abrir(&dir.path().join("profesor.db")).unwrap();
+    let reg = bd.registrar_entrega(&e).unwrap();
+    let perfil = e.manifiesto.perfil_id.clone();
+    bd.calificar(&perfil, "u1-a1", Some(9.5), "Bien, revisa la sangría")
+        .unwrap();
+    let actividades = vec![
+        ("u1-a1".to_string(), "Actividad uno".to_string()),
+        ("u1-a2".to_string(), "Actividad dos".to_string()),
+    ];
+    let bytes = rlp_core::excel::exportar_xlsx(&bd, None, &actividades).unwrap();
+
+    let mut zip = zip::ZipArchive::new(Cursor::new(bytes)).unwrap();
+    let mut leer = |nombre: &str| {
+        let mut s = String::new();
+        zip.by_name(nombre).unwrap().read_to_string(&mut s).unwrap();
+        s
+    };
+    let libro = leer("xl/workbook.xml");
+    for hoja in ["Resumen", "Actividades", "Calificaciones"] {
+        assert!(
+            libro.contains(&format!("name=\"{hoja}\"")),
+            "falta la hoja {hoja}"
+        );
+    }
+    let textos = leer("xl/sharedStrings.xml");
+    assert!(textos.contains(&reg.nombre) && textos.contains(&reg.numero_control));
+    assert!(textos.contains("Actividad uno"));
+    let calif = leer("xl/worksheets/sheet3.xml");
+    assert!(calif.contains("<v>9.5</v>"), "calificación capturada");
+    assert!(calif.contains("AVERAGE"), "promedio con fórmula");
+    assert!(leer("xl/comments1.xml").contains("revisa la sangría"));
 }

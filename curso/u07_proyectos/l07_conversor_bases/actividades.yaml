@@ -1,0 +1,132 @@
+- id: u7-conversor-bases
+  titulo: Conversor decimal ↔ binario
+  tipo: codigo
+  dificultad: 3
+  puntos: 25
+  enunciado: |
+    **Funciones** (sin usar `bin()` ni `int(texto, 2)`):
+
+    - `a_binario(n)`: recibe un entero `n >= 0` y devuelve su representación binaria como cadena.
+    - `a_decimal(binario)`: recibe una cadena de ceros y unos y devuelve el entero.
+    - `es_binario(texto)`: `True` si el texto no está vacío y solo tiene `0` y `1`.
+
+    **Menú** (hasta elegir `3`):
+
+    ```texto
+    1) Decimal a binario
+    2) Binario a decimal
+    3) Salir
+    ```
+
+    1. Pide `Número decimal: `; si no son solo dígitos muestra `Número inválido`; si no,
+       `En binario: 1011`.
+    2. Pide `Número binario: `; si no es binario muestra `Eso no es binario`; si no,
+       `En decimal: 11`.
+    3. Muestra `Hasta luego`.
+  codigo_inicial: |
+    def a_binario(n):
+        pass
+
+
+    def a_decimal(binario):
+        pass
+
+
+    def es_binario(texto):
+        pass
+
+
+    # Programa principal
+  pistas:
+    - "a_binario: while n > 0: resultado = str(n % 2) + resultado; n = n // 2 (y el 0 aparte)."
+    - "a_decimal: for digito in binario: valor = valor * 2 + int(digito)"
+    - "es_binario: revisa len(texto) > 0 y que cada carácter esté en \"01\"."
+  pruebas:
+    - nombre: a_binario(11)
+      funcion: a_binario
+      args: [11]
+      esperado: "1011"
+    - nombre: a_binario(0)
+      funcion: a_binario
+      args: [0]
+      esperado: "0"
+    - nombre: a_binario(255)
+      funcion: a_binario
+      args: [255]
+      esperado: "11111111"
+    - nombre: a_decimal("1011")
+      funcion: a_decimal
+      args: ["1011"]
+      esperado: 11
+    - nombre: a_decimal("100000")
+      funcion: a_decimal
+      args: ["100000"]
+      esperado: 32
+    - nombre: es_binario
+      funcion: es_binario
+      args: ["10102"]
+      esperado: false
+    - nombre: es_binario vacío
+      funcion: es_binario
+      args: [""]
+      esperado: false
+    - nombre: es_binario correcto
+      funcion: es_binario
+      args: ["0110"]
+      esperado: true
+    - nombre: Programa completo
+      entrada: "1\n10\n2\n1111\n3\n"
+      salida: ["En binario: 1010", "En decimal: 15", "Hasta luego"]
+    - nombre: Datos inválidos
+      entrada: "1\ndiez\n2\n1021\n3\n"
+      salida: ["Número inválido", "Eso no es binario", "Hasta luego"]
+  solucion: |
+    def a_binario(n):
+        if n == 0:
+            return "0"
+        resultado = ""
+        while n > 0:
+            resultado = str(n % 2) + resultado
+            n = n // 2
+        return resultado
+
+
+    def a_decimal(binario):
+        valor = 0
+        for digito in binario:
+            valor = valor * 2 + int(digito)
+        return valor
+
+
+    def es_binario(texto):
+        if len(texto) == 0:
+            return False
+        for c in texto:
+            if c not in "01":
+                return False
+        return True
+
+
+    # Programa principal
+    opcion = ""
+    while opcion != "3":
+        print("1) Decimal a binario")
+        print("2) Binario a decimal")
+        print("3) Salir")
+        opcion = input("Opción: ")
+        if opcion == "1":
+            texto = input("Número decimal: ")
+            if texto.isdigit():
+                print("En binario:", a_binario(int(texto)))
+            else:
+                print("Número inválido")
+        elif opcion == "2":
+            texto = input("Número binario: ")
+            if es_binario(texto):
+                print("En decimal:", a_decimal(texto))
+            else:
+                print("Eso no es binario")
+        elif opcion == "3":
+            print("Hasta luego")
+        else:
+            print("Opción no válida")

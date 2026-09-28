@@ -1,0 +1,162 @@
+- id: u6-predice-rebanadas
+  titulo: Rebanadas
+  tipo: prediccion
+  enunciado: ¿Qué muestra este programa?
+  codigo: |
+    numeros = [10, 20, 30, 40, 50, 60]
+    print(numeros[1:4])
+    print(numeros[:2] + numeros[-2:])
+    print(numeros[::3])
+    a, b = numeros[0], numeros[-1]
+    print(a + b)
+  salida_esperada: |
+    [20, 30, 40]
+    [10, 20, 50, 60]
+    [10, 40]
+    70
+  explicacion: |
+    `[1:4]` toma las posiciones 1, 2 y 3. `[:2]` son los dos primeros y `[-2:]` los dos últimos;
+    `+` une las dos listas. `[::3]` toma una de cada tres posiciones (0 y 3). Por último se
+    desempacan el primero y el último.
+
+- id: u6-rotar
+  titulo: Rotar una lista
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Escribe la función `rotar(lista, k)` que devuelva una lista nueva con los elementos
+    **recorridos k lugares a la derecha**: los últimos pasan al principio.
+
+    ```python
+    rotar([1, 2, 3, 4, 5], 2)    # [4, 5, 1, 2, 3]
+    rotar([1, 2, 3], 4)          # [3, 1, 2]   (4 lugares = 1 vuelta completa + 1)
+    ```
+
+    Si la lista está vacía, devuelve `[]`.
+  codigo_inicial: |
+    def rotar(lista, k):
+        pass
+
+
+    print(rotar([1, 2, 3, 4, 5], 2))
+  pistas:
+    - Los últimos k elementos son lista[-k:] y el resto lista[:-k].
+    - "Para que k no sea mayor que la lista: k = k % len(lista) (¡después de revisar que no esté vacía!)."
+    - "Cuidado con k = 0: lista[-0:] es toda la lista. Revisa ese caso aparte o usa lista[len(lista) - k:]."
+  pruebas:
+    - nombre: Dos lugares
+      funcion: rotar
+      args: [[1, 2, 3, 4, 5], 2]
+      esperado: [4, 5, 1, 2, 3]
+    - nombre: Más que el tamaño
+      funcion: rotar
+      args: [[1, 2, 3], 4]
+      esperado: [3, 1, 2]
+    - nombre: Cero lugares
+      funcion: rotar
+      args: [["a", "b", "c"], 0]
+      esperado: ["a", "b", "c"]
+    - nombre: Una vuelta completa
+      funcion: rotar
+      args: [[1, 2, 3], 3]
+      esperado: [1, 2, 3]
+    - nombre: Lista vacía
+      funcion: rotar
+      args: [[], 3]
+      esperado: []
+  solucion: |
+    def rotar(lista, k):
+        if len(lista) == 0:
+            return []
+        k = k % len(lista)
+        corte = len(lista) - k
+        return lista[corte:] + lista[:corte]
+
+
+    print(rotar([1, 2, 3, 4, 5], 2))
+
+- id: u6-cuadrados
+  titulo: Lista de cuadrados
+  tipo: codigo
+  enunciado: |
+    Escribe la función `cuadrados(n)` que devuelva la lista de los cuadrados del 1 al `n`.
+    Intenta hacerlo con una lista por comprensión.
+
+    ```python
+    cuadrados(5)    # [1, 4, 9, 16, 25]
+    ```
+  codigo_inicial: |
+    def cuadrados(n):
+        pass
+
+
+    print(cuadrados(5))
+  pistas:
+    - "[i ** 2 for i in range(1, n + 1)]"
+  pruebas:
+    - nombre: Hasta 5
+      funcion: cuadrados
+      args: [5]
+      esperado: [1, 4, 9, 16, 25]
+    - nombre: Hasta 1
+      funcion: cuadrados
+      args: [1]
+      esperado: [1]
+    - nombre: Cero
+      funcion: cuadrados
+      args: [0]
+      esperado: []
+  solucion: |
+    def cuadrados(n):
+        return [i ** 2 for i in range(1, n + 1)]
+
+
+    print(cuadrados(5))
+
+- id: u6-min-max
+  titulo: Menor y mayor a la vez
+  tipo: codigo
+  enunciado: |
+    Escribe la función `min_max(numeros)` que devuelva una **tupla** `(menor, mayor)` recorriendo
+    la lista **una sola vez** (sin `min`, `max` ni `sort`). La lista tiene al menos un elemento.
+
+    ```python
+    menor, mayor = min_max([7, 2, 9, 4])
+    print(menor, mayor)    # 2 9
+    ```
+  codigo_inicial: |
+    def min_max(numeros):
+        pass
+
+
+    menor, mayor = min_max([7, 2, 9, 4])
+    print(menor, mayor)
+  pistas:
+    - Empieza con menor = mayor = numeros[0].
+    - "En el ciclo actualiza cada uno; al final: return menor, mayor"
+  pruebas:
+    - nombre: Ejemplo
+      funcion: min_max
+      args: [[7, 2, 9, 4]]
+      esperado: [2, 9]
+    - nombre: Negativos
+      funcion: min_max
+      args: [[-3, -10, -1]]
+      esperado: [-10, -1]
+    - nombre: Un elemento
+      funcion: min_max
+      args: [[5]]
+      esperado: [5, 5]
+  solucion: |
+    def min_max(numeros):
+        menor = mayor = numeros[0]
+        for n in numeros:
+            if n < menor:
+                menor = n
+            if n > mayor:
+                mayor = n
+        return menor, mayor
+
+
+    menor, mayor = min_max([7, 2, 9, 4])
+    print(menor, mayor)

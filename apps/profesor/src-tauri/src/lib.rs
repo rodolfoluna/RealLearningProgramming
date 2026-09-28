@@ -9,6 +9,7 @@ use rlp_core::bd_profesor::{BdProfesor, DetalleEntrega, FilaTablero, RegistroEnt
 use rlp_core::crypto::ParametrosKdf;
 use rlp_core::modelo::{ahora_ms, GrupoInfo};
 use rlp_core::profesor::{ArchivoIdentidad, IdentidadProfesor, NuevoGrupo};
+use rlp_core::reproduccion::{linea_de_tiempo, LineaDeTiempo};
 use rlp_core::verificacion::{abrir_entrega, Contexto};
 use serde::Serialize;
 use tauri::{Manager, State};
@@ -325,6 +326,15 @@ fn detalle(estado: State<Estado>, entrega_id: i64) -> R<DetalleEntrega> {
         .ok_or_else(|| "Entrega no encontrada.".into())
 }
 
+/// Línea de tiempo para reproducir cómo se escribió el código de una actividad.
+#[tauri::command]
+fn reproduccion(estado: State<Estado>, entrega_id: i64, actividad_id: String) -> R<LineaDeTiempo> {
+    let payload = estado
+        .con_bd(|bd| bd.payload(entrega_id))?
+        .ok_or("Esta entrega no se pudo abrir: no hay historial que reproducir.")?;
+    linea_de_tiempo(&payload, &actividad_id).map_err(texto)
+}
+
 #[tauri::command]
 fn calificar(
     estado: State<Estado>,
@@ -346,6 +356,124 @@ fn exportar_csv(
     let csv = estado.con_bd(|bd| bd.exportar_csv(grupo_id.as_deref(), &actividades))?;
     let destino = PathBuf::from(carpeta).join(format!("avance_{}.csv", ahora_ms() / 1000));
     fs::write(&destino, csv).map_err(texto)?;
+    Ok(destino.to_string_lossy().into_owned())
+}
+
+#[derive(Serialize)]
+struct ArchivoCreado {
+    ruta: String,
+    /// Alumnos incluidos (retroalimentación).
+    alumnos: usize,
+    /// Contraseña temporal para el alumno (archivo de acceso).
+    temporal: Option<String>,
+}
+
+fn nombre_seguro(texto: &str) -> String {
+    let s: String = texto
+        .chars()
+        .map(|c| if c.is_alphanumeric() { c } else { '_' })
+        .collect();
+    s.trim_matches('_').to_string()
+}
+
+/// Código QR (SVG) con el grupo firmado, para que los alumnos se unan desde el celular.
+#[tauri::command]
+fn qr_grupo(estado: State<Estado>, grupo_id: String) -> R<String> {
+    use qrcode::render::svg;
+    let (grupo, _) = estado
+        .con_bd(|bd| bd.grupo(&grupo_id))?
+        .ok_or("Grupo no encontrado.")?;
+    let contenido = rlp_core::grupo::a_texto_qr(&grupo).map_err(texto)?;
+    let codigo =
+        qrcode::QrCode::with_error_correction_level(contenido.as_bytes(), qrcode::EcLevel::L)
+            .map_err(|e| format!("No se pudo crear el código QR: {e}"))?;
+    Ok(codigo
+        .render::<svg::Color>()
+        .min_dimensions(360, 360)
+        .dark_color(svg::Color("#000000"))
+        .light_color(svg::Color("#ffffff"))
+        .build())
+}
+
+/// Un archivo `.rlpr` con la calificación y el comentario de cada actividad para cada alumno
+/// del grupo; cada alumno solo puede leer su parte.
+#[tauri::command]
+fn exportar_retroalimentacion(
+    estado: State<Estado>,
+    grupo_id: Option<String>,
+    carpeta: String,
+) -> R<ArchivoCreado> {
+    let (bytes, alumnos) = estado.con_identidad(|id| {
+        estado.con_bd(|bd| rlp_core::retroalimentacion::crear_desde_bd(id, bd, grupo_id.as_deref()))
+    })?;
+    let grupo = match &grupo_id {
+        Some(g) => estado
+            .con_bd(|bd| bd.grupo(g))?
+            .map(|(_, i)| nombre_seguro(&i.nombre))
+            .unwrap_or_else(|| "grupo".into()),
+        None => "todos".into(),
+    };
+    let fecha = fecha_archivo();
+    let destino = PathBuf::from(carpeta).join(format!(
+        "retroalimentacion_{grupo}_{fecha}.{}",
+        rlp_core::retroalimentacion::EXTENSION
+    ));
+    fs::write(&destino, bytes).map_err(texto)?;
+    Ok(ArchivoCreado {
+        ruta: destino.to_string_lossy().into_owned(),
+        alumnos,
+        temporal: None,
+    })
+}
+
+/// Archivo de acceso para un alumno que olvidó su contraseña y su código de recuperación.
+#[tauri::command]
+fn crear_acceso(estado: State<Estado>, entrega_id: i64, carpeta: String) -> R<ArchivoCreado> {
+    let (manifiesto, detalle) =
+        estado.con_bd(|bd| Ok((bd.manifiesto(entrega_id)?, bd.detalle(entrega_id)?)))?;
+    let (Some(m), Some(d)) = (manifiesto, detalle) else {
+        return Err("Entrega no encontrada.".into());
+    };
+    let (bytes, temporal) = estado.con_identidad(|id| {
+        rlp_core::acceso::crear(
+            id,
+            &m,
+            &d.fila.numero_control,
+            &d.fila.nombre,
+            &ParametrosKdf::estandar(),
+        )
+        .map_err(texto)
+    })?;
+    let destino = PathBuf::from(carpeta).join(format!(
+        "acceso_{}.{}",
+        nombre_seguro(&d.fila.numero_control),
+        rlp_core::acceso::EXTENSION
+    ));
+    fs::write(&destino, bytes).map_err(texto)?;
+    Ok(ArchivoCreado {
+        ruta: destino.to_string_lossy().into_owned(),
+        alumnos: 1,
+        temporal: Some(temporal),
+    })
+}
+
+/// Fecha y hora local compacta para nombres de archivo.
+fn fecha_archivo() -> String {
+    chrono::Local::now().format("%Y%m%d-%H%M").to_string()
+}
+
+/// Libro de Excel con las hojas Resumen, Actividades y Calificaciones.
+#[tauri::command]
+fn exportar_xlsx(
+    estado: State<Estado>,
+    grupo_id: Option<String>,
+    actividades: Vec<(String, String)>,
+    carpeta: String,
+) -> R<String> {
+    let bytes = estado
+        .con_bd(|bd| rlp_core::excel::exportar_xlsx(bd, grupo_id.as_deref(), &actividades))?;
+    let destino = PathBuf::from(carpeta).join(format!("avance_{}.xlsx", ahora_ms() / 1000));
+    fs::write(&destino, bytes).map_err(texto)?;
     Ok(destino.to_string_lossy().into_owned())
 }
 
@@ -451,8 +579,13 @@ pub fn run() {
             importar_carpeta,
             tablero,
             detalle,
+            reproduccion,
             calificar,
             exportar_csv,
+            exportar_xlsx,
+            exportar_retroalimentacion,
+            qr_grupo,
+            crear_acceso,
             autoprueba_fin,
             consola_log,
             entrada_enviar,

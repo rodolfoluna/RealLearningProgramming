@@ -2,14 +2,15 @@
 
 Apps **sin conexión** para aprender y enseñar programación en Python, en español:
 
-- **RLP Alumno**: curso con lecciones y 53 actividades (fundamentos, condiciones, ciclos y
-  programas con menú), editor con el pegado bloqueado, consola con `input()`, pruebas automáticas,
+- **RLP Alumno**: curso con 42 lecciones y 118 actividades (fundamentos, condiciones, ciclos,
+  funciones, cadenas, listas y 8 proyectos integradores), editor con el pegado bloqueado, consola con `input()`, pruebas automáticas,
   errores explicados en español, pistas, generación de `.exe` y entregas cifradas.
 - **RLP Profesor**: importa entregas, verifica que no se hayan modificado fuera de la app
   (reconstruye el código tecla a tecla), muestra avance y estadísticas (copias, intentos de pegar,
-  salidas de ventana), vuelve a correr las pruebas y exporta calificaciones a CSV.
+  salidas de ventana), **reproduce cómo se escribió** cada código, vuelve a correr las pruebas,
+  exporta a Excel y envía **retroalimentación firmada** a los alumnos.
 
-Windows ahora; Android (app del alumno) en la fase 2. El diseño completo está en
+Windows (ambas apps) y Android (App Alumno, APK). El diseño completo está en
 [`docs/DISENO.md`](docs/DISENO.md).
 
 ## Stack
@@ -46,9 +47,20 @@ pnpm exec playwright test              # interfaz y Pyodide en Chromium
 El contenido está en `curso/` (Markdown + YAML + Python). Para agregar una actividad, edita el
 `actividades.yaml` de la lección, ejecuta `pnpm curso` y valida con `python3 scripts/validar_curso.py`.
 
-## Compilar para Windows
+## Compilar y publicar
 
 El workflow **Build Windows** genera `RLP-Alumno-*.zip` y `RLP-Profesor-*.zip` (carpetas
-portables). Para producción, genera la llave de firma de la App Alumno con
-`cargo run -p rlp-core --example generar_llave_app`, guarda la semilla en el secreto
-`RLP_CLAVE_APP` y la llave pública en `crates/rlp-core/llaves_app.txt`.
+portables) en cada push. Para publicar una versión:
+
+1. Configura una sola vez el secreto `RLP_CLAVE_APP` (Settings → Secrets and variables →
+   Actions) con la semilla de la llave de firma de la App Alumno; su llave pública ya está en
+   `crates/rlp-core/llaves_app.txt`. Para cambiarla: `cargo run -p rlp-core --example
+   generar_llave_app` y agrega la nueva llave pública (conserva las anteriores para que las
+   entregas viejas se sigan verificando).
+2. Anota los cambios en `CHANGELOG.md` y sube la versión en `Cargo.toml`, los `package.json` y
+   los `tauri.conf.json` de las apps.
+3. Crea la etiqueta sobre `main` (`git tag v0.2.0 && git push origin v0.2.0`). El workflow
+   verifica la llave de producción, compila, corre la autoprueba y publica el **Release** con los
+   dos zips y las notas del `CHANGELOG.md`.
+
+La guía para instalar en un laboratorio está en [`docs/INSTALACION.md`](docs/INSTALACION.md).

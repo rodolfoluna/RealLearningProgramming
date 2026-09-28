@@ -37,6 +37,11 @@ export async function autoprueba(fase: string) {
         coprofesores: [],
       });
       await paso("exportar grupo", () => b.exportarGrupo(g.grupo_id, compartida));
+      await paso("QR del grupo", async () => {
+        const svg = await b.qrGrupo(g.grupo_id);
+        if (!svg.includes("<svg")) throw new Error(svg.slice(0, 80));
+        return `${svg.length} caracteres de SVG`;
+      });
     } else {
       await paso("desbloquear", () => b.desbloquear(CLAVE));
       const r = await b.importarCarpeta(compartida, codigosIniciales);
@@ -60,6 +65,31 @@ export async function autoprueba(fase: string) {
         const res = await python.probar(d.actividades[actividad.id].codigo, actividad.pruebas ?? []);
         if (res.pasadas !== res.total) throw new Error(JSON.stringify(res));
         return `${res.pasadas}/${res.total}`;
+      });
+      await paso("reproducción de la escritura", async () => {
+        const l = await b.reproduccion(d.fila.entrega_id, "u1-suma-dos-numeros");
+        let texto = "";
+        for (const t of l.tramos) {
+          texto = t.texto_inicial ?? "";
+          for (const [, desde, hasta, insertado] of t.ops) texto = texto.slice(0, desde) + insertado + texto.slice(hasta);
+        }
+        if (l.avisos.length || !l.tramos.length || texto !== l.codigo_final) throw new Error(JSON.stringify(l.avisos));
+        if (!l.marcas.some((m) => m.tipo === "pegado")) throw new Error("falta la marca del intento de pegar");
+        return `${l.tramos.length} tramo(s), ${l.marcas.length} marca(s)`;
+      });
+      await paso("exportar a Excel", async () => {
+        await b.calificar(d.fila.perfil_id, "u1-suma-dos-numeros", 10, "¡Muy bien!");
+        return b.exportarXlsx(null, [["u1-suma-dos-numeros", "Suma de dos números"]], compartida);
+      });
+      await paso("retroalimentación para el grupo", async () => {
+        const r = await b.exportarRetroalimentacion(null, compartida);
+        if (r.alumnos !== 1) throw new Error(JSON.stringify(r));
+        return r;
+      });
+      await paso("archivo de acceso", async () => {
+        const r = await b.crearAcceso(d.fila.entrega_id, compartida);
+        if (!r.temporal) throw new Error("sin contraseña temporal");
+        return r;
       });
       await paso("tablero", async () => {
         const t = await b.tablero(null);

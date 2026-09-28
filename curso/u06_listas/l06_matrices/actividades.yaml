@@ -1,0 +1,175 @@
+- id: u6-predice-matriz
+  titulo: Filas y columnas
+  tipo: prediccion
+  enunciado: ¿Qué muestra este programa?
+  codigo: |
+    m = [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+    ]
+    print(m[1])
+    print(m[2][0], m[0][2])
+    total = 0
+    for i in range(3):
+        total += m[i][i]
+    print(total)
+  salida_esperada: |
+    [4, 5, 6]
+    7 3
+    15
+  explicacion: |
+    `m[1]` es la segunda fila. `m[2][0]` es fila 2, columna 0 (7) y `m[0][2]` es fila 0,
+    columna 2 (3). El ciclo suma la diagonal: 1 + 5 + 9 = 15.
+
+- id: u6-suma-filas
+  titulo: Suma de cada fila
+  tipo: codigo
+  enunciado: |
+    Escribe la función `suma_filas(matriz)` que devuelva una lista con la suma de cada fila.
+
+    ```python
+    suma_filas([[1, 2, 3], [4, 5, 6]])   # [6, 15]
+    ```
+  codigo_inicial: |
+    def suma_filas(matriz):
+        pass
+
+
+    print(suma_filas([[1, 2, 3], [4, 5, 6]]))
+  pistas:
+    - Recorre las filas; para cada una calcula su suma (con otro for o con sum) y agrégala al resultado.
+  pruebas:
+    - nombre: Dos filas
+      funcion: suma_filas
+      args: [[[1, 2, 3], [4, 5, 6]]]
+      esperado: [6, 15]
+    - nombre: Filas de distinto tamaño
+      funcion: suma_filas
+      args: [[[10], [1, 1, 1, 1], []]]
+      esperado: [10, 4, 0]
+    - nombre: Sin filas
+      funcion: suma_filas
+      args: [[]]
+      esperado: []
+  solucion: |
+    def suma_filas(matriz):
+        resultado = []
+        for fila in matriz:
+            total = 0
+            for valor in fila:
+                total += valor
+            resultado.append(total)
+        return resultado
+
+
+    print(suma_filas([[1, 2, 3], [4, 5, 6]]))
+
+- id: u6-transpuesta
+  titulo: Matriz transpuesta
+  tipo: codigo
+  dificultad: 3
+  enunciado: |
+    La **transpuesta** de una matriz convierte las filas en columnas. Escribe la función
+    `transpuesta(matriz)` que la devuelva (la matriz tiene al menos una fila y todas las filas
+    son del mismo tamaño).
+
+    ```python
+    transpuesta([[1, 2, 3],
+                 [4, 5, 6]])
+    # [[1, 4],
+    #  [2, 5],
+    #  [3, 6]]
+    ```
+  codigo_inicial: |
+    def transpuesta(matriz):
+        pass
+
+
+    print(transpuesta([[1, 2, 3], [4, 5, 6]]))
+  pistas:
+    - La nueva matriz tiene tantas filas como columnas tenía la original (len(matriz[0])).
+    - "La fila c de la nueva matriz se forma con matriz[f][c] para cada fila f."
+  pruebas:
+    - nombre: 2 × 3
+      funcion: transpuesta
+      args: [[[1, 2, 3], [4, 5, 6]]]
+      esperado: [[1, 4], [2, 5], [3, 6]]
+    - nombre: Cuadrada
+      funcion: transpuesta
+      args: [[[1, 2], [3, 4]]]
+      esperado: [[1, 3], [2, 4]]
+    - nombre: Una fila
+      funcion: transpuesta
+      args: [[["a", "b", "c"]]]
+      esperado: [["a"], ["b"], ["c"]]
+  solucion: |
+    def transpuesta(matriz):
+        resultado = []
+        for c in range(len(matriz[0])):
+            nueva_fila = []
+            for f in range(len(matriz)):
+                nueva_fila.append(matriz[f][c])
+            resultado.append(nueva_fila)
+        return resultado
+
+
+    print(transpuesta([[1, 2, 3], [4, 5, 6]]))
+
+- id: u6-mostrar-tablero
+  titulo: Dibujar un tablero
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Escribe la función `mostrar(tablero)` que **muestre** un tablero de 3 × 3 (una lista de 3
+    filas con 3 casillas cada una) así, con `" | "` entre casillas y una línea de 9 guiones
+    entre filas:
+
+    ```texto
+    X | O |  
+    ---------
+      | X |  
+    ---------
+    O |   | X
+    ```
+
+    Esta función te servirá en el proyecto del gato.
+  codigo_inicial: |
+    def mostrar(tablero):
+        pass
+
+
+    tablero = [
+        ["X", "O", " "],
+        [" ", "X", " "],
+        ["O", " ", "X"],
+    ]
+    mostrar(tablero)
+  pistas:
+    - "\" | \".join(fila) une las 3 casillas de una fila con el separador."
+    - La línea de guiones va entre filas, no después de la última.
+  pruebas:
+    - nombre: Tablero del ejemplo
+      funcion: mostrar
+      args: [[["X", "O", " "], [" ", "X", " "], ["O", " ", "X"]]]
+      salida: "X | O |\n---------\n  | X |\n---------\nO |   | X"
+      modo: normalizada
+    - nombre: Tablero vacío
+      funcion: mostrar
+      args: [[[" ", " ", " "], [" ", " ", " "], [" ", " ", " "]]]
+      salida: "  |   |\n---------\n  |   |\n---------\n  |   |"
+      modo: normalizada
+  solucion: |
+    def mostrar(tablero):
+        for f in range(3):
+            print(" | ".join(tablero[f]))
+            if f < 2:
+                print("-" * 9)
+
+
+    tablero = [
+        ["X", "O", " "],
+        [" ", "X", " "],
+        ["O", " ", "X"],
+    ]
+    mostrar(tablero)

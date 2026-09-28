@@ -1,0 +1,90 @@
+- id: u4-predice-alcance
+  titulo: Dentro y fuera
+  tipo: prediccion
+  enunciado: ¿Qué muestra este programa?
+  codigo: |
+    x = 10
+
+    def cambiar():
+        x = 99
+        print("Dentro:", x)
+
+    cambiar()
+    print("Fuera:", x)
+  salida_esperada: |
+    Dentro: 99
+    Fuera: 10
+  explicacion: |
+    La `x = 99` de la función es una variable **local** distinta de la `x` de afuera. Al terminar
+    la función, la `x` de afuera sigue valiendo 10.
+
+- id: u4-corrige-puntos
+  titulo: Corrige el marcador
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Este programa termina con `UnboundLocalError`. Corrígelo usando parámetros y `return`:
+
+    - `ganar(puntos)` debe **devolver** los puntos más 10.
+    - El programa principal debe usar `puntos = ganar(puntos)` dos veces y al final mostrar
+      `Puntos: 20`.
+  codigo_inicial: |
+    puntos = 0
+
+    def ganar():
+        puntos = puntos + 10
+
+    ganar()
+    ganar()
+    print("Puntos:", puntos)
+  pistas:
+    - "La función debe recibir los puntos: def ganar(puntos):"
+    - Dentro, devuelve puntos + 10.
+    - "En el programa principal guarda lo que devuelve: puntos = ganar(puntos)"
+  pruebas:
+    - nombre: ganar(0)
+      funcion: ganar
+      args: [0]
+      esperado: 10
+    - nombre: ganar(35)
+      funcion: ganar
+      args: [35]
+      esperado: 45
+    - nombre: El programa muestra 20 puntos
+      salida: "Puntos: 20"
+  solucion: |
+    def ganar(puntos):
+        return puntos + 10
+
+
+    puntos = 0
+    puntos = ganar(puntos)
+    puntos = ganar(puntos)
+    print("Puntos:", puntos)
+
+- id: u4-om-local
+  titulo: ¿Existe afuera?
+  tipo: opcion_multiple
+  enunciado: |
+    ¿Qué pasa al ejecutar este programa?
+
+    ```python
+    def calcular():
+        total = 5 * 3
+
+    calcular()
+    print(total)
+    ```
+  opciones:
+    - texto: Muestra `15`
+      correcta: false
+      explicacion: "`total` es local: desaparece cuando termina `calcular()`."
+    - texto: Error `NameError`, porque `total` no existe fuera de la función
+      correcta: true
+      explicacion: Para usar el valor afuera, la función debería hacer `return total` y el programa guardarlo.
+    - texto: Muestra `None`
+      correcta: false
+      explicacion: "`None` sería lo que devuelve `calcular()`, pero aquí se intenta mostrar una variable que no existe."
+    - texto: Muestra `0`
+      correcta: false
+      explicacion: Las variables no tienen un valor inicial automático.

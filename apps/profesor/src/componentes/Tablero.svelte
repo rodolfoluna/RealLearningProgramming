@@ -32,6 +32,9 @@
     avance: filas.length ? Math.round(filas.reduce((s, f) => s + porcentaje(completadas(f), actividades.length), 0) / filas.length) : 0,
   });
 
+  /** Primera actividad de cada unidad: ahí el mapa marca la separación. */
+  const iniciosDeUnidad = new Set(curso.unidades.map((u) => u.lecciones.flatMap((l) => l.actividades)[0]?.id).filter(Boolean));
+
   function estadoCelda(f: FilaTablero, id: string): string {
     const a = f.actividades[id];
     if (!a) return "vacia";
@@ -39,13 +42,26 @@
     return "progreso";
   }
 
-  async function exportarCsv() {
+  async function retroalimentacion() {
     try {
       const b = await backend();
-      const carpeta = await b.elegirCarpeta("¿Dónde guardo el archivo CSV?");
+      const carpeta = await b.elegirCarpeta("¿Dónde guardo el archivo de retroalimentación?");
       if (!carpeta) return;
-      const ruta = await b.exportarCsv(app.grupoId, actividades.map((a) => [a.id, a.titulo]), carpeta);
-      avisar(`CSV guardado en ${ruta}`, 6000);
+      const r = await b.exportarRetroalimentacion(app.grupoId, carpeta);
+      avisar(`Retroalimentación para ${r.alumnos} alumno(s) guardada en ${r.ruta}. Compártela con el grupo: cada alumno solo puede leer la suya.`, 8000);
+    } catch (e) {
+      avisar(mensajeError(e), 6000);
+    }
+  }
+
+  async function exportar(formato: "xlsx" | "csv") {
+    try {
+      const b = await backend();
+      const carpeta = await b.elegirCarpeta(formato === "xlsx" ? "¿Dónde guardo el archivo de Excel?" : "¿Dónde guardo el archivo CSV?");
+      if (!carpeta) return;
+      const pares = actividades.map((a) => [a.id, a.titulo] as [string, string]);
+      const ruta = formato === "xlsx" ? await b.exportarXlsx(app.grupoId, pares, carpeta) : await b.exportarCsv(app.grupoId, pares, carpeta);
+      avisar(`${formato === "xlsx" ? "Excel" : "CSV"} guardado en ${ruta}`, 6000);
     } catch (e) {
       avisar(mensajeError(e), 6000);
     }
@@ -64,7 +80,9 @@
     <input class="buscar" placeholder="Buscar por nombre o número de control" bind:value={buscar} />
     <label class="fila interruptor"><input type="checkbox" bind:checked={mapa} /> Ver mapa de actividades</label>
     <span class="espaciador"></span>
-    <button onclick={exportarCsv} disabled={!filas.length}>⬇ Exportar CSV (Excel)</button>
+    <button onclick={() => exportar("xlsx")} disabled={!filas.length} title="Hojas Resumen, Actividades y Calificaciones">⬇ Exportar a Excel</button>
+    <button onclick={() => exportar("csv")} disabled={!filas.length}>CSV</button>
+    <button onclick={retroalimentacion} disabled={!filas.length} title="Calificaciones y comentarios para los alumnos (.rlpr)">📬 Retroalimentación</button>
   </div>
 
   {#if error}
@@ -82,7 +100,7 @@
       <table class="datos">
         <thead>
           <tr>
-            <th>Alumno</th>
+            <th class="fijo">Alumno</th>
             <th>Integridad</th>
             <th>Avance</th>
             <th class="num">Puntos</th>
@@ -104,7 +122,7 @@
         <tbody>
           {#each visibles as f (f.perfil_id)}
             <tr onclick={() => (app.vista = { tipo: "detalle", entregaId: f.entrega_id })} class="clic" data-alumno={f.numero_control}>
-              <td>
+              <td class="fijo">
                 <strong>{f.nombre}</strong>
                 <div class="suave chico">{f.numero_control}{f.alerta_identidad ? " · ⚠ identidad duplicada" : ""}</div>
               </td>
@@ -118,7 +136,7 @@
               <td class="num">{puntos(f)}</td>
               {#if mapa}
                 {#each actividades as a (a.id)}
-                  <td class="celda {estadoCelda(f, a.id)}" title={a.titulo}></td>
+                  <td class="celda {estadoCelda(f, a.id)}" class:inicio-unidad={iniciosDeUnidad.has(a.id)} title={a.titulo}></td>
                 {/each}
               {:else}
                 <td class="num">{minutos(f.global.tiempo_ms)}</td>
@@ -210,9 +228,27 @@
   }
   .celda {
     padding: 0 !important;
-    width: 12px;
-    min-width: 12px;
+    width: 11px;
+    min-width: 11px;
     border-left: 1px solid var(--superficie);
+  }
+  .celda.inicio-unidad {
+    border-left: 2px solid var(--borde);
+  }
+  /* El nombre queda visible al desplazar el mapa de actividades a la derecha. */
+  .fijo {
+    position: sticky;
+    left: 0;
+    background: var(--superficie);
+    z-index: 1;
+    box-shadow: 1px 0 0 var(--borde);
+  }
+  th.fijo {
+    background: var(--superficie-2);
+    z-index: 2;
+  }
+  tr:hover .fijo {
+    background: var(--primario-suave);
   }
   .celda.hecha {
     background: var(--exito);

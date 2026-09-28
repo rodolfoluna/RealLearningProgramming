@@ -1,0 +1,90 @@
+- id: u4-encabezado
+  titulo: Encabezado de la tienda
+  tipo: codigo
+  enunciado: |
+    Escribe la función `encabezado()` que muestre este letrero (la línea tiene 30 signos `=`):
+
+    ```texto
+    ==============================
+       TIENDA DE DON PYTHON
+    ==============================
+    ```
+
+    Después, en el programa principal, **llámala dos veces**.
+  codigo_inicial: |
+    # Define aquí la función encabezado()
+
+
+    # Programa principal: llama a la función dos veces
+  pistas:
+    - "La primera línea de la función es: def encabezado():"
+    - "Para la línea de signos puedes usar print(\"=\" * 30)."
+    - Las llamadas van al final, sin sangría: encabezado()
+  pruebas:
+    - nombre: La función muestra el letrero
+      funcion: encabezado
+      salida: ["==============================", "TIENDA DE DON PYTHON", "=============================="]
+    - nombre: El programa la llama dos veces
+      salida: ["TIENDA DE DON PYTHON", "TIENDA DE DON PYTHON"]
+  solucion: |
+    def encabezado():
+        print("=" * 30)
+        print("   TIENDA DE DON PYTHON")
+        print("=" * 30)
+
+
+    encabezado()
+    encabezado()
+
+- id: u4-predice-orden
+  titulo: ¿En qué orden se ejecuta?
+  tipo: prediccion
+  enunciado: ¿Qué muestra este programa? Fíjate en qué momento corre cada función.
+  codigo: |
+    def a():
+        print("A")
+
+    def b():
+        print("B")
+        a()
+
+    print("Inicio")
+    b()
+    a()
+    print("Fin")
+  salida_esperada: |
+    Inicio
+    B
+    A
+    A
+    Fin
+  explicacion: |
+    Las definiciones no muestran nada. El programa empieza en `print("Inicio")`; luego `b()`
+    muestra `B` y dentro llama a `a()`, que muestra `A`. Después se llama a `a()` otra vez y al
+    final se muestra `Fin`.
+
+- id: u4-om-definir
+  titulo: Definir no es ejecutar
+  tipo: opcion_multiple
+  enunciado: |
+    ¿Qué muestra este programa?
+
+    ```python
+    def despedida():
+        print("Adiós")
+
+    print("Hola")
+    ```
+  opciones:
+    - texto: "`Hola`"
+      correcta: true
+      explicacion: La función se define pero nunca se llama, así que `Adiós` no aparece.
+    - texto: "`Adiós` y luego `Hola`"
+      correcta: false
+      explicacion: Definir una función no la ejecuta; faltaría escribir `despedida()`.
+    - texto: "`Hola` y luego `Adiós`"
+      correcta: false
+      explicacion: Para ver `Adiós` habría que llamar a `despedida()` después del print.
+    - texto: Un error, porque la función no se usa
+      correcta: false
+      explicacion: No es un error tener una función que no se usa.

@@ -1,0 +1,150 @@
+- id: u5-formatear-nombre
+  titulo: Nombre bien escrito
+  tipo: codigo
+  enunciado: |
+    Cuando la gente escribe su nombre en un formulario, a veces deja espacios de más o usa
+    mayúsculas al azar. Escribe la función `formatear_nombre(texto)` que devuelva el nombre sin
+    espacios sobrantes y con la primera letra de cada palabra en mayúscula.
+
+    ```python
+    formatear_nombre("  ana   MARÍA lópez ")   # "Ana María López"
+    ```
+  codigo_inicial: |
+    def formatear_nombre(texto):
+        pass
+
+
+    print(formatear_nombre("  ana   MARÍA lópez "))
+  pistas:
+    - "split() sin argumentos separa en palabras e ignora los espacios repetidos."
+    - Une las palabras con " ".join(...) y aplica title().
+  pruebas:
+    - nombre: Espacios y mayúsculas
+      funcion: formatear_nombre
+      args: ["  ana   MARÍA lópez "]
+      esperado: "Ana María López"
+    - nombre: Todo en mayúsculas
+      funcion: formatear_nombre
+      args: ["JUAN PÉREZ"]
+      esperado: "Juan Pérez"
+    - nombre: Ya está bien
+      funcion: formatear_nombre
+      args: ["Sofía Ruiz"]
+      esperado: "Sofía Ruiz"
+  solucion: |
+    def formatear_nombre(texto):
+        return " ".join(texto.split()).title()
+
+
+    print(formatear_nombre("  ana   MARÍA lópez "))
+
+- id: u5-contar-palabras
+  titulo: Estadísticas de una frase
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Pide una frase y muestra cuántas palabras tiene, cuál es la palabra más larga y cuántas
+    veces aparece la letra `a` (sin importar mayúsculas):
+
+    ```texto
+    Frase: Aprender a programar es divertido
+    Palabras: 5
+    Más larga: programar
+    Letras a: 4
+    ```
+
+    Si hay varias palabras con la longitud máxima, muestra la primera.
+  codigo_inicial: |
+    frase = input("Frase: ")
+  pistas:
+    - "palabras = frase.split() te da las palabras; len(palabras) cuántas son."
+    - Para la más larga, recorre las palabras guardando la mejor hasta ahora (usa > para quedarte con la primera).
+    - "frase.lower().count(\"a\")"
+  pruebas:
+    - nombre: Ejemplo
+      entrada: "Aprender a programar es divertido"
+      salida: ["Palabras: 5", "Más larga: programar", "Letras a: 4"]
+    - nombre: Empate en longitud
+      entrada: "sol mar luz"
+      salida: ["Palabras: 3", "Más larga: sol", "Letras a: 1"]
+    - nombre: Espacios de más
+      entrada: "  Hola    Mundo  "
+      salida: ["Palabras: 2", "Más larga: Mundo", "Letras a: 1"]
+  solucion: |
+    frase = input("Frase: ")
+    palabras = frase.split()
+    mas_larga = ""
+    for palabra in palabras:
+        if len(palabra) > len(mas_larga):
+            mas_larga = palabra
+    print("Palabras:", len(palabras))
+    print("Más larga:", mas_larga)
+    print("Letras a:", frase.lower().count("a"))
+
+- id: u5-acronimo
+  titulo: Acrónimos
+  tipo: codigo
+  enunciado: |
+    Escribe la función `acronimo(frase)` que devuelva las iniciales de cada palabra en
+    mayúsculas.
+
+    ```python
+    acronimo("instituto tecnológico nacional")   # "ITN"
+    acronimo("Hypertext Markup Language")        # "HML"
+    ```
+  codigo_inicial: |
+    def acronimo(frase):
+        pass
+
+
+    print(acronimo("instituto tecnológico nacional"))
+  pistas:
+    - Recorre frase.split() y toma palabra[0] de cada una.
+    - Al final aplica upper() al resultado.
+  pruebas:
+    - nombre: Tres palabras
+      funcion: acronimo
+      args: ["instituto tecnológico nacional"]
+      esperado: "ITN"
+    - nombre: Ya en mayúsculas
+      funcion: acronimo
+      args: ["Hypertext Markup Language"]
+      esperado: "HML"
+    - nombre: Espacios de más
+      funcion: acronimo
+      args: ["  organización   de las naciones unidas "]
+      esperado: "ODLNU"
+  solucion: |
+    def acronimo(frase):
+        resultado = ""
+        for palabra in frase.split():
+            resultado += palabra[0]
+        return resultado.upper()
+
+
+    print(acronimo("instituto tecnológico nacional"))
+
+- id: u5-om-inmutables
+  titulo: ¿Cambió la cadena?
+  tipo: opcion_multiple
+  enunciado: |
+    ¿Qué muestra este programa?
+
+    ```python
+    ciudad = "mérida"
+    ciudad.upper()
+    print(ciudad)
+    ```
+  opciones:
+    - texto: "`mérida`"
+      correcta: true
+      explicacion: "`upper()` devuelve una cadena nueva, pero no se guardó; `ciudad` no cambia. Haría falta `ciudad = ciudad.upper()`."
+    - texto: "`MÉRIDA`"
+      correcta: false
+      explicacion: Las cadenas no se modifican; el resultado de `upper()` se perdió.
+    - texto: "`Mérida`"
+      correcta: false
+      explicacion: Eso lo haría `title()` o `capitalize()`, y aun así habría que guardar el resultado.
+    - texto: Un error
+      correcta: false
+      explicacion: Llamar a un método sin guardar su resultado no es un error.

@@ -15,6 +15,7 @@ function Correr($app, $carpeta, $fase) {
   if (-not $p.WaitForExit(240000)) { $p.Kill(); Get-Content "$log.err" -Tail 40; throw "Tiempo agotado: $app $fase" }
   $linea = Get-Content $log | Where-Object { $_ -like "AUTOPRUEBA *" } | Select-Object -First 1
   if (-not $linea) { Get-Content "$log.err" -Tail 40; throw "Sin resultado: $app $fase" }
+  Set-Content -Path (Join-Path $dir ((($fase -split '@')[0]) + ".json")) -Value $linea.Substring(11) -Encoding utf8
   $r = $linea.Substring(11) | ConvertFrom-Json
   foreach ($paso in $r.pasos) {
     if ($paso.ok) { Write-Host "  OK  $($paso.paso) $($paso.detalle | ConvertTo-Json -Compress -Depth 2)" }
@@ -34,4 +35,9 @@ if ($env:RLP_AUTOPRUEBA_EXE -eq "1") {
   Correr "rlp-alumno" (Join-Path $dir "alumno") "alumno"
 }
 Correr "rlp-profesor" (Join-Path $dir "profesor") "profesor-importar"
+# El alumno entra con el archivo de acceso y lee la retroalimentación que exportó el profesor.
+$r = Get-Content (Join-Path $dir "profesor-importar.json") -Raw -Encoding utf8 | ConvertFrom-Json
+$acceso = ($r.pasos | Where-Object { $_.paso -eq "archivo de acceso" }).detalle
+$retro = ($r.pasos | Where-Object { $_.paso -eq "retroalimentación para el grupo" }).detalle
+Correr "rlp-alumno" (Join-Path $dir "alumno") ("alumno-retro@" + $acceso.temporal + "@" + (Split-Path $retro.ruta -Leaf))
 Write-Host "Autoprueba completa: OK"

@@ -1,0 +1,15 @@
+id: u5
+numero: 5
+titulo: Cadenas de texto
+descripcion: Recorrer, transformar y validar texto; dar formato a tablas y cifrar mensajes.
+objetivos:
+  - Recorrer una cadena carácter por carácter con for.
+  - Construir cadenas nuevas a partir de otras.
+  - Usar los métodos más comunes de las cadenas.
+  - Validar datos de texto como números de control, correos y contraseñas.
+  - Alinear texto en columnas con f-strings y trabajar con códigos de caracteres.
+lecciones:
+  - l01_recorrer
+  - l02_metodos
+  - l03_validaciones
+  - l04_formato_cifrado

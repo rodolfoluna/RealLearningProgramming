@@ -2,11 +2,12 @@
   import type { Actividad } from "@rlp/curso";
   import { crearVisor, type EditorCodigo } from "@rlp/editor";
   import type { ResultadoPruebas } from "@rlp/python-worker";
-  import { fecha, Markdown, mensajeError, minutos, Semaforo } from "@rlp/ui-comun";
+  import { fecha, Markdown, mensajeError, minutos, Modal, Semaforo } from "@rlp/ui-comun";
   import { onDestroy, onMount } from "svelte";
   import { backend } from "../lib/backend";
   import { actividades, app, avisar, curso, python } from "../lib/app.svelte";
-  import { contadoresVacios, type DetalleEntrega } from "../lib/tipos";
+  import { contadoresVacios, type ArchivoCreado, type DetalleEntrega, type LineaDeTiempo } from "../lib/tipos";
+  import Reproductor from "./Reproductor.svelte";
 
   let { entregaId }: { entregaId: number } = $props();
   let d = $state<DetalleEntrega | null>(null);
@@ -19,6 +20,10 @@
   let probando = $state(false);
   let calificacion = $state("");
   let comentario = $state("");
+  let reproduccion = $state<LineaDeTiempo | null>(null);
+  let confirmarAcceso = $state(false);
+  let acceso = $state<ArchivoCreado | null>(null);
+  let cargandoReproduccion = $state(false);
 
   onMount(async () => {
     try {
@@ -67,6 +72,31 @@
     }
   }
 
+  async function verReproduccion() {
+    if (!elegida || !d) return;
+    cargandoReproduccion = true;
+    try {
+      reproduccion = await (await backend()).reproduccion(d.fila.entrega_id, elegida.id);
+    } catch (e) {
+      avisar(mensajeError(e));
+    } finally {
+      cargandoReproduccion = false;
+    }
+  }
+
+  async function crearAcceso() {
+    if (!d) return;
+    try {
+      const b = await backend();
+      const carpeta = await b.elegirCarpeta("¿Dónde guardo el archivo de acceso?");
+      if (!carpeta) return;
+      acceso = await b.crearAcceso(d.fila.entrega_id, carpeta);
+      confirmarAcceso = false;
+    } catch (e) {
+      avisar(mensajeError(e), 6000);
+    }
+  }
+
   async function guardarCalificacion() {
     if (!elegida || !d) return;
     const valor = calificacion.trim() === "" ? null : Number(calificacion);
@@ -93,6 +123,9 @@
       </div>
       <span class="espaciador"></span>
       <Semaforo nivel={d.reporte.nivel} />
+      <button class="chico" onclick={() => (confirmarAcceso = true)} title="Para un alumno que olvidó su contraseña y su código de recuperación">
+        🔑 Archivo de acceso
+      </button>
       {#if d.historial.length > 1}
         <select class="historial" onchange={(e) => (app.vista = { tipo: "detalle", entregaId: Number((e.target as HTMLSelectElement).value) })}>
           {#each d.historial as h (h.entrega_id)}
@@ -180,6 +213,9 @@
             {#if elegida.tipo === "codigo"}
               <div class="visor" bind:this={visorPadre}></div>
               <div class="fila">
+                <button onclick={verReproduccion} disabled={cargandoReproduccion} data-ver-reproduccion>
+                  {cargandoReproduccion ? "Cargando…" : "⏯ Ver cómo lo escribió"}
+                </button>
                 <button onclick={reprobar} disabled={probando}>{probando ? "Probando…" : "✔ Volver a correr las pruebas"}</button>
                 {#if pruebas}
                   <span class:alerta={pruebas.pasadas !== pruebas.total}>Pasaron {pruebas.pasadas} de {pruebas.total}</span>
@@ -233,7 +269,60 @@
   {/if}
 </div>
 
+<Modal titulo="Archivo de acceso" abierto={confirmarAcceso} cerrar={() => (confirmarAcceso = false)} ancho="560px">
+  <p>
+    Si {d?.fila.nombre ?? "el alumno"} olvidó su contraseña <strong>y</strong> su código de recuperación, este archivo le permite
+    entrar y elegir una contraseña nueva (en la App Alumno: "Tengo un archivo de acceso de mi profesor").
+  </p>
+  <p class="suave">
+    Se crea con su entrega más reciente y solo sirve con la contraseña temporal que verás a continuación. Dáselos por
+    separado y en persona.
+  </p>
+  {#snippet acciones()}
+    <button onclick={() => (confirmarAcceso = false)}>Cancelar</button>
+    <button class="primario" onclick={crearAcceso}>Crear archivo</button>
+  {/snippet}
+</Modal>
+
+<Modal titulo="Archivo de acceso creado" abierto={acceso !== null} cerrar={() => (acceso = null)} ancho="560px">
+  {#if acceso}
+    <p>Guardado en:</p>
+    <p class="ruta">{acceso.ruta}</p>
+    <p>Contraseña temporal para {d?.fila.nombre}:</p>
+    <p class="temporal" data-temporal>{acceso.temporal}</p>
+    <p class="suave">Anótala ahora: no se vuelve a mostrar. Al entrar, el alumno elegirá una contraseña nueva y recibirá un código de recuperación nuevo.</p>
+  {/if}
+  {#snippet acciones()}
+    <button class="primario" onclick={() => (acceso = null)}>Listo</button>
+  {/snippet}
+</Modal>
+
+<Modal titulo={elegida ? `Cómo escribió: ${elegida.titulo}` : "Reproducción"} abierto={reproduccion !== null} cerrar={() => (reproduccion = null)} ancho="1000px">
+  {#if reproduccion}
+    {#key reproduccion}
+      <Reproductor linea={reproduccion} />
+    {/key}
+  {/if}
+</Modal>
+
 <style>
+  .ruta {
+    font-family: var(--fuente-codigo);
+    word-break: break-all;
+    background: var(--superficie-2);
+    padding: 0.5em;
+    border-radius: var(--radio-chico);
+  }
+  .temporal {
+    font-family: var(--fuente-codigo);
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-align: center;
+    padding: 0.4em;
+    border: 2px dashed var(--primario);
+    border-radius: var(--radio);
+  }
   .detalle {
     padding: 1rem 1.2rem 2rem;
   }

@@ -25,6 +25,9 @@ jobs:
           cache: pnpm
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+      - name: Llave de firma de producción (solo al publicar)
+        if: github.ref_type == 'tag'
+        run: cargo run -p rlp-core --example verificar_llave_app
       - run: pnpm install --frozen-lockfile
       - run: pnpm preparar
 
@@ -61,6 +64,10 @@ jobs:
     name: Autoprueba en WebView2
     runs-on: windows-latest
     timeout-minutes: 90
+    env:
+      # Con el secreto configurado, la autoprueba verifica la firma de producción (verde).
+      RLP_CLAVE_APP: ${{ secrets.RLP_CLAVE_APP }}
+      RLP_CLAVE_APP_PUBLICA: ${{ vars.RLP_CLAVE_APP_PUBLICA }}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -85,3 +92,35 @@ jobs:
         run: |
           $env:RLP_PYTHON = (Resolve-Path runtime\python.exe).Path
           ./scripts/autoprueba.ps1
+
+  publicar:
+    name: Publicar versión
+    if: github.ref_type == 'tag'
+    needs: [windows, autoprueba-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: rlp-windows-portable
+          path: dist
+      - name: Notas de la versión (CHANGELOG.md)
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v v="$version" 'index($0, "## [" v "]") == 1 {p = 1; next} /^## \[/ {p = 0} p' CHANGELOG.md > notas.md
+          if [ ! -s notas.md ]; then echo "Versión $version" > notas.md; fi
+          cat >> notas.md <<'FIN'
+
+          ---
+          Descarga los dos .zip, descomprímelos y sigue la guía
+          [docs/INSTALACION.md](${{ github.server_url }}/${{ github.repository }}/blob/main/docs/INSTALACION.md). No requieren instalación ni internet.
+          FIN
+          cat notas.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: RLP ${{ github.ref_name }}
+          body_path: notas.md
+          files: dist/*.zip
+          prerelease: ${{ contains(github.ref_name, '-') }}

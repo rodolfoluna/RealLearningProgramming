@@ -194,12 +194,31 @@ Además el tablero marca si un mismo perfil aparece con otro número de control 
 - En Android (fase 2) el bloqueo de pegado es menos hermético (teclados de terceros): se bloquea el
   menú y las inserciones grandes o de varias líneas, y todo se registra.
 
-### 4.6 Llave de firma de la App Alumno
+### 4.6 Del profesor al alumno: retroalimentación y acceso
+
+- **Retroalimentación** (`.rlpr`): un archivo por grupo. La parte de cada alumno (calificación y
+  comentario por actividad) va cifrada con **su** llave de datos, que el profesor abre desde la
+  envoltura dirigida a él en la última entrega; el archivo completo va firmado con la llave Ed25519
+  del profesor. La App Alumno solo lo acepta si la firma es la del profesor que creó su grupo, no
+  acepta una retroalimentación más vieja que la que ya tiene y la guarda cifrada en su perfil.
+- **Archivo de acceso** (`.rlpa`): para quien olvidó su contraseña **y** su código de
+  recuperación. El profesor envuelve la llave de datos del alumno con una contraseña temporal
+  (Argon2id, `XXXX-XXXX-XXXX`) y firma el archivo. El alumno entra con ambos, fija una contraseña
+  nueva y recibe un **código de recuperación nuevo**. La app comprueba la firma, que el archivo
+  sea de ese alumno, que lo haya firmado el profesor de su grupo y que la llave abra realmente su
+  historial; queda registrado como evento `acceso_profesor`. Si el perfil no está en esa
+  computadora, se restaura desde su último `.rlp` con el mismo archivo.
+
+### 4.7 Llave de firma de la App Alumno
 
 - Desarrollo: llave pública fija (la App Profesor la acepta en **amarillo**).
 - Producción: `cargo run -p rlp-core --example generar_llave_app` genera un par. La semilla va al
   secreto de CI `RLP_CLAVE_APP`; la pública, a `crates/rlp-core/llaves_app.txt` (o a la variable
-  `RLP_CLAVE_APP_PUBLICA`). La semilla se inyecta ofuscada por `build.rs`.
+  `RLP_CLAVE_APP_PUBLICA`). La semilla se inyecta ofuscada por `build.rs`. La lista conserva las
+  llaves de versiones anteriores para seguir verificando sus entregas.
+- Al publicar (etiqueta `v*`), `cargo run -p rlp-core --example verificar_llave_app` detiene el
+  workflow si falta el secreto o si su llave pública no está en la lista: una versión publicada
+  nunca firma con la llave de desarrollo.
 - La App Profesor se compila **sin** la función `firmar`: no contiene ninguna llave privada. Cada
   app se compila por separado para que Cargo no unifique esa función.
 
@@ -239,6 +258,15 @@ profesor, llaves X25519 de los profesores, llave Ed25519 de firma, políticas
 JSON con las llaves públicas y las privadas cifradas (AES-GCM con una llave envuelta con
 Argon2id(contraseña del profesor)).
 
+### Retroalimentación `.rlpr` y acceso `.rlpa`
+
+Ambos: `{"contenido": "<JSON exacto>", "firma": "<Ed25519 del profesor>"}`.
+- `.rlpr`: `formato`, `grupo_id`, `profesor`, `llave_firma`, `creado` y `alumnos`
+  (`perfil_id` → JSON `{profesor, creado, actividades: {id: {calificacion, comentario}}}` cifrado con
+  AES-GCM y la llave de datos del alumno, AAD `retro|<perfil_id>`).
+- `.rlpa`: `formato`, `perfil_id`, `numero_control`, `nombre`, `profesor`, `llave_firma`, `creado` y
+  la llave de datos envuelta con la contraseña temporal (AAD `dek|<perfil_id>`).
+
 ### Base del profesor `profesor.db`
 
 `grupos`, `entregas` (manifiesto, reporte, estadísticas y contenido descifrado), `calificaciones`.
@@ -269,6 +297,28 @@ Argon2id(contraseña del profesor)).
 - **Exportar entrega**, **importar avances** de otro equipo, **cambiar contraseña**, **unirse a un
   grupo**, tema claro/oscuro.
 
+### Android (APK de la App Alumno)
+
+- Mismo código que en Windows (Tauri 2). Los datos viven en la carpeta privada de la app
+  (`/data/user/0/mx.reallearningprogramming.alumno`); **desinstalar la app los borra**, así que el
+  alumno debe exportar su entrega con frecuencia (también le sirve de respaldo).
+- **Archivos**: el selector de Android devuelve URIs `content://`; los comandos de Rust los abren
+  con el plugin fs (`archivos.rs`). Exportar usa "Guardar como" (Descargas, Drive…), porque en
+  Android no se puede elegir una carpeta.
+- **Unirse al grupo por QR**: la App Profesor muestra el `.rlpg` firmado como QR
+  (`RLPG1:` + deflate + base64 URL, ~1 KB); la App Alumno lo escanea con la cámara
+  (plugin barcode-scanner) y verifica la firma igual que con el archivo.
+- **Barra de teclas de código** en pantallas táctiles (Tab, `:`, paréntesis, corchetes, comillas,
+  operadores, flechas, deshacer): inserta como tecleo normal, así cuenta en el historial.
+- Cambiar de app (`visibilitychange`) cuenta como salida de la ventana.
+- Sin `.exe` (no hay PyInstaller en el celular).
+- **CI** (`build-android.yml`): genera el proyecto con `tauri android init`, compila un APK de
+  depuración x86_64 que se instala en un **emulador** y corre la autoprueba (activada con
+  `autoprueba.txt` en la carpeta privada vía `adb shell run-as`; el resultado queda en
+  `autoprueba_resultado.json`), y el APK para celulares (arm64 y armv7), firmado con el keystore de
+  los secretos `ANDROID_KEYSTORE`, `ANDROID_KEYSTORE_PASSWORD` y `ANDROID_KEY_ALIAS`. La firma debe
+  ser siempre la misma: Android solo actualiza una app (conservando sus datos) si coincide.
+
 ### Ejecución de Python
 
 - Pyodide corre en un Web Worker. Con `SharedArrayBuffer` (WebView2 en Windows), `input()` espera
@@ -291,10 +341,18 @@ Argon2id(contraseña del profesor)).
 - **Importar**: archivos sueltos o una carpeta completa (p. ej. la USB con todas las entregas).
   Las repetidas se ignoran; se guarda el historial de entregas de cada alumno.
 - **Tablero**: alumnos con semáforo de integridad, avance, puntos, tiempo, ejecuciones, copias,
-  intentos de pegar, salidas, pistas; **mapa de actividades**; búsqueda; **CSV para Excel**.
+  intentos de pegar, salidas, pistas; **mapa de actividades**; búsqueda; exportar a **Excel**
+  (hojas Resumen, Actividades y Calificaciones con los comentarios como notas) o CSV; y
+  **retroalimentación** `.rlpr` para todo el grupo.
 - **Detalle**: reporte de verificación y ritmo de escritura; por actividad: estado, estadísticas,
   código (solo lectura), **volver a correr las pruebas** (en Pyodide: el código del alumno no toca
   el disco del profesor), enunciado y solución de referencia, calificación y comentario.
+- **Reproductor de escritura**: "Ver cómo lo escribió" vuelve a escribir el código tecla a tecla
+  desde el historial firmado (también cuando el alumno continuó en otro equipo), con velocidad
+  hasta 100×, "saltar pausas" y una línea de tiempo con marcas de intentos de pegar, copias,
+  salidas de la ventana, ejecuciones, pruebas, pistas y reinicios. Al final comprueba que el
+  resultado coincida con el código entregado.
+- **Archivo de acceso** `.rlpa` para el alumno que olvidó su contraseña y su código (ver 4.6).
 
 ---
 
@@ -313,11 +371,19 @@ Tipos de prueba (`pruebas:` de una actividad de código):
   modo: contiene | exacta | normalizada | regex | termina
 - funcion: es_par              # llama una función del alumno
   args: [4]
-  esperado: true
+  kwargs: {base: 10}           # argumentos con nombre (opcional)
+  esperado: true               # valor devuelto (se revisa si está, o si no hay "salida")
+  entrada: "17\n"              # datos para los input() dentro de la función (opcional)
+  salida: ["Hola, Ana"]        # lo que la función debe mostrar (opcional; usa "modo")
   oculta: true                 # no se muestran los datos si falla
 ```
 
-### Incluido en esta versión (4 unidades, 20 lecciones, 53 actividades)
+En las pruebas de función, el programa principal se ejecuta hasta su primer `input()` y ahí se
+detiene sin error: así se pueden probar por separado las funciones de un programa completo (con
+menú) siempre que estén definidas antes del programa principal, que es la estructura que enseña
+el curso.
+
+### Incluido en esta versión (8 unidades, 42 lecciones, 118 actividades; curso 1.1)
 
 | Unidad | Lecciones |
 |--------|-----------|
@@ -325,28 +391,27 @@ Tipos de prueba (`pruebas:` de una actividad de código):
 | 1 Fundamentos | Variables y tipos · Operadores · input() y conversión · Cadenas y f-strings · math y redondeo |
 | 2 Condiciones | Comparaciones · if/else · elif · and/or/not y anidadas · try/except |
 | 3 Ciclos | while · Contadores y acumuladores · Centinela · for y range · break/continue · Anidados y figuras · Programas con menú (calculadora, cajero) |
+| 4 Funciones | def y llamada · Parámetros · return (print contra return) · Valores por defecto y argumentos con nombre · Alcance (UnboundLocalError) · Descomponer un programa |
+| 5 Cadenas | Recorrer (vocales, invertir, palíndromos) · Métodos (split/join, title, count…) · Validaciones (número de control, contraseña segura, correo) · Formato de tablas y cifrado César |
+| 6 Listas | Crear e indexar · Métodos · Recorrer y acumular (máximo sin max) · Buscar y filtrar · Tuplas, rebanadas y comprensiones · Matrices |
+| 7 Proyectos | Control de calificaciones · Inventario · Ahorcado (2 partes) · Gato (2 partes) · Agenda · Piedra, papel o tijera · Conversor decimal/binario · Punto de venta |
 
-### Siguientes unidades (fase 2)
-
-| Unidad | Contenido |
-|--------|-----------|
-| 4 Funciones | def, parámetros, return, valores por defecto, alcance, descomposición, `random` |
-| 5 Cadenas a fondo | recorridos, métodos, validaciones, contar y reemplazar |
-| 6 Listas | índices, rebanadas, métodos, recorrer, buscar, máximos/promedios, tuplas, matrices |
-| 7 Diccionarios (opcional) | pares llave-valor, conteos, agendas |
-| 8 Proyectos | calculadora completa, adivina el número, cajero, control de calificaciones, inventario, ahorcado, gato, agenda |
+Cada proyecto se califica por partes (cada función con sus pruebas) y como programa completo.
+Los diccionarios quedan como posible unidad opcional en una versión posterior.
 
 ---
 
 ## 9. Plan por fases
 
-- **Fase 1 (esta entrega, Windows)**: núcleo, App Alumno, App Profesor, curso U0–U3, CI y
-  empaquetado portable.
-- **Fase 2**: **APK Android** (barra de teclas de código, teclado sin sugerencias, heurísticas de
-  IME, unirse al grupo por **QR**, compartir `.rlp`, pausa de la app como salida); unidades 4–6 y 8;
-  **reproductor visual del historial** (ver cómo se escribió el código); **retroalimentación
-  firmada** profesor → alumno (cifrada con la DEK del alumno); restablecer contraseña desde el
-  profesor; exportar a Excel; problemas de Parsons; historial de versiones; consola interactiva.
+- **Fase 1 (hecha, Windows)**: núcleo, App Alumno, App Profesor, curso U0–U3, CI y empaquetado
+  portable.
+- **Fase 2 (en curso)**: unidades 4–7 del curso (**hecho**: funciones, cadenas, listas y
+  proyectos); versión publicable (llave de firma de producción, Releases); **reproductor visual
+  del historial**, **retroalimentación firmada** profesor → alumno, **archivo de acceso** y
+  exportar a **Excel** (**hechos**); **APK Android** (barra de teclas de código, unirse al grupo por
+  **QR**, exportar con "Guardar como", pausa de la app como salida, autoprueba en emulador;
+  **hecho**, pendiente afinar las heurísticas de IME con teclados reales). Después: problemas de
+  Parsons, historial de versiones, consola interactiva.
 - **Fase 3**: **detección de similitud** entre alumnos (huellas de tokens/AST); visualizador paso a
   paso (tipo Python Tutor); editor del curso y paquetes `.curso` firmados; insignias y rachas;
   tablero de dificultades por actividad.
@@ -360,7 +425,7 @@ Tipos de prueba (`pruebas:` de una actividad de código):
 | Núcleo (Rust) | cifrado, contraseñas, recuperación, envolturas, firmas, UTF-16 (propiedades), flujo completo, continuar en otro dispositivo, byte alterado, manifiesto editado, re-cifrado con otra llave, código cambiado sin historial, eventos borrados, otro profesor | `cargo test -p rlp-core` |
 | Editor (TS) | filtro de pegado, inserciones sospechosas, operaciones reproducibles | `pnpm vitest run` |
 | Navegador | Pyodide con `input()`, detener, `time.sleep`, errores en español, pruebas con ciclo infinito; pegado por teclado, menú, evento y arrastre; política "propio"; flujos de interfaz de ambas apps | `pnpm exec playwright test` |
-| Curso | 53 soluciones y predicciones en CPython y Pyodide | `python3 scripts/validar_curso.py`, `node scripts/validar-curso-pyodide.mjs` |
+| Curso | 118 actividades: soluciones, códigos iniciales y predicciones en CPython y Pyodide; pruebas del arnés | `python3 scripts/validar_curso.py`, `node scripts/validar-curso-pyodide.mjs`, `python3 -m unittest discover packages/python-worker/pruebas` |
 | Apps reales | profesor → alumno → profesor con Tauri, WebView y núcleo reales | `scripts/autoprueba.sh` (Linux/Xvfb), `scripts/autoprueba.ps1` (Windows/WebView2) |
 | Windows | compilación, runtime con PyInstaller que genera un `.exe` funcional, empaquetado | `.github/workflows/build-windows.yml` |
 
@@ -368,11 +433,11 @@ Tipos de prueba (`pruebas:` de una actividad de código):
 
 ## 11. Distribución
 
-1. Descarga el artefacto `rlp-windows-portable` del workflow **Build Windows** (o una versión
-   etiquetada).
-2. Profesor: descomprime `RLP-Profesor-*.zip`, crea sus llaves, **guarda el respaldo**, crea el grupo.
-3. Con "Instalar en carpeta de la App Alumno" coloca el grupo en la carpeta `RLP-Alumno` y cópiala a
-   las PCs o memorias USB (o entrega el `.rlpg` para que cada alumno lo importe).
-4. La App Alumno requiere el WebView2 de Microsoft (incluido en Windows 11 y en Windows 10
-   actualizado). Si un antivirus bloquea los `.exe` generados, agrega una excepción para la carpeta
-   de la app.
+- Cada push genera el artefacto `rlp-windows-portable` del workflow **Build Windows**; cada
+  etiqueta `v*` publica además un **Release** de GitHub con los dos zips y las notas de
+  `CHANGELOG.md` (el zip del profesor incluye `INSTALACION.md`).
+- Guía completa para un laboratorio (WebView2 sin internet, antivirus, equipos que se restauran al
+  reiniciar, entregas, actualizar sin perder datos): [`docs/INSTALACION.md`](INSTALACION.md).
+- Resumen: el profesor descomprime `RLP-Profesor`, crea sus llaves, **guarda el respaldo** y crea
+  el grupo; con "Instalar en carpeta de la App Alumno" coloca el grupo en la carpeta `RLP-Alumno`
+  y la copia a las PCs o memorias USB (o entrega el `.rlpg` para que cada alumno lo importe).

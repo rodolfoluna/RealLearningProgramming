@@ -1,6 +1,6 @@
 {
   "name": "@rlp/alumno",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,6 +16,7 @@
     "@rlp/python-worker": "workspace:*",
     "@rlp/ui-comun": "workspace:*",
     "@tauri-apps/api": "^2.8.0",
+    "@tauri-apps/plugin-barcode-scanner": "^2.5.0",
     "@tauri-apps/plugin-dialog": "^2.4.0"
   },
   "devDependencies": {

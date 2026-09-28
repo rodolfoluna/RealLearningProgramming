@@ -32,6 +32,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Compilar el curso y copiar Pyodide
         run: pnpm preparar
+      - name: Pruebas del arnés de Python
+        run: python3 -m unittest discover packages/python-worker/pruebas
       - name: Validar el curso (CPython)
         run: python3 scripts/validar_curso.py
       - name: Validar el curso (Pyodide)
@@ -41,7 +43,7 @@ jobs:
           cargo fmt --all --check
           cargo clippy --workspace --all-targets -- -D warnings
       - name: Pruebas del núcleo (Rust)
-        run: cargo test -p rlp-core
+        run: cargo test -p rlp-core --features excel
       - name: Pruebas unitarias (TypeScript)
         run: pnpm vitest run
       - name: Revisión de tipos (Svelte)

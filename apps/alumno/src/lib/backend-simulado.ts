@@ -11,6 +11,7 @@ import {
   type Estadisticas,
   type GrupoInfo,
   type PerfilLocal,
+  type Retroalimentacion,
 } from "./tipos";
 
 interface Evento {
@@ -25,7 +26,11 @@ interface Perfil {
   codigo: string;
   actividades: Record<string, EstadoActividad>;
   eventos: Evento[];
+  retroalimentacion: Retroalimentacion | null;
 }
+
+/** Contraseña temporal de los archivos de acceso de demostración. */
+const TEMPORAL_DEMO = "ABCD-EFGH-JKMN";
 
 const GRUPO_DEMO: GrupoInfo = {
   grupo_id: "demo",
@@ -99,6 +104,7 @@ export function crearBackendSimulado(): Backend {
     grupo,
     actividades: structuredClone(sesion().actividades),
     estadisticas: estadisticas(),
+    retroalimentacion: structuredClone(sesion().retroalimentacion),
   });
   const act = (id: string): EstadoActividad =>
     (sesion().actividades[id] ??= {
@@ -117,8 +123,8 @@ export function crearBackendSimulado(): Backend {
 
   return {
     estadoApp: async () => ({
-      version: "0.1.0-navegador",
-      plataforma: "navegador",
+      version: "0.2.0-navegador",
+      plataforma: new URLSearchParams(location.search).has("android") ? "android" : "navegador",
       carpeta_datos: "(memoria del navegador)",
       escribible: true,
       grupo,
@@ -128,6 +134,11 @@ export function crearBackendSimulado(): Backend {
     }),
     elegirArchivo: async () => "simulado://archivo",
     elegirCarpeta: async () => "simulado://carpeta",
+    elegirDestino: async (_t, nombre) => `simulado://descargas/${nombre}`,
+    escanearQr: async () => "RLPG1:demo",
+    importarGrupoQr: async () => (grupo = GRUPO_DEMO),
+    unirseGrupoQr: async () => (grupo = GRUPO_DEMO),
+    exportarA: async () => `${sesion().local.perfil.numero_control}.rlp`,
     abrirCarpeta: async () => undefined,
     importarGrupo: async () => (grupo = GRUPO_DEMO),
     async registrar(numeroControl, nombre, contrasena) {
@@ -147,6 +158,7 @@ export function crearBackendSimulado(): Backend {
         codigo: "ABCD-EFGH-JKMN-PQRS-TVWX",
         actividades: {},
         eventos: [],
+        retroalimentacion: null,
       };
       perfiles.push(p);
       actual = p;
@@ -221,6 +233,42 @@ export function crearBackendSimulado(): Backend {
     },
     exportar: async () => `simulado://carpeta/${sesion().local.perfil.numero_control}.rlp`,
     importarAvances: async () => ({ eventos_nuevos: 0, actividades_actualizadas: [], dispositivos: [], conflictos: [] }),
+    async importarRetroalimentacion() {
+      if (!grupo) throw new Error("Tu perfil no está en un grupo: primero únete al grupo de tu profesor.");
+      const r: Retroalimentacion = {
+        profesor: grupo.profesor,
+        creado: Date.now(),
+        actividades: {
+          "u0-hola-mundo": { calificacion: 10, comentario: "¡Excelente inicio!", actualizado: Date.now() },
+          "u0-mensaje-bienvenida": { calificacion: 8, comentario: "Revisa los acentos del mensaje.", actualizado: Date.now() },
+        },
+      };
+      sesion().retroalimentacion = r;
+      registrar("retroalimentacion", null, { actividades: 2 });
+      return structuredClone(r);
+    },
+    async leerAcceso() {
+      const p = perfiles[0];
+      return {
+        nombre: p?.local.perfil.nombre ?? "Alumno de prueba",
+        numero_control: p?.local.perfil.numero_control ?? "00000000",
+        profesor: "Profesor de prueba",
+        perfil_local: !!p,
+      };
+    },
+    async entrarConAcceso(_ruta, temporal, nueva, rutaEntrega) {
+      const p = perfiles[0];
+      if (!p && !rutaEntrega) throw new Error("Tu perfil no está en esta carpeta: elige también tu último archivo .rlp.");
+      if (!p) throw new Error("La restauración solo está disponible en la app instalada.");
+      if (temporal.replace(/[^A-Z0-9]/gi, "").toUpperCase() !== TEMPORAL_DEMO.replace(/-/g, ""))
+        throw new Error("Contraseña o código de recuperación incorrecto.");
+      if (nueva.length < 8) throw new Error("La contraseña debe tener al menos 8 caracteres.");
+      p.contrasena = nueva;
+      p.codigo = "NUEV-OCOD-IGOR-ECUP-ERAR";
+      actual = p;
+      registrar("acceso_profesor", null);
+      return retrasar({ ...estado(), codigo_nuevo: p.codigo });
+    },
     cambiarContrasena: async (a, n) => {
       if (a !== sesion().contrasena) throw new Error("Contraseña o código de recuperación incorrecto.");
       sesion().contrasena = n;

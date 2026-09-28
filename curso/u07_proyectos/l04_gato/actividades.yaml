@@ -1,0 +1,217 @@
+- id: u7-gato-funciones
+  titulo: "Gato, parte 1: ¿quién ganó?"
+  tipo: codigo
+  dificultad: 2
+  puntos: 15
+  enunciado: |
+    Escribe dos funciones para el juego del gato. El tablero es una matriz de 3 × 3 con
+    `"X"`, `"O"` o `" "` (libre).
+
+    - `ganador(tablero)`: devuelve `"X"` u `"O"` si alguien completó una fila, columna o
+      diagonal; si no, devuelve `""`.
+    - `tablero_lleno(tablero)`: devuelve `True` si ya no hay casillas libres.
+  codigo_inicial: |
+    def ganador(tablero):
+        pass
+
+
+    def tablero_lleno(tablero):
+        pass
+
+
+    tablero = [
+        ["X", "O", "O"],
+        [" ", "X", " "],
+        [" ", " ", "X"],
+    ]
+    print(ganador(tablero))
+  pistas:
+    - "Revisa las 3 filas y las 3 columnas con un for de 0 a 2 y después las dos diagonales."
+    - "Una línea gana si su primera casilla no es \" \" y las tres son iguales."
+    - "tablero_lleno: si encuentras un \" \" en alguna fila, devuelve False."
+  pruebas:
+    - nombre: Diagonal principal
+      funcion: ganador
+      args: [[["X", "O", "O"], [" ", "X", " "], [" ", " ", "X"]]]
+      esperado: "X"
+    - nombre: Fila
+      funcion: ganador
+      args: [[["X", "X", " "], ["O", "O", "O"], ["X", " ", " "]]]
+      esperado: "O"
+    - nombre: Columna
+      funcion: ganador
+      args: [[["X", "O", " "], ["X", "O", " "], [" ", "O", "X"]]]
+      esperado: "O"
+    - nombre: Otra diagonal
+      funcion: ganador
+      args: [[["X", "X", "O"], ["X", "O", " "], ["O", " ", " "]]]
+      esperado: "O"
+    - nombre: Nadie
+      funcion: ganador
+      args: [[["X", "O", "X"], ["X", "O", "O"], ["O", "X", "X"]]]
+      esperado: ""
+    - nombre: Tablero vacío
+      funcion: ganador
+      args: [[[" ", " ", " "], [" ", " ", " "], [" ", " ", " "]]]
+      esperado: ""
+    - nombre: Lleno
+      funcion: tablero_lleno
+      args: [[["X", "O", "X"], ["X", "O", "O"], ["O", "X", "X"]]]
+      esperado: true
+    - nombre: Con una casilla libre
+      funcion: tablero_lleno
+      args: [[["X", "O", "X"], ["X", "O", "O"], ["O", "X", " "]]]
+      esperado: false
+  solucion: |
+    def ganador(tablero):
+        lineas = []
+        for i in range(3):
+            lineas.append([tablero[i][0], tablero[i][1], tablero[i][2]])
+            lineas.append([tablero[0][i], tablero[1][i], tablero[2][i]])
+        lineas.append([tablero[0][0], tablero[1][1], tablero[2][2]])
+        lineas.append([tablero[0][2], tablero[1][1], tablero[2][0]])
+        for a, b, c in lineas:
+            if a != " " and a == b == c:
+                return a
+        return ""
+
+
+    def tablero_lleno(tablero):
+        for fila in tablero:
+            if " " in fila:
+                return False
+        return True
+
+
+    tablero = [
+        ["X", "O", "O"],
+        [" ", "X", " "],
+        [" ", " ", "X"],
+    ]
+    print(ganador(tablero))
+
+- id: u7-gato-juego
+  titulo: "Gato, parte 2: el juego"
+  tipo: codigo
+  dificultad: 3
+  puntos: 30
+  enunciado: |
+    Ya tienes `mostrar`, `ganador` y `tablero_lleno`. Escribe el juego para dos personas.
+    Empieza `X`. En cada turno:
+
+    1. Muestra el tablero y `Turno de X` (o de `O`).
+    2. Pide `Fila (1-3): ` y `Columna (1-3): `.
+    3. Si alguna no es `1`, `2` o `3`, muestra `Posición inválida`; si la casilla está ocupada,
+       muestra `Casilla ocupada`. En ambos casos el mismo jugador vuelve a tirar.
+    4. Marca la casilla. Si ese jugador ganó, muestra el tablero y `¡Ganó X!`; si el tablero se
+       llenó, muestra el tablero y `Empate`. Si no, cambia de turno.
+  codigo_inicial: |
+    def mostrar(tablero):
+        for f in range(3):
+            print(" | ".join(tablero[f]))
+            if f < 2:
+                print("-" * 9)
+
+
+    def ganador(tablero):
+        lineas = []
+        for i in range(3):
+            lineas.append([tablero[i][0], tablero[i][1], tablero[i][2]])
+            lineas.append([tablero[0][i], tablero[1][i], tablero[2][i]])
+        lineas.append([tablero[0][0], tablero[1][1], tablero[2][2]])
+        lineas.append([tablero[0][2], tablero[1][1], tablero[2][0]])
+        for a, b, c in lineas:
+            if a != " " and a == b == c:
+                return a
+        return ""
+
+
+    def tablero_lleno(tablero):
+        for fila in tablero:
+            if " " in fila:
+                return False
+        return True
+
+
+    # Programa principal
+    tablero = []
+    for f in range(3):
+        tablero.append([" ", " ", " "])
+    turno = "X"
+  pistas:
+    - Usa while True y termina con break cuando alguien gane o haya empate.
+    - "Valida con: if fila not in [\"1\", \"2\", \"3\"] or columna not in [\"1\", \"2\", \"3\"]:"
+    - "Convierte a posiciones: f = int(fila) - 1 y c = int(columna) - 1"
+    - Usa continue para que el mismo jugador vuelva a tirar después de un error.
+  pruebas:
+    - nombre: Gana X
+      entrada: "1\n1\n2\n1\n1\n2\n2\n2\n1\n3\n"
+      salida: ["Turno de X", "Turno de O", "X | X | X", "¡Ganó X!"]
+    - nombre: Gana O
+      entrada: "1\n1\n2\n2\n1\n2\n1\n3\n3\n3\n3\n1\n"
+      salida: ["¡Ganó O!"]
+    - nombre: Empate
+      entrada: "1\n1\n1\n2\n1\n3\n2\n2\n2\n1\n3\n1\n3\n2\n2\n3\n3\n3\n"
+      salida: ["X | O | X", "X | O | O", "O | X | X", "Empate"]
+    - nombre: Jugadas inválidas
+      entrada: "0\n2\n1\n1\n1\n1\n2\n1\n1\n2\n2\n2\n1\n3\n"
+      salida: ["Posición inválida", "Turno de X", "Casilla ocupada", "Turno de O", "¡Ganó X!"]
+  solucion: |
+    def mostrar(tablero):
+        for f in range(3):
+            print(" | ".join(tablero[f]))
+            if f < 2:
+                print("-" * 9)
+
+
+    def ganador(tablero):
+        lineas = []
+        for i in range(3):
+            lineas.append([tablero[i][0], tablero[i][1], tablero[i][2]])
+            lineas.append([tablero[0][i], tablero[1][i], tablero[2][i]])
+        lineas.append([tablero[0][0], tablero[1][1], tablero[2][2]])
+        lineas.append([tablero[0][2], tablero[1][1], tablero[2][0]])
+        for a, b, c in lineas:
+            if a != " " and a == b == c:
+                return a
+        return ""
+
+
+    def tablero_lleno(tablero):
+        for fila in tablero:
+            if " " in fila:
+                return False
+        return True
+
+
+    # Programa principal
+    tablero = []
+    for f in range(3):
+        tablero.append([" ", " ", " "])
+    turno = "X"
+    while True:
+        mostrar(tablero)
+        print(f"Turno de {turno}")
+        fila = input("Fila (1-3): ")
+        columna = input("Columna (1-3): ")
+        if fila not in ["1", "2", "3"] or columna not in ["1", "2", "3"]:
+            print("Posición inválida")
+            continue
+        f = int(fila) - 1
+        c = int(columna) - 1
+        if tablero[f][c] != " ":
+            print("Casilla ocupada")
+            continue
+        tablero[f][c] = turno
+        if ganador(tablero) != "":
+            mostrar(tablero)
+            print(f"¡Ganó {turno}!")
+            break
+        if tablero_lleno(tablero):
+            mostrar(tablero)
+            print("Empate")
+            break
+        if turno == "X":
+            turno = "O"
+        else:
+            turno = "X"

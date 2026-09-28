@@ -1,0 +1,8 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "movil",
+  "description": "Permisos solo en Android/iOS: escanear el QR del grupo",
+  "platforms": ["android", "iOS"],
+  "windows": ["main"],
+  "permissions": ["barcode-scanner:default"]
+}

@@ -1,0 +1,174 @@
+- id: u5-predice-formato
+  titulo: Ancho y alineación
+  tipo: prediccion
+  enunciado: ¿Qué muestra este programa? Cuenta bien los espacios.
+  codigo: |
+    nombre = "Ana"
+    promedio = 92.456
+    print(f"[{nombre:<6}]")
+    print(f"[{nombre:>6}]")
+    print(f"[{nombre:^7}]")
+    print(f"[{promedio:8.2f}]")
+    print(f"{7:03d}")
+  salida_esperada: |
+    [Ana   ]
+    [   Ana]
+    [  Ana  ]
+    [   92.46]
+    007
+  explicacion: |
+    El número después de `<`, `>` o `^` es el ancho total. `8.2f` ocupa 8 caracteres con dos
+    decimales (92.456 se redondea a 92.46) y los números se alinean a la derecha por defecto.
+    `03d` rellena con ceros hasta 3 cifras.
+
+- id: u5-ticket
+  titulo: Renglones de un ticket
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Escribe dos funciones que **devuelvan** (no muestren) los renglones de un ticket:
+
+    - `fila(producto, cantidad, precio)`: el producto alineado a la izquierda en 15 caracteres,
+      la cantidad a la derecha en 5 y el importe (cantidad × precio) a la derecha en 10 con dos
+      decimales.
+    - `total(importe)`: la palabra `TOTAL` a la izquierda en 20 caracteres y el importe a la
+      derecha en 10 con dos decimales.
+
+    ```texto
+    Cuaderno           3    103.50
+    Lápiz             12     60.00
+    TOTAL                   163.50
+    ```
+  codigo_inicial: |
+    def fila(producto, cantidad, precio):
+        pass
+
+
+    def total(importe):
+        pass
+
+
+    print(fila("Cuaderno", 3, 34.5))
+    print(fila("Lápiz", 12, 5))
+    print(total(163.5))
+  pistas:
+    - "return f\"{producto:<15}{cantidad:>5}{cantidad * precio:>10.2f}\""
+    - "Dentro de una f-string con comillas dobles, escribe el texto fijo con comillas simples: {'TOTAL':<20}"
+  pruebas:
+    - nombre: fila de cuadernos
+      funcion: fila
+      args: ["Cuaderno", 3, 34.5]
+      esperado: "Cuaderno           3    103.50"
+    - nombre: fila de lápices
+      funcion: fila
+      args: ["Lápiz", 12, 5.0]
+      esperado: "Lápiz             12     60.00"
+    - nombre: Nombre de 15 letras
+      funcion: fila
+      args: ["Mochila escolar", 1, 899.9]
+      esperado: "Mochila escolar    1    899.90"
+    - nombre: total
+      funcion: total
+      args: [1063.4]
+      esperado: "TOTAL                  1063.40"
+    - nombre: total entero
+      funcion: total
+      args: [5]
+      esperado: "TOTAL                     5.00"
+  solucion: |
+    def fila(producto, cantidad, precio):
+        return f"{producto:<15}{cantidad:>5}{cantidad * precio:>10.2f}"
+
+
+    def total(importe):
+        return f"{'TOTAL':<20}{importe:>10.2f}"
+
+
+    print(fila("Cuaderno", 3, 34.5))
+    print(fila("Lápiz", 12, 5))
+    print(total(163.5))
+
+- id: u5-cesar
+  titulo: Cifrado César
+  tipo: codigo
+  dificultad: 3
+  enunciado: |
+    Escribe las funciones:
+
+    - `cifrar(texto, desplazamiento)`: recorre cada letra de la `a` a la `z` (y de la `A` a la
+      `Z`) `desplazamiento` posiciones, dando la vuelta al alfabeto. Los demás caracteres
+      (espacios, signos, números, `ñ`, acentos) quedan igual.
+    - `descifrar(texto, desplazamiento)`: hace lo contrario.
+
+    ```python
+    cifrar("hola", 3)            # "krod"
+    cifrar("Zorro", 2)           # "Bqttq"
+    cifrar("¡Hola, Ana!", 1)     # "¡Ipmb, Bob!"
+    descifrar("krod", 3)         # "hola"
+    ```
+  codigo_inicial: |
+    def cifrar(texto, desplazamiento):
+        pass
+
+
+    def descifrar(texto, desplazamiento):
+        pass
+
+
+    secreto = cifrar("Nos vemos a las 5", 3)
+    print(secreto)
+    print(descifrar(secreto, 3))
+  pistas:
+    - "Para una minúscula: chr((ord(c) - ord(\"a\") + desplazamiento) % 26 + ord(\"a\"))"
+    - "Revisa el rango con \"a\" <= c <= \"z\" (así la ñ y las vocales con acento quedan fuera)."
+    - "descifrar puede ser una sola línea: return cifrar(texto, -desplazamiento)"
+  pruebas:
+    - nombre: cifrar("hola", 3)
+      funcion: cifrar
+      args: ["hola", 3]
+      esperado: "krod"
+    - nombre: Mayúsculas y vuelta al alfabeto
+      funcion: cifrar
+      args: ["Zorro", 2]
+      esperado: "Bqttq"
+    - nombre: Signos sin cambio
+      funcion: cifrar
+      args: ["¡Hola, Ana!", 1]
+      esperado: "¡Ipmb, Bob!"
+    - nombre: Desplazamiento mayor que 26
+      funcion: cifrar
+      args: ["xyz", 29]
+      esperado: "abc"
+    - nombre: descifrar
+      funcion: descifrar
+      args: ["krod", 3]
+      esperado: "hola"
+    - nombre: descifrar con vuelta
+      funcion: descifrar
+      args: ["Bqttq 2024", 2]
+      esperado: "Zorro 2024"
+    - nombre: La ñ no cambia
+      funcion: cifrar
+      args: ["año", 1]
+      esperado: "bñp"
+      oculta: true
+  solucion: |
+    def cifrar(texto, desplazamiento):
+        resultado = ""
+        for c in texto:
+            if "a" <= c <= "z":
+                resultado += chr((ord(c) - ord("a") + desplazamiento) % 26 + ord("a"))
+            elif "A" <= c <= "Z":
+                resultado += chr((ord(c) - ord("A") + desplazamiento) % 26 + ord("A"))
+            else:
+                resultado += c
+        return resultado
+
+
+    def descifrar(texto, desplazamiento):
+        return cifrar(texto, -desplazamiento)
+
+
+    secreto = cifrar("Nos vemos a las 5", 3)
+    print(secreto)
+    print(descifrar(secreto, 3))

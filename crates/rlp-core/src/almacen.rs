@@ -154,6 +154,39 @@ impl Almacen {
         &self.dek
     }
 
+    fn aad_privado(&self, clave: &str) -> Vec<u8> {
+        format!("privado|{}|{clave}", self.meta.perfil.perfil_id).into_bytes()
+    }
+
+    /// Guarda un dato cifrado con la llave de datos (p. ej. la retroalimentación del profesor).
+    pub fn guardar_privado(&self, clave: &str, datos: &[u8]) -> Resultado<()> {
+        let cifrado = crate::crypto::b64(&cifrar(&self.dek, &self.aad_privado(clave), datos));
+        self.conn.execute(
+            "INSERT INTO meta (clave, valor) VALUES (?1, ?2) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor",
+            params![format!("privado:{clave}"), cifrado],
+        )?;
+        Ok(())
+    }
+
+    pub fn leer_privado(&self, clave: &str) -> Resultado<Option<Vec<u8>>> {
+        let valor: Option<String> = self
+            .conn
+            .query_row(
+                "SELECT valor FROM meta WHERE clave = ?1",
+                params![format!("privado:{clave}")],
+                |r| r.get(0),
+            )
+            .optional()?;
+        match valor {
+            Some(v) => Ok(Some(descifrar(
+                &self.dek,
+                &self.aad_privado(clave),
+                &crate::crypto::de_b64(&v)?,
+            )?)),
+            None => Ok(None),
+        }
+    }
+
     pub fn guardar_meta(&self) -> Resultado<()> {
         self.conn.execute(
             "INSERT INTO meta (clave, valor) VALUES ('perfil', ?1) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor",

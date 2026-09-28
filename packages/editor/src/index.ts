@@ -1,7 +1,18 @@
 // Editor de código del alumno (CodeMirror 6) con control de portapapeles e historial de edición.
 
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
-import { defaultKeymap, history, historyKeymap, indentLess, indentMore } from "@codemirror/commands";
+import {
+  cursorCharLeft,
+  cursorCharRight,
+  cursorLineDown,
+  cursorLineUp,
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentLess,
+  indentMore,
+  undo,
+} from "@codemirror/commands";
 import { python } from "@codemirror/lang-python";
 import {
   bracketMatching,
@@ -92,6 +103,8 @@ export interface OpcionesEditor {
   atajos?: { tecla: string; accion: () => void }[];
   intervaloOperacionesMs?: number;
 }
+
+export type AccionTecla = "tab" | "izquierda" | "derecha" | "arriba" | "abajo" | "deshacer";
 
 export class EditorCodigo {
   readonly view: EditorView;
@@ -206,6 +219,30 @@ export class EditorCodigo {
   }
 
   enfocar(): void {
+    this.view.focus();
+  }
+
+  /**
+   * Inserta texto como si se tecleara (barra de teclas en pantallas táctiles): pasa por los
+   * mismos filtros y queda en el historial como tecleo.
+   */
+  teclear(texto: string): void {
+    if (this.view.state.readOnly) return;
+    this.view.dispatch(this.view.state.replaceSelection(texto), { userEvent: "input.type", scrollIntoView: true });
+    this.view.focus();
+  }
+
+  /** Teclas especiales de la barra táctil. */
+  accion(nombre: AccionTecla): void {
+    const comandos = {
+      tab: tabulador,
+      izquierda: cursorCharLeft,
+      derecha: cursorCharRight,
+      arriba: cursorLineUp,
+      abajo: cursorLineDown,
+      deshacer: undo,
+    } as const;
+    comandos[nombre](this.view);
     this.view.focus();
   }
 

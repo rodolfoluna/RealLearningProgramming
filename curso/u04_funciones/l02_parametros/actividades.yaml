@@ -1,0 +1,136 @@
+- id: u4-saludo-hora
+  titulo: Saludo según la hora
+  tipo: codigo
+  enunciado: |
+    Escribe la función `saludar(nombre, hora)`. `hora` es un entero de 0 a 23. La función debe
+    **mostrar**:
+
+    - `Buenos días, <nombre>` si la hora es menor que 12,
+    - `Buenas tardes, <nombre>` si es menor que 19,
+    - `Buenas noches, <nombre>` en otro caso.
+
+    Por ejemplo, `saludar("Ana", 9)` muestra `Buenos días, Ana`.
+  codigo_inicial: |
+    def saludar(nombre, hora):
+        pass  # Reemplaza esta línea
+
+
+    saludar("Ana", 9)
+    saludar("Luis", 20)
+  pistas:
+    - Dentro de la función usa if / elif / else con el parámetro hora.
+    - "print(f\"Buenos días, {nombre}\")"
+  pruebas:
+    - nombre: Mañana
+      funcion: saludar
+      args: ["Ana", 9]
+      salida: "Buenos días, Ana"
+    - nombre: Tarde
+      funcion: saludar
+      args: ["Luis", 15]
+      salida: "Buenas tardes, Luis"
+    - nombre: Noche
+      funcion: saludar
+      args: ["Sofía", 21]
+      salida: "Buenas noches, Sofía"
+    - nombre: Justo a las 12
+      funcion: saludar
+      args: ["Eva", 12]
+      salida: "Buenas tardes, Eva"
+    - nombre: Justo a las 19
+      funcion: saludar
+      args: ["Iván", 19]
+      salida: "Buenas noches, Iván"
+      oculta: true
+  solucion: |
+    def saludar(nombre, hora):
+        if hora < 12:
+            print(f"Buenos días, {nombre}")
+        elif hora < 19:
+            print(f"Buenas tardes, {nombre}")
+        else:
+            print(f"Buenas noches, {nombre}")
+
+
+    saludar("Ana", 9)
+    saludar("Luis", 20)
+
+- id: u4-rectangulo
+  titulo: Rectángulo de símbolos
+  tipo: codigo
+  dificultad: 2
+  enunciado: |
+    Escribe la función `rectangulo(ancho, alto, simbolo)` que dibuje un rectángulo relleno.
+    Por ejemplo, `rectangulo(4, 2, "*")` muestra:
+
+    ```texto
+    ****
+    ****
+    ```
+
+    Y `rectangulo(3, 3, "#")`:
+
+    ```texto
+    ###
+    ###
+    ###
+    ```
+  codigo_inicial: |
+    def rectangulo(ancho, alto, simbolo):
+        pass  # Reemplaza esta línea
+
+
+    rectangulo(4, 2, "*")
+  pistas:
+    - Necesitas repetir `alto` veces la impresión de una fila.
+    - "Una fila es simbolo * ancho."
+  pruebas:
+    - nombre: 4 × 2 con *
+      funcion: rectangulo
+      args: [4, 2, "*"]
+      salida: "****\n****"
+      modo: normalizada
+    - nombre: 3 × 3 con #
+      funcion: rectangulo
+      args: [3, 3, "#"]
+      salida: "###\n###\n###"
+      modo: normalizada
+    - nombre: 1 × 1
+      funcion: rectangulo
+      args: [1, 1, "@"]
+      salida: "@"
+      modo: normalizada
+    - nombre: 6 × 1
+      funcion: rectangulo
+      args: [6, 1, "-"]
+      salida: "------"
+      modo: normalizada
+      oculta: true
+  solucion: |
+    def rectangulo(ancho, alto, simbolo):
+        for _ in range(alto):
+            print(simbolo * ancho)
+
+
+    rectangulo(4, 2, "*")
+
+- id: u4-predice-parametros
+  titulo: El orden de los argumentos
+  tipo: prediccion
+  enunciado: ¿Qué muestra este programa?
+  codigo: |
+    def presentar(nombre, edad):
+        print(nombre, "tiene", edad, "años")
+
+    presentar("Ana", 20)
+    presentar(15, "Luis")
+    edad = 30
+    presentar("Eva", edad + 1)
+  salida_esperada: |
+    Ana tiene 20 años
+    15 tiene Luis años
+    Eva tiene 31 años
+  explicacion: |
+    Los argumentos se asignan a los parámetros **por posición**: en la segunda llamada
+    `nombre` recibe `15` y `edad` recibe `"Luis"`. En la tercera, primero se calcula
+    `edad + 1` (31) y ese valor es el que recibe el parámetro.

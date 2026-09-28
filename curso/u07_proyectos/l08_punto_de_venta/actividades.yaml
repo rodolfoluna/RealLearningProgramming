@@ -1,0 +1,138 @@
+- id: u7-punto-de-venta
+  titulo: Punto de venta
+  tipo: codigo
+  dificultad: 3
+  puntos: 30
+  enunciado: |
+    **Funciones**:
+
+    - `buscar_en_catalogo(catalogo, codigo)`: devuelve la tupla del producto con ese código (sin
+      importar mayúsculas) o `None`.
+    - `totales(carrito)`: el carrito es una lista de `[nombre, cantidad, precio]`; devuelve la
+      tupla `(subtotal, iva, total)` con IVA del 16 %, cada valor redondeado a 2 decimales.
+
+    **Programa**:
+
+    1. Pide `Código (o fin): ` hasta que escriban `fin`. Si el código no existe muestra
+       `Código no encontrado`. Si existe, pide `Cantidad: `; si no es un entero mayor que 0
+       muestra `Cantidad inválida`; si es válida, agrégalo al carrito y muestra
+       `Agregado: 2 x Refresco`.
+    2. Si el carrito está vacío muestra `No se vendió nada` y termina.
+    3. Si no, muestra el ticket: una línea de 30 guiones, cada producto con
+       `f"{nombre:<15}{cantidad:>5}{importe:>10.2f}"`, otra línea de guiones y
+       `Subtotal`, `IVA` y `Total` con `f"{etiqueta:<20}{valor:>10.2f}"`.
+    4. Pide `Pago: ` hasta que alcance para el total (si no, `Pago insuficiente`) y muestra
+       `Cambio: $40.26`.
+  codigo_inicial: |
+    CATALOGO = [
+        ("A1", "Refresco", 18.0),
+        ("A2", "Papas", 15.5),
+        ("B1", "Sándwich", 42.0),
+        ("B2", "Galletas", 12.0),
+    ]
+
+
+    def buscar_en_catalogo(catalogo, codigo):
+        pass
+
+
+    def totales(carrito):
+        pass
+
+
+    # Programa principal
+    carrito = []
+  pistas:
+    - "buscar_en_catalogo: for producto in catalogo: if producto[0].lower() == codigo.lower(): return producto"
+    - "totales: subtotal = suma de cantidad * precio; iva = subtotal * 0.16"
+    - "Para la cantidad: try: cantidad = int(texto) except ValueError: cantidad = 0"
+    - "subtotal, iva, total = totales(carrito)"
+  pruebas:
+    - nombre: Buscar sin importar mayúsculas
+      funcion: buscar_en_catalogo
+      args: [[["A1", "Refresco", 18.0], ["A2", "Papas", 15.5]], "a2"]
+      esperado: ["A2", "Papas", 15.5]
+    - nombre: Código inexistente
+      funcion: buscar_en_catalogo
+      args: [[["A1", "Refresco", 18.0]], "Z9"]
+      esperado: null
+    - nombre: totales
+      funcion: totales
+      args: [[["Refresco", 2, 18.0], ["Papas", 1, 15.5]]]
+      esperado: [51.5, 8.24, 59.74]
+    - nombre: totales sin productos
+      funcion: totales
+      args: [[]]
+      esperado: [0, 0, 0]
+    - nombre: Venta completa
+      entrada: "a1\n2\nA2\n1\nfin\n50\n100\n"
+      salida: ["Agregado: 2 x Refresco", "Agregado: 1 x Papas", "Refresco 2 36.00", "Papas 1 15.50", "Subtotal 51.50", "IVA 8.24", "Total 59.74", "Pago insuficiente", "Cambio: $40.26"]
+    - nombre: Formato del ticket
+      entrada: "a1\n2\nfin\n100\n"
+      salida: ['^-{30}$', '^Refresco {11}2 {5}36\.00$', '^Subtotal {17}36\.00$', '^IVA {23}5\.76$', '^Total {20}41\.76$']
+      modo: regex
+    - nombre: Errores
+      entrada: "Z9\nB1\n0\nB1\ncinco\nb2\n3\nfin\n50\n"
+      salida: ["Código no encontrado", "Cantidad inválida", "Cantidad inválida", "Agregado: 3 x Galletas", "Total 41.76", "Cambio: $8.24"]
+    - nombre: Sin ventas
+      entrada: "fin\n"
+      salida: "No se vendió nada"
+  solucion: |
+    CATALOGO = [
+        ("A1", "Refresco", 18.0),
+        ("A2", "Papas", 15.5),
+        ("B1", "Sándwich", 42.0),
+        ("B2", "Galletas", 12.0),
+    ]
+
+
+    def buscar_en_catalogo(catalogo, codigo):
+        for producto in catalogo:
+            if producto[0].lower() == codigo.lower():
+                return producto
+        return None
+
+
+    def totales(carrito):
+        subtotal = 0
+        for nombre, cantidad, precio in carrito:
+            subtotal += cantidad * precio
+        iva = subtotal * 0.16
+        return round(subtotal, 2), round(iva, 2), round(subtotal + iva, 2)
+
+
+    # Programa principal
+    carrito = []
+    codigo = input("Código (o fin): ")
+    while codigo.lower() != "fin":
+        producto = buscar_en_catalogo(CATALOGO, codigo)
+        if producto is None:
+            print("Código no encontrado")
+        else:
+            try:
+                cantidad = int(input("Cantidad: "))
+            except ValueError:
+                cantidad = 0
+            if cantidad > 0:
+                carrito.append([producto[1], cantidad, producto[2]])
+                print(f"Agregado: {cantidad} x {producto[1]}")
+            else:
+                print("Cantidad inválida")
+        codigo = input("Código (o fin): ")
+
+    if len(carrito) == 0:
+        print("No se vendió nada")
+    else:
+        subtotal, iva, total = totales(carrito)
+        print("-" * 30)
+        for nombre, cantidad, precio in carrito:
+            print(f"{nombre:<15}{cantidad:>5}{cantidad * precio:>10.2f}")
+        print("-" * 30)
+        print(f"{'Subtotal':<20}{subtotal:>10.2f}")
+        print(f"{'IVA':<20}{iva:>10.2f}")
+        print(f"{'Total':<20}{total:>10.2f}")
+        pago = float(input("Pago: "))
+        while pago < total:
+            print("Pago insuficiente")
+            pago = float(input("Pago: "))
+        print(f"Cambio: ${pago - total:.2f}")

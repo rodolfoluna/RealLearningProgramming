@@ -1,8 +1,10 @@
 import type {
+  ArchivoCreado,
   DetalleEntrega,
   EstadoApp,
   FilaTablero,
   GrupoInfo,
+  LineaDeTiempo,
   NuevoGrupo,
   ResultadoImportacion,
 } from "./tipos";
@@ -20,12 +22,20 @@ export interface Backend {
   grupos(): Promise<GrupoInfo[]>;
   exportarGrupo(grupoId: string, carpeta: string): Promise<string>;
   instalarGrupo(grupoId: string, carpetaApp: string): Promise<string>;
+  /** Código QR (SVG) del grupo para unirse desde la App Alumno en el celular. */
+  qrGrupo(grupoId: string): Promise<string>;
   importarEntregas(rutas: string[], codigosIniciales: Record<string, string>): Promise<ResultadoImportacion[]>;
   importarCarpeta(carpeta: string, codigosIniciales: Record<string, string>): Promise<ResultadoImportacion[]>;
   tablero(grupoId: string | null): Promise<FilaTablero[]>;
   detalle(entregaId: number): Promise<DetalleEntrega>;
+  reproduccion(entregaId: number, actividadId: string): Promise<LineaDeTiempo>;
   calificar(perfilId: string, actividadId: string, calificacion: number | null, comentario: string): Promise<void>;
   exportarCsv(grupoId: string | null, actividades: [string, string][], carpeta: string): Promise<string>;
+  exportarXlsx(grupoId: string | null, actividades: [string, string][], carpeta: string): Promise<string>;
+  /** Archivo .rlpr con la calificación y el comentario de cada actividad para cada alumno. */
+  exportarRetroalimentacion(grupoId: string | null, carpeta: string): Promise<ArchivoCreado>;
+  /** Archivo .rlpa para un alumno que olvidó su contraseña y su código de recuperación. */
+  crearAcceso(entregaId: number, carpeta: string): Promise<ArchivoCreado>;
 }
 
 let instancia: Promise<Backend> | null = null;
