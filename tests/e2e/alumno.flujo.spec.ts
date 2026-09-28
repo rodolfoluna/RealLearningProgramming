@@ -116,6 +116,34 @@ test("prueba de función que revisa lo que la función muestra", async ({ page }
   await page.screenshot({ path: `${capturas}/alumno-09-prueba-de-funcion.png` });
 });
 
+test("retroalimentación del profesor y archivo de acceso", async ({ page }) => {
+  await registrarse(page);
+  await page.getByRole("button", { name: /Ana López García/ }).click();
+  await page.getByRole("menuitem", { name: /Importar retroalimentación/ }).click();
+  await expect(page.getByText(/Retroalimentación de Profesor de prueba: 2 actividad/)).toBeVisible();
+  await page.locator('[data-actividad="u0-hola-mundo"]').click();
+  const retro = page.locator("[data-retroalimentacion]");
+  await expect(retro).toContainText("Calificación 10");
+  await expect(retro).toContainText("¡Excelente inicio!");
+  await page.screenshot({ path: `${capturas}/alumno-10-retroalimentacion.png` });
+
+  // Olvidó contraseña y código: entra con el archivo de acceso del profesor.
+  await page.getByRole("button", { name: /Ana López García/ }).click();
+  await page.getByRole("menuitem", { name: /Cerrar sesión/ }).click();
+  await page.getByRole("button", { name: /Tengo un archivo de acceso de mi profesor/ }).click();
+  const form = page.locator("form[data-acceso]");
+  await form.getByRole("button", { name: /Elegir archivo de acceso/ }).click();
+  await expect(form.getByText(/Archivo de Profesor de prueba para/)).toBeVisible();
+  await form.getByLabel(/Contraseña temporal/).fill("abcd efgh jkmn");
+  await form.getByLabel("Contraseña nueva", { exact: true }).fill("otra-clave-segura");
+  await form.getByLabel("Repite la contraseña nueva").fill("otra-clave-segura");
+  await form.getByRole("button", { name: "Entrar" }).click();
+  await expect(page.getByText("NUEV-OCOD-IGOR-ECUP-ERAR")).toBeVisible();
+  await page.getByLabel("Ya lo anoté en un lugar seguro").check();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(page.getByRole("heading", { name: /Hola, Ana/ })).toBeVisible();
+});
+
 test("diseño en pantalla de celular", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await registrarse(page);

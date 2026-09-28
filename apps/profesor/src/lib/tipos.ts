@@ -155,6 +155,13 @@ export interface ResultadoImportacion {
   registro: RegistroEntrega | null;
 }
 
+/** Archivo creado por la App Profesor (.rlpr o .rlpa). */
+export interface ArchivoCreado {
+  ruta: string;
+  alumnos: number;
+  temporal: string | null;
+}
+
 /** Operación de edición con su momento: [t (epoch ms), desde, hasta, insertado, origen]. */
 export type OpConTiempo = [number, number, number, string, string];
 

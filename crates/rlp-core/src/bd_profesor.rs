@@ -412,6 +412,22 @@ impl BdProfesor {
         }))
     }
 
+    /// Manifiesto de una entrega (contiene las envolturas de la llave de datos del alumno).
+    pub fn manifiesto(&self, entrega_id: i64) -> Resultado<Option<Manifiesto>> {
+        let texto: Option<String> = self
+            .conn
+            .query_row(
+                "SELECT manifiesto FROM entregas WHERE id = ?1",
+                params![entrega_id],
+                |r| r.get(0),
+            )
+            .optional()?;
+        Ok(match texto {
+            Some(t) => Some(serde_json::from_str(&t)?),
+            None => None,
+        })
+    }
+
     /// Contenido descifrado de una entrega (para reproducir su historial).
     pub fn payload(&self, entrega_id: i64) -> Resultado<Option<Payload>> {
         let texto: Option<Option<String>> = self

@@ -1,4 +1,5 @@
 import type {
+  ArchivoCreado,
   DetalleEntrega,
   EstadoApp,
   FilaTablero,
@@ -29,6 +30,10 @@ export interface Backend {
   calificar(perfilId: string, actividadId: string, calificacion: number | null, comentario: string): Promise<void>;
   exportarCsv(grupoId: string | null, actividades: [string, string][], carpeta: string): Promise<string>;
   exportarXlsx(grupoId: string | null, actividades: [string, string][], carpeta: string): Promise<string>;
+  /** Archivo .rlpr con la calificación y el comentario de cada actividad para cada alumno. */
+  exportarRetroalimentacion(grupoId: string | null, carpeta: string): Promise<ArchivoCreado>;
+  /** Archivo .rlpa para un alumno que olvidó su contraseña y su código de recuperación. */
+  crearAcceso(entregaId: number, carpeta: string): Promise<ArchivoCreado>;
 }
 
 let instancia: Promise<Backend> | null = null;

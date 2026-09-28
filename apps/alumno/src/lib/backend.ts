@@ -8,7 +8,9 @@ import type {
   EstadoApp,
   Estadisticas,
   GrupoInfo,
+  InfoAcceso,
   ResultadoGuardado,
+  Retroalimentacion,
   ResumenImportacion,
   Secreto,
 } from "./tipos";
@@ -35,6 +37,11 @@ export interface Backend {
   registrarEvento(tipo: string, actividad: string | null, datos: Record<string, unknown>): Promise<void>;
   exportar(carpeta: string): Promise<string>;
   importarAvances(ruta: string): Promise<ResumenImportacion>;
+  importarRetroalimentacion(ruta: string): Promise<Retroalimentacion>;
+  /** Lee un archivo de acceso del profesor (comprueba su firma). */
+  leerAcceso(ruta: string): Promise<InfoAcceso>;
+  /** Entra con el archivo de acceso; `rutaEntrega` solo si el perfil no está en esta carpeta. */
+  entrarConAcceso(rutaAcceso: string, temporal: string, nueva: string, rutaEntrega: string | null): Promise<EstadoAlumno>;
   cambiarContrasena(actual: string, nueva: string): Promise<void>;
   unirseGrupo(ruta: string): Promise<GrupoInfo>;
   generarEjecutable(nombre: string, codigo: string, alProgreso: (linea: string) => void): Promise<string>;

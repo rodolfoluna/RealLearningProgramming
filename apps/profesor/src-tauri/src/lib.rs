@@ -359,6 +359,90 @@ fn exportar_csv(
     Ok(destino.to_string_lossy().into_owned())
 }
 
+#[derive(Serialize)]
+struct ArchivoCreado {
+    ruta: String,
+    /// Alumnos incluidos (retroalimentación).
+    alumnos: usize,
+    /// Contraseña temporal para el alumno (archivo de acceso).
+    temporal: Option<String>,
+}
+
+fn nombre_seguro(texto: &str) -> String {
+    let s: String = texto
+        .chars()
+        .map(|c| if c.is_alphanumeric() { c } else { '_' })
+        .collect();
+    s.trim_matches('_').to_string()
+}
+
+/// Un archivo `.rlpr` con la calificación y el comentario de cada actividad para cada alumno
+/// del grupo; cada alumno solo puede leer su parte.
+#[tauri::command]
+fn exportar_retroalimentacion(
+    estado: State<Estado>,
+    grupo_id: Option<String>,
+    carpeta: String,
+) -> R<ArchivoCreado> {
+    let (bytes, alumnos) = estado.con_identidad(|id| {
+        estado.con_bd(|bd| rlp_core::retroalimentacion::crear_desde_bd(id, bd, grupo_id.as_deref()))
+    })?;
+    let grupo = match &grupo_id {
+        Some(g) => estado
+            .con_bd(|bd| bd.grupo(g))?
+            .map(|(_, i)| nombre_seguro(&i.nombre))
+            .unwrap_or_else(|| "grupo".into()),
+        None => "todos".into(),
+    };
+    let fecha = fecha_archivo();
+    let destino = PathBuf::from(carpeta).join(format!(
+        "retroalimentacion_{grupo}_{fecha}.{}",
+        rlp_core::retroalimentacion::EXTENSION
+    ));
+    fs::write(&destino, bytes).map_err(texto)?;
+    Ok(ArchivoCreado {
+        ruta: destino.to_string_lossy().into_owned(),
+        alumnos,
+        temporal: None,
+    })
+}
+
+/// Archivo de acceso para un alumno que olvidó su contraseña y su código de recuperación.
+#[tauri::command]
+fn crear_acceso(estado: State<Estado>, entrega_id: i64, carpeta: String) -> R<ArchivoCreado> {
+    let (manifiesto, detalle) =
+        estado.con_bd(|bd| Ok((bd.manifiesto(entrega_id)?, bd.detalle(entrega_id)?)))?;
+    let (Some(m), Some(d)) = (manifiesto, detalle) else {
+        return Err("Entrega no encontrada.".into());
+    };
+    let (bytes, temporal) = estado.con_identidad(|id| {
+        rlp_core::acceso::crear(
+            id,
+            &m,
+            &d.fila.numero_control,
+            &d.fila.nombre,
+            &ParametrosKdf::estandar(),
+        )
+        .map_err(texto)
+    })?;
+    let destino = PathBuf::from(carpeta).join(format!(
+        "acceso_{}.{}",
+        nombre_seguro(&d.fila.numero_control),
+        rlp_core::acceso::EXTENSION
+    ));
+    fs::write(&destino, bytes).map_err(texto)?;
+    Ok(ArchivoCreado {
+        ruta: destino.to_string_lossy().into_owned(),
+        alumnos: 1,
+        temporal: Some(temporal),
+    })
+}
+
+/// Fecha y hora local compacta para nombres de archivo.
+fn fecha_archivo() -> String {
+    chrono::Local::now().format("%Y%m%d-%H%M").to_string()
+}
+
 /// Libro de Excel con las hojas Resumen, Actividades y Calificaciones.
 #[tauri::command]
 fn exportar_xlsx(
@@ -480,6 +564,8 @@ pub fn run() {
             calificar,
             exportar_csv,
             exportar_xlsx,
+            exportar_retroalimentacion,
+            crear_acceso,
             autoprueba_fin,
             consola_log,
             entrada_enviar,

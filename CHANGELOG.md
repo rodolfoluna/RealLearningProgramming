@@ -18,8 +18,21 @@ siguen [SemVer](https://semver.org/lang/es/). El curso tiene su propia versión 
 
 ### App Profesor
 
+- **Reproductor de escritura**: vuelve a escribir, tecla a tecla, el código de cada actividad con
+  una línea de tiempo que marca intentos de pegar, copias, salidas, ejecuciones y pruebas.
+- **Retroalimentación** para el grupo (`.rlpr`): calificación y comentario por actividad, firmada
+  por el profesor; cada alumno solo puede leer la suya.
+- **Archivo de acceso** (`.rlpa`) para el alumno que olvidó su contraseña y su código de
+  recuperación.
+- Exportar a **Excel** (`.xlsx`) con hojas Resumen, Actividades y Calificaciones.
 - El mapa de actividades mantiene visible el nombre del alumno al desplazarse y separa las
   unidades.
+
+### App Alumno
+
+- Importa la retroalimentación del profesor y la muestra en cada actividad.
+- "Tengo un archivo de acceso de mi profesor" en la pantalla de inicio: contraseña nueva y código
+  de recuperación nuevo.
 
 ### Distribución
 

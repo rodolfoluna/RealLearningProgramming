@@ -76,12 +76,36 @@ export interface Estadisticas {
   por_actividad: Record<string, Contadores>;
 }
 
+export interface NotaActividad {
+  calificacion: number | null;
+  comentario: string;
+  actualizado: number;
+}
+
+/** Retroalimentación firmada del profesor (archivo .rlpr). */
+export interface Retroalimentacion {
+  profesor: string;
+  creado: number;
+  actividades: Record<string, NotaActividad>;
+}
+
 export interface EstadoAlumno {
   perfil: PerfilPublico;
   dispositivo: string;
   grupo: GrupoInfo | null;
   actividades: Record<string, EstadoActividad>;
   estadisticas: Estadisticas;
+  retroalimentacion?: Retroalimentacion | null;
+  /** Código de recuperación nuevo (tras entrar con un archivo de acceso); se muestra una vez. */
+  codigo_nuevo?: string;
+}
+
+/** Datos de un archivo de acceso del profesor (.rlpa). */
+export interface InfoAcceso {
+  nombre: string;
+  numero_control: string;
+  profesor: string;
+  perfil_local: boolean;
 }
 
 export interface ResultadoGuardado {
@@ -98,7 +122,8 @@ export interface ResumenImportacion {
 
 export type Secreto =
   | { tipo: "contrasena"; contrasena: string }
-  | { tipo: "codigo"; codigo: string; nueva_contrasena: string };
+  | { tipo: "codigo"; codigo: string; nueva_contrasena: string }
+  | { tipo: "acceso"; archivo: string; temporal: string; nueva_contrasena: string };
 
 export function contadoresVacios(): Contadores {
   return {

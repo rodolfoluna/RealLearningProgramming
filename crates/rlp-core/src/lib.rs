@@ -3,6 +3,7 @@
 //! Compartido por la App Alumno y la App Profesor (Windows ahora, Android después):
 //! cifrado de los avances, historial verificable, formato de entrega y verificación.
 
+pub mod acceso;
 pub mod crypto;
 pub mod entrega;
 pub mod error;
@@ -13,6 +14,7 @@ pub mod llave_app;
 pub mod modelo;
 pub mod replay;
 pub mod reproduccion;
+pub mod retroalimentacion;
 
 #[cfg(feature = "firmar")]
 pub mod almacen;

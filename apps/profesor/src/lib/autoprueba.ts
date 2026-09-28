@@ -76,6 +76,16 @@ export async function autoprueba(fase: string) {
         await b.calificar(d.fila.perfil_id, "u1-suma-dos-numeros", 10, "¡Muy bien!");
         return b.exportarXlsx(null, [["u1-suma-dos-numeros", "Suma de dos números"]], compartida);
       });
+      await paso("retroalimentación para el grupo", async () => {
+        const r = await b.exportarRetroalimentacion(null, compartida);
+        if (r.alumnos !== 1) throw new Error(JSON.stringify(r));
+        return r;
+      });
+      await paso("archivo de acceso", async () => {
+        const r = await b.crearAcceso(d.fila.entrega_id, compartida);
+        if (!r.temporal) throw new Error("sin contraseña temporal");
+        return r;
+      });
       await paso("tablero", async () => {
         const t = await b.tablero(null);
         if (t.length !== 1 || t[0].numero_control !== "21349999") throw new Error(JSON.stringify(t));

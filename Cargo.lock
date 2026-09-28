@@ -3255,6 +3255,7 @@ dependencies = [
 name = "rlp-profesor"
 version = "0.2.0"
 dependencies = [
+ "chrono",
  "rlp-core",
  "rlp-puente",
  "serde",

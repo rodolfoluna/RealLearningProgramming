@@ -14,6 +14,15 @@ Primer uso
 Entregar tus avances
   Menú de tu nombre > "Exportar entrega". Se crea un archivo .rlp: entrégaselo a tu profesor.
 
+Retroalimentación de tu profesor
+  Menú de tu nombre > "Importar retroalimentación del profesor" y elige el archivo .rlpr que te
+  compartió. Verás tu calificación y los comentarios en cada actividad.
+
+Olvidé mi contraseña
+  Usa tu código de recuperación ("Olvidé mi contraseña"). Si también lo perdiste, pide a tu
+  profesor un archivo de acceso (.rlpa) y una contraseña temporal, y elige "Tengo un archivo de
+  acceso de mi profesor".
+
 Trabajar en otra computadora
   En la otra computadora abre la app y elige "Tengo mis avances en un archivo", luego tu .rlp y
   tu contraseña. Para regresar, exporta allá e importa acá con "Importar avances de otro equipo".

@@ -42,6 +42,18 @@
     return "progreso";
   }
 
+  async function retroalimentacion() {
+    try {
+      const b = await backend();
+      const carpeta = await b.elegirCarpeta("¿Dónde guardo el archivo de retroalimentación?");
+      if (!carpeta) return;
+      const r = await b.exportarRetroalimentacion(app.grupoId, carpeta);
+      avisar(`Retroalimentación para ${r.alumnos} alumno(s) guardada en ${r.ruta}. Compártela con el grupo: cada alumno solo puede leer la suya.`, 8000);
+    } catch (e) {
+      avisar(mensajeError(e), 6000);
+    }
+  }
+
   async function exportar(formato: "xlsx" | "csv") {
     try {
       const b = await backend();
@@ -70,6 +82,7 @@
     <span class="espaciador"></span>
     <button onclick={() => exportar("xlsx")} disabled={!filas.length} title="Hojas Resumen, Actividades y Calificaciones">⬇ Exportar a Excel</button>
     <button onclick={() => exportar("csv")} disabled={!filas.length}>CSV</button>
+    <button onclick={retroalimentacion} disabled={!filas.length} title="Calificaciones y comentarios para los alumnos (.rlpr)">📬 Retroalimentación</button>
   </div>
 
   {#if error}

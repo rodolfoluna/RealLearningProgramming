@@ -80,6 +80,11 @@ impl IdentidadProfesor {
         b64(self.firma.verifying_key().as_bytes())
     }
 
+    /// Firma datos con la llave Ed25519 del profesor bajo un contexto (tipo de archivo).
+    pub fn firmar(&self, contexto: &[u8], datos: &[u8]) -> String {
+        firmar(&self.firma, contexto, datos)
+    }
+
     pub fn a_archivo(&self, contrasena: &str, kdf: &ParametrosKdf) -> Resultado<ArchivoIdentidad> {
         if contrasena.chars().count() < 10 {
             return Err(Error::validacion(

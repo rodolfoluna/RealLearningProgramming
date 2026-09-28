@@ -71,6 +71,21 @@
     }
   }
 
+  async function importarRetroalimentacion() {
+    menuAbierto = false;
+    try {
+      const b = await backend();
+      const r = await b.elegirArchivo("Elige el archivo de retroalimentación de tu profesor", "rlpr", "Retroalimentación de RLP");
+      if (!r) return;
+      const retro = await b.importarRetroalimentacion(r);
+      app.alumno = await b.estado();
+      const n = Object.keys(retro.actividades).length;
+      avisar(`Retroalimentación de ${retro.profesor}: ${n} actividad(es) con calificación o comentario.`, 6000);
+    } catch (e) {
+      avisar(mensajeError(e), 6000);
+    }
+  }
+
   async function unirseGrupo() {
     menuAbierto = false;
     try {
@@ -127,6 +142,7 @@
           <div class="suave quien">{alumno.perfil.numero_control}{alumno.grupo ? ` · ${alumno.grupo.nombre}` : " · sin grupo"}</div>
           <button role="menuitem" onclick={exportar}>📤 Exportar entrega</button>
           <button role="menuitem" onclick={importarAvances}>📥 Importar avances de otro equipo</button>
+          <button role="menuitem" onclick={importarRetroalimentacion}>📬 Importar retroalimentación del profesor</button>
           <button role="menuitem" onclick={() => { menuAbierto = false; ir({ tipo: "estadisticas" }); }}>📊 Mis estadísticas</button>
           <button role="menuitem" onclick={unirseGrupo}>👥 {alumno.grupo ? "Cambiar de grupo" : "Unirme a un grupo"}</button>
           <button role="menuitem" onclick={() => { menuAbierto = false; modalClave = true; }}>🔑 Cambiar contraseña</button>

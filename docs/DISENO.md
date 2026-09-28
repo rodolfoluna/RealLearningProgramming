@@ -194,7 +194,22 @@ Además el tablero marca si un mismo perfil aparece con otro número de control 
 - En Android (fase 2) el bloqueo de pegado es menos hermético (teclados de terceros): se bloquea el
   menú y las inserciones grandes o de varias líneas, y todo se registra.
 
-### 4.6 Llave de firma de la App Alumno
+### 4.6 Del profesor al alumno: retroalimentación y acceso
+
+- **Retroalimentación** (`.rlpr`): un archivo por grupo. La parte de cada alumno (calificación y
+  comentario por actividad) va cifrada con **su** llave de datos, que el profesor abre desde la
+  envoltura dirigida a él en la última entrega; el archivo completo va firmado con la llave Ed25519
+  del profesor. La App Alumno solo lo acepta si la firma es la del profesor que creó su grupo, no
+  acepta una retroalimentación más vieja que la que ya tiene y la guarda cifrada en su perfil.
+- **Archivo de acceso** (`.rlpa`): para quien olvidó su contraseña **y** su código de
+  recuperación. El profesor envuelve la llave de datos del alumno con una contraseña temporal
+  (Argon2id, `XXXX-XXXX-XXXX`) y firma el archivo. El alumno entra con ambos, fija una contraseña
+  nueva y recibe un **código de recuperación nuevo**. La app comprueba la firma, que el archivo
+  sea de ese alumno, que lo haya firmado el profesor de su grupo y que la llave abra realmente su
+  historial; queda registrado como evento `acceso_profesor`. Si el perfil no está en esa
+  computadora, se restaura desde su último `.rlp` con el mismo archivo.
+
+### 4.7 Llave de firma de la App Alumno
 
 - Desarrollo: llave pública fija (la App Profesor la acepta en **amarillo**).
 - Producción: `cargo run -p rlp-core --example generar_llave_app` genera un par. La semilla va al
@@ -242,6 +257,15 @@ profesor, llaves X25519 de los profesores, llave Ed25519 de firma, políticas
 
 JSON con las llaves públicas y las privadas cifradas (AES-GCM con una llave envuelta con
 Argon2id(contraseña del profesor)).
+
+### Retroalimentación `.rlpr` y acceso `.rlpa`
+
+Ambos: `{"contenido": "<JSON exacto>", "firma": "<Ed25519 del profesor>"}`.
+- `.rlpr`: `formato`, `grupo_id`, `profesor`, `llave_firma`, `creado` y `alumnos`
+  (`perfil_id` → JSON `{profesor, creado, actividades: {id: {calificacion, comentario}}}` cifrado con
+  AES-GCM y la llave de datos del alumno, AAD `retro|<perfil_id>`).
+- `.rlpa`: `formato`, `perfil_id`, `numero_control`, `nombre`, `profesor`, `llave_firma`, `creado` y
+  la llave de datos envuelta con la contraseña temporal (AAD `dek|<perfil_id>`).
 
 ### Base del profesor `profesor.db`
 
@@ -295,10 +319,18 @@ Argon2id(contraseña del profesor)).
 - **Importar**: archivos sueltos o una carpeta completa (p. ej. la USB con todas las entregas).
   Las repetidas se ignoran; se guarda el historial de entregas de cada alumno.
 - **Tablero**: alumnos con semáforo de integridad, avance, puntos, tiempo, ejecuciones, copias,
-  intentos de pegar, salidas, pistas; **mapa de actividades**; búsqueda; **CSV para Excel**.
+  intentos de pegar, salidas, pistas; **mapa de actividades**; búsqueda; exportar a **Excel**
+  (hojas Resumen, Actividades y Calificaciones con los comentarios como notas) o CSV; y
+  **retroalimentación** `.rlpr` para todo el grupo.
 - **Detalle**: reporte de verificación y ritmo de escritura; por actividad: estado, estadísticas,
   código (solo lectura), **volver a correr las pruebas** (en Pyodide: el código del alumno no toca
   el disco del profesor), enunciado y solución de referencia, calificación y comentario.
+- **Reproductor de escritura**: "Ver cómo lo escribió" vuelve a escribir el código tecla a tecla
+  desde el historial firmado (también cuando el alumno continuó en otro equipo), con velocidad
+  hasta 100×, "saltar pausas" y una línea de tiempo con marcas de intentos de pegar, copias,
+  salidas de la ventana, ejecuciones, pruebas, pistas y reinicios. Al final comprueba que el
+  resultado coincida con el código entregado.
+- **Archivo de acceso** `.rlpa` para el alumno que olvidó su contraseña y su código (ver 4.6).
 
 ---
 
@@ -353,9 +385,8 @@ Los diccionarios quedan como posible unidad opcional en una versión posterior.
   portable.
 - **Fase 2 (en curso)**: unidades 4–7 del curso (**hecho**: funciones, cadenas, listas y
   proyectos); versión publicable (llave de firma de producción, Releases); **reproductor visual
-  del historial** (ver cómo se escribió el código); **retroalimentación firmada** profesor →
-  alumno (cifrada con la DEK del alumno); restablecer contraseña desde el profesor; exportar a
-  Excel; **APK Android** (barra de teclas de código, teclado sin sugerencias, heurísticas de IME,
+  del historial**, **retroalimentación firmada** profesor → alumno, **archivo de acceso** y
+  exportar a **Excel** (**hechos**); **APK Android** (barra de teclas de código, teclado sin sugerencias, heurísticas de IME,
   unirse al grupo por **QR**, compartir `.rlp`, pausa de la app como salida). Después: problemas
   de Parsons, historial de versiones, consola interactiva.
 - **Fase 3**: **detección de similitud** entre alumnos (huellas de tokens/AST); visualizador paso a

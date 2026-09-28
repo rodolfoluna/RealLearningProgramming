@@ -63,3 +63,26 @@ test("reproducir cómo se escribió el código", async ({ page }) => {
   await dialogo.getByLabel("Posición en el historial").fill("0");
   await expect(dialogo.locator("[data-coincide]")).toHaveCount(0);
 });
+
+test("retroalimentación para el grupo y archivo de acceso", async ({ page }) => {
+  await page.goto("/?desbloqueado");
+  await page.getByRole("button", { name: /Retroalimentación/ }).click();
+  await expect(page.getByText(/Aún no has calificado/)).toBeVisible();
+
+  await page.locator('tr[data-alumno="21340001"]').click();
+  await page.getByRole("tab", { name: /Actividades/ }).click();
+  await page.getByRole("button", { name: /Suma de dos números/ }).click();
+  await page.getByLabel("Calificación").fill("9");
+  await page.getByRole("button", { name: "Guardar" }).click();
+  await expect(page.getByText("Calificación guardada.")).toBeVisible();
+
+  await page.getByRole("button", { name: /Archivo de acceso/ }).click();
+  await page.getByRole("button", { name: "Crear archivo" }).click();
+  await expect(page.locator("[data-temporal]")).toHaveText("ABCD-EFGH-JKMN");
+  await page.screenshot({ path: `${capturas}/profesor-07-acceso.png` });
+  await page.getByRole("button", { name: "Listo" }).click();
+
+  await page.getByRole("button", { name: "← Tablero" }).click();
+  await page.getByRole("button", { name: /Retroalimentación/ }).click();
+  await expect(page.getByText(/Retroalimentación para 1 alumno/)).toBeVisible();
+});

@@ -22,6 +22,7 @@ use crate::modelo::{
     ahora_ms, nuevo_id, Envolturas, EstadoActividad, GrupoFirmado, GrupoInfo, PerfilPublico,
 };
 use crate::replay::{aplicar, hash_texto, LoteOps};
+use crate::retroalimentacion::Retroalimentacion;
 
 pub const LONGITUD_MINIMA_CONTRASENA: usize = 8;
 
@@ -35,6 +36,13 @@ pub enum Secreto {
     /// Código de recuperación; se fija una contraseña nueva.
     Codigo {
         codigo: String,
+        nueva_contrasena: String,
+    },
+    /// Archivo de acceso del profesor (`.rlpa`, su contenido) y la contraseña temporal que
+    /// le dio; se fijan una contraseña y un código de recuperación nuevos.
+    Acceso {
+        archivo: String,
+        temporal: String,
         nueva_contrasena: String,
     },
 }
@@ -52,20 +60,32 @@ fn validar_contrasena(c: &str) -> Resultado<()> {
     Ok(())
 }
 
-/// Desenvuelve la llave de datos con un secreto. Con código de recuperación también devuelve
-/// la envoltura nueva para la contraseña indicada.
+/// Resultado de abrir la llave de datos con un secreto.
+struct Apertura {
+    dek: Zeroizing<Llave>,
+    /// Envolturas nuevas que hay que guardar (código de recuperación o archivo de acceso).
+    nuevas: Option<Envolturas>,
+    /// Código de recuperación nuevo (solo con archivo de acceso): se muestra una vez.
+    codigo_nuevo: Option<String>,
+    /// Llave de firma del profesor que emitió el archivo de acceso: debe ser la del grupo.
+    firma_acceso: Option<String>,
+}
+
+/// Desenvuelve la llave de datos con un secreto.
 fn abrir_dek(
     envolturas: &Envolturas,
     perfil_id: &str,
     secreto: &Secreto,
     kdf: &ParametrosKdf,
-) -> Resultado<(Zeroizing<Llave>, Option<Envolturas>)> {
+) -> Resultado<Apertura> {
     let aad = aad_perfil(perfil_id);
     match secreto {
-        Secreto::Contrasena { contrasena } => Ok((
-            abrir_con_secreto(&envolturas.contrasena, contrasena, &aad)?,
-            None,
-        )),
+        Secreto::Contrasena { contrasena } => Ok(Apertura {
+            dek: abrir_con_secreto(&envolturas.contrasena, contrasena, &aad)?,
+            nuevas: None,
+            codigo_nuevo: None,
+            firma_acceso: None,
+        }),
         Secreto::Codigo {
             codigo,
             nueva_contrasena,
@@ -75,8 +95,52 @@ fn abrir_dek(
                 abrir_con_secreto(&envolturas.recuperacion, &normalizar_codigo(codigo), &aad)?;
             let mut nuevas = envolturas.clone();
             nuevas.contrasena = envolver_con_secreto(&dek, nueva_contrasena, kdf, &aad)?;
-            Ok((dek, Some(nuevas)))
+            Ok(Apertura {
+                dek,
+                nuevas: Some(nuevas),
+                codigo_nuevo: None,
+                firma_acceso: None,
+            })
         }
+        Secreto::Acceso {
+            archivo,
+            temporal,
+            nueva_contrasena,
+        } => {
+            let acceso = crate::acceso::leer(archivo.as_bytes())?;
+            if acceso.perfil_id != perfil_id {
+                return Err(Error::validacion(
+                    "Ese archivo de acceso es de otro alumno.",
+                ));
+            }
+            validar_contrasena(nueva_contrasena)?;
+            let dek = crate::acceso::abrir_dek(&acceso, temporal)?;
+            let codigo = codigo_recuperacion();
+            let mut nuevas = envolturas.clone();
+            nuevas.contrasena = envolver_con_secreto(&dek, nueva_contrasena, kdf, &aad)?;
+            nuevas.recuperacion =
+                envolver_con_secreto(&dek, &normalizar_codigo(&codigo), kdf, &aad)?;
+            Ok(Apertura {
+                dek,
+                nuevas: Some(nuevas),
+                codigo_nuevo: Some(codigo),
+                firma_acceso: Some(acceso.llave_firma),
+            })
+        }
+    }
+}
+
+/// Un archivo de acceso solo vale si lo firmó el profesor del grupo del alumno.
+fn validar_firma_acceso(firma: &Option<String>, grupo: Option<&GrupoFirmado>) -> Resultado<()> {
+    let Some(firma) = firma else {
+        return Ok(());
+    };
+    let info = grupo.map(verificar_grupo).transpose()?;
+    match info {
+        Some(g) if g.llave_firma == *firma => Ok(()),
+        _ => Err(Error::validacion(
+            "Ese archivo de acceso no lo firmó el profesor de tu grupo.",
+        )),
     }
 }
 
@@ -154,12 +218,22 @@ pub struct EstadoAlumno {
     pub grupo: Option<GrupoInfo>,
     pub actividades: BTreeMap<String, EstadoActividad>,
     pub estadisticas: Estadisticas,
+    /// Última retroalimentación importada del profesor.
+    #[serde(default)]
+    pub retroalimentacion: Option<Retroalimentacion>,
+    /// Código de recuperación nuevo para mostrar una sola vez (después de entrar con un
+    /// archivo de acceso del profesor).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub codigo_nuevo: Option<String>,
 }
+
+const CLAVE_RETRO: &str = "retroalimentacion";
 
 pub struct SesionAlumno {
     almacen: Almacen,
     carpeta: PathBuf,
     kdf: ParametrosKdf,
+    codigo_nuevo: Option<String>,
 }
 
 impl SesionAlumno {
@@ -245,6 +319,7 @@ impl SesionAlumno {
                 almacen,
                 carpeta,
                 kdf,
+                codigo_nuevo: None,
             },
             codigo,
         ))
@@ -254,23 +329,31 @@ impl SesionAlumno {
     pub fn abrir(carpeta: &Path, secreto: &Secreto, kdf: ParametrosKdf) -> Resultado<Self> {
         let bd = carpeta.join(ARCHIVO_BD);
         let meta = leer_meta(&bd)?;
-        let (dek, nuevas) = abrir_dek(&meta.envolturas, &meta.perfil.perfil_id, secreto, &kdf)?;
-        let mut almacen = Almacen::abrir(&bd, *dek)?;
+        let a = abrir_dek(&meta.envolturas, &meta.perfil.perfil_id, secreto, &kdf)?;
+        // Abrir el almacén descifra el historial: comprueba que la llave de datos es la buena.
+        let mut almacen = Almacen::abrir(&bd, *a.dek)?;
+        validar_firma_acceso(&a.firma_acceso, almacen.meta.grupo.as_ref())?;
         let mut eventos = vec![(
             "sesion_inicio".to_string(),
             None,
             json!({ "version": env!("CARGO_PKG_VERSION") }),
         )];
-        if let Some(n) = nuevas {
+        if let Some(n) = a.nuevas {
             almacen.meta.envolturas = n;
             almacen.guardar_meta()?;
-            eventos.insert(0, ("recuperacion".into(), None, json!({})));
+            let tipo = if a.firma_acceso.is_some() {
+                "acceso_profesor"
+            } else {
+                "recuperacion"
+            };
+            eventos.insert(0, (tipo.into(), None, json!({})));
         }
         almacen.agregar(eventos, &[])?;
         Ok(SesionAlumno {
             almacen,
             carpeta: carpeta.to_path_buf(),
             kdf,
+            codigo_nuevo: a.codigo_nuevo,
         })
     }
 
@@ -296,30 +379,32 @@ impl SesionAlumno {
                 "Este perfil ya existe en esta carpeta: inicia sesión y usa \"Importar avances\".",
             ));
         }
-        let (dek, nuevas) = abrir_dek(&m.envolturas, &m.perfil_id, secreto, &kdf)?;
-        let payload = entrega::descifrar_payload(&dek, &m.perfil_id, &leida.payload)?;
+        let a = abrir_dek(&m.envolturas, &m.perfil_id, secreto, &kdf)?;
+        let payload = entrega::descifrar_payload(&a.dek, &m.perfil_id, &leida.payload)?;
         if payload.perfil.perfil_id != m.perfil_id {
             return Err(Error::Alterado("perfil inconsistente".into()));
         }
+        validar_firma_acceso(&a.firma_acceso, payload.grupo.as_ref())?;
         let carpeta = dir_perfiles.join(&m.perfil_id);
         fs::create_dir_all(&carpeta)?;
         let meta = MetaPerfil {
             formato: 1,
             perfil: payload.perfil.clone(),
             dispositivo: nuevo_id(),
-            envolturas: nuevas.unwrap_or_else(|| m.envolturas.clone()),
+            envolturas: a.nuevas.unwrap_or_else(|| m.envolturas.clone()),
             grupo: payload.grupo.clone(),
         };
-        let almacen = Almacen::crear(&carpeta.join(ARCHIVO_BD), meta, *dek)?;
+        let almacen = Almacen::crear(&carpeta.join(ARCHIVO_BD), meta, *a.dek)?;
         let mut sesion = SesionAlumno {
             almacen,
             carpeta,
             kdf,
+            codigo_nuevo: a.codigo_nuevo,
         };
         let resumen = sesion.fusionar(&leida, &payload)?;
         sesion.almacen.agregar(
             vec![
-                ("restauracion".into(), None, json!({ "dispositivos": resumen.dispositivos, "eventos": resumen.eventos_nuevos })),
+                ("restauracion".into(), None, json!({ "dispositivos": resumen.dispositivos, "eventos": resumen.eventos_nuevos, "acceso_profesor": a.firma_acceso.is_some() })),
                 ("sesion_inicio".into(), None, json!({ "version": env!("CARGO_PKG_VERSION") })),
             ],
             &[],
@@ -358,7 +443,56 @@ impl SesionAlumno {
             grupo: self.grupo(),
             actividades: self.almacen.actividades()?,
             estadisticas: self.estadisticas(),
+            retroalimentacion: self.retroalimentacion()?,
+            codigo_nuevo: None,
         })
+    }
+
+    /// Código de recuperación nuevo (tras entrar con un archivo de acceso); se entrega una vez.
+    pub fn tomar_codigo_nuevo(&mut self) -> Option<String> {
+        self.codigo_nuevo.take()
+    }
+
+    /// Última retroalimentación del profesor guardada en el perfil.
+    pub fn retroalimentacion(&self) -> Resultado<Option<Retroalimentacion>> {
+        match self.almacen.leer_privado(CLAVE_RETRO)? {
+            Some(json) => Ok(Some(serde_json::from_slice(&json)?)),
+            None => Ok(None),
+        }
+    }
+
+    /// Importa un archivo `.rlpr` del profesor del grupo y guarda la parte de este alumno.
+    pub fn importar_retroalimentacion(&mut self, archivo: &[u8]) -> Resultado<Retroalimentacion> {
+        let grupo = self.grupo().ok_or_else(|| {
+            Error::validacion(
+                "Tu perfil no está en un grupo: primero únete al grupo de tu profesor.",
+            )
+        })?;
+        let perfil_id = self.perfil().perfil_id.clone();
+        let r = crate::retroalimentacion::abrir(
+            archivo,
+            &perfil_id,
+            self.almacen.dek(),
+            &grupo.llave_firma,
+        )?;
+        if let Some(actual) = self.retroalimentacion()? {
+            if actual.creado > r.creado {
+                return Err(Error::validacion(
+                    "Ya tienes una retroalimentación más reciente de tu profesor.",
+                ));
+            }
+        }
+        self.almacen
+            .guardar_privado(CLAVE_RETRO, &serde_json::to_vec(&r)?)?;
+        self.almacen.agregar(
+            vec![(
+                "retroalimentacion".into(),
+                None,
+                json!({ "creado": r.creado, "actividades": r.actividades.len() }),
+            )],
+            &[],
+        )?;
+        Ok(r)
     }
 
     pub fn cerrar(mut self) -> Resultado<()> {

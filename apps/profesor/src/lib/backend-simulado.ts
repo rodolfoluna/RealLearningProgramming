@@ -199,5 +199,14 @@ export function crearBackendSimulado(): Backend {
     },
     exportarCsv: async () => "simulado://carpeta/avance.csv",
     exportarXlsx: async () => "simulado://carpeta/avance.xlsx",
+    async exportarRetroalimentacion() {
+      const alumnos = Object.values(calificaciones).filter((c) => Object.keys(c).length).length;
+      if (!alumnos) throw new Error("Aún no has calificado ni comentado ninguna actividad de estos alumnos.");
+      return { ruta: "simulado://carpeta/retroalimentacion_grupo.rlpr", alumnos, temporal: null };
+    },
+    async crearAcceso(id) {
+      const f = filas.find((x) => x.entrega_id === id % 100)!;
+      return { ruta: `simulado://carpeta/acceso_${f.numero_control}.rlpa`, alumnos: 1, temporal: "ABCD-EFGH-JKMN" };
+    },
   };
 }

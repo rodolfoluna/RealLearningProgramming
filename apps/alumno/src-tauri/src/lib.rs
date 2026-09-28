@@ -15,6 +15,7 @@ use rlp_core::estadisticas::Estadisticas;
 use rlp_core::grupo::{leer_grupo, verificar_grupo};
 use rlp_core::modelo::{EstadoActividad, GrupoFirmado, GrupoInfo};
 use rlp_core::replay::LoteOps;
+use rlp_core::retroalimentacion::Retroalimentacion;
 use serde::Serialize;
 use serde_json::{json, Value};
 use tauri::{Emitter, Manager, State};
@@ -54,6 +55,14 @@ impl Estado {
         let mut guardia = self.sesion.lock().map_err(texto)?;
         let sesion = guardia.as_mut().ok_or("No hay una sesión iniciada.")?;
         f(sesion).map_err(texto)
+    }
+
+    /// Deja abierta la sesión y devuelve su estado (con el código de recuperación nuevo, si hay).
+    fn activar(&self, mut sesion: SesionAlumno) -> R<EstadoAlumno> {
+        let mut est = sesion.estado().map_err(texto)?;
+        est.codigo_nuevo = sesion.tomar_codigo_nuevo();
+        *self.sesion.lock().map_err(texto)? = Some(sesion);
+        Ok(est)
     }
 
     fn grupo_app(&self) -> Option<(GrupoFirmado, GrupoInfo)> {
@@ -168,9 +177,7 @@ fn iniciar_sesion(estado: State<Estado>, carpeta: String, secreto: Secreto) -> R
         return Err("Perfil no encontrado.".into());
     }
     let sesion = SesionAlumno::abrir(&carpeta, &secreto, kdf()).map_err(texto)?;
-    let est = sesion.estado().map_err(texto)?;
-    *estado.sesion.lock().map_err(texto)? = Some(sesion);
-    Ok(est)
+    estado.activar(sesion)
 }
 
 #[tauri::command]
@@ -178,9 +185,73 @@ fn restaurar(estado: State<Estado>, ruta: String, secreto: Secreto) -> R<EstadoA
     let bytes = std::fs::read(&ruta).map_err(texto)?;
     let sesion =
         SesionAlumno::restaurar(&estado.rutas.perfiles, &bytes, &secreto, kdf()).map_err(texto)?;
-    let est = sesion.estado().map_err(texto)?;
-    *estado.sesion.lock().map_err(texto)? = Some(sesion);
-    Ok(est)
+    estado.activar(sesion)
+}
+
+/// Datos de un archivo de acceso del profesor (antes de pedir la contraseña temporal).
+#[derive(Serialize)]
+struct InfoAcceso {
+    nombre: String,
+    numero_control: String,
+    profesor: String,
+    /// El perfil está en esta carpeta; si no, hace falta también su último archivo `.rlp`.
+    perfil_local: bool,
+}
+
+#[tauri::command]
+fn leer_acceso(estado: State<Estado>, ruta: String) -> R<InfoAcceso> {
+    let bytes = std::fs::read(&ruta).map_err(texto)?;
+    let a = rlp_core::acceso::leer(&bytes).map_err(texto)?;
+    Ok(InfoAcceso {
+        perfil_local: listar_perfiles(&estado.rutas.perfiles)
+            .iter()
+            .any(|p| p.perfil.perfil_id == a.perfil_id),
+        nombre: a.nombre,
+        numero_control: a.numero_control,
+        profesor: a.profesor,
+    })
+}
+
+/// Entra con el archivo de acceso del profesor: en el perfil local o, si no está en esta
+/// carpeta, restaurando el último `.rlp` del alumno.
+#[tauri::command]
+fn entrar_con_acceso(
+    estado: State<Estado>,
+    ruta_acceso: String,
+    temporal: String,
+    nueva: String,
+    ruta_entrega: Option<String>,
+) -> R<EstadoAlumno> {
+    let archivo = std::fs::read_to_string(&ruta_acceso).map_err(texto)?;
+    let a = rlp_core::acceso::leer(archivo.as_bytes()).map_err(texto)?;
+    let secreto = Secreto::Acceso {
+        archivo,
+        temporal,
+        nueva_contrasena: nueva,
+    };
+    let local = listar_perfiles(&estado.rutas.perfiles)
+        .into_iter()
+        .find(|p| p.perfil.perfil_id == a.perfil_id);
+    let sesion = match (local, ruta_entrega) {
+        (Some(p), _) => SesionAlumno::abrir(&PathBuf::from(p.carpeta), &secreto, kdf()),
+        (None, Some(ruta)) => {
+            let bytes = std::fs::read(&ruta).map_err(texto)?;
+            SesionAlumno::restaurar(&estado.rutas.perfiles, &bytes, &secreto, kdf())
+        }
+        (None, None) => {
+            return Err(
+                "Tu perfil no está en esta carpeta: elige también tu último archivo .rlp.".into(),
+            )
+        }
+    }
+    .map_err(texto)?;
+    estado.activar(sesion)
+}
+
+#[tauri::command]
+fn importar_retroalimentacion(estado: State<Estado>, ruta: String) -> R<Retroalimentacion> {
+    let bytes = std::fs::read(&ruta).map_err(texto)?;
+    estado.con_sesion(|s| s.importar_retroalimentacion(&bytes))
 }
 
 #[tauri::command]
@@ -437,6 +508,9 @@ pub fn run() {
             registrar_evento,
             exportar,
             importar_avances,
+            importar_retroalimentacion,
+            leer_acceso,
+            entrar_con_acceso,
             cambiar_contrasena,
             unirse_grupo,
             generar_ejecutable,

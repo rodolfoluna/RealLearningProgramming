@@ -62,7 +62,11 @@ de cada clase deben **exportar su entrega**, que también les sirve de respaldo.
 2. En la App Profesor, **Importar entregas** acepta archivos sueltos o una carpeta completa.
    Puedes importar entregas nuevas del mismo alumno cuantas veces quieras: se guarda el historial.
 3. Revisa el **semáforo de integridad** (verde, amarillo, rojo), el avance, las estadísticas de
-   copias e intentos de pegar y el código de cada actividad. Exporta las calificaciones a CSV.
+   copias e intentos de pegar y el código de cada actividad; con "Ver cómo lo escribió" puedes
+   reproducir la escritura tecla a tecla. Exporta a Excel.
+4. Para devolver calificaciones y comentarios, en el tablero usa **Retroalimentación**: comparte
+   el `.rlpr` con todo el grupo (cada alumno solo puede abrir lo suyo) y cada quien lo importa
+   desde el menú con su nombre.
 
 ## 5. Continuar en casa
 
@@ -84,5 +88,8 @@ Las entregas de versiones anteriores se siguen verificando.
 ## 7. Olvidé mi contraseña
 
 - **Alumno**: en la pantalla de inicio, "Olvidé mi contraseña" con su código de recuperación.
+  Si también lo perdió: en la App Profesor, en el detalle del alumno, **Archivo de acceso** crea un
+  `.rlpa` y muestra una contraseña temporal; el alumno elige "Tengo un archivo de acceso de mi
+  profesor", pone una contraseña nueva y recibe un código de recuperación nuevo.
 - **Profesor**: "Restaurar desde un respaldo" con el archivo `.rlpk` y la contraseña con la que lo
   guardó.

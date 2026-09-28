@@ -2,9 +2,9 @@
   import { Modal, mensajeError } from "@rlp/ui-comun";
   import { backend } from "../lib/backend";
   import { app, cargarEstadoApp, curso, entrar } from "../lib/app.svelte";
-  import type { EstadoAlumno, PerfilLocal } from "../lib/tipos";
+  import type { EstadoAlumno, InfoAcceso, PerfilLocal } from "../lib/tipos";
 
-  type Modo = "entrar" | "registro" | "restaurar";
+  type Modo = "entrar" | "registro" | "restaurar" | "acceso";
   let modo: Modo = $state(app.estadoApp?.perfiles.length ? "entrar" : "registro");
   let error = $state("");
   let ocupado = $state(false);
@@ -26,6 +26,12 @@
   // Restaurar
   let archivo = $state("");
   let usarCodigo = $state(false);
+
+  // Archivo de acceso del profesor
+  let rutaAcceso = $state("");
+  let infoAcceso = $state<InfoAcceso | null>(null);
+  let temporal = $state("");
+  let rutaEntrega = $state("");
 
   // Código de recuperación recién creado
   let codigoNuevo = $state("");
@@ -90,6 +96,32 @@
       } else {
         entrar(await b.restaurar(archivo, { tipo: "contrasena", contrasena }));
       }
+    });
+
+  const elegirAcceso = () =>
+    accion(async () => {
+      const b = await backend();
+      const r = await b.elegirArchivo("Elige el archivo de acceso que te dio tu profesor", "rlpa", "Acceso de RLP");
+      if (!r) return;
+      infoAcceso = await b.leerAcceso(r);
+      rutaAcceso = r;
+    });
+
+  const elegirEntrega = () =>
+    accion(async () => {
+      const r = await (await backend()).elegirArchivo("Elige tu último archivo de avances", "rlp", "Avances de RLP");
+      if (r) rutaEntrega = r;
+    });
+
+  const entrarConAcceso = () =>
+    accion(async () => {
+      if (!infoAcceso) throw new Error("Elige primero el archivo de acceso.");
+      if (!infoAcceso.perfil_local && !rutaEntrega) throw new Error("Elige también tu último archivo .rlp.");
+      if (nueva !== nueva2) throw new Error("Las contraseñas nuevas no coinciden.");
+      const est = await (await backend()).entrarConAcceso(rutaAcceso, temporal, nueva, infoAcceso.perfil_local ? null : rutaEntrega);
+      estadoPendiente = est;
+      if (est.codigo_nuevo) codigoNuevo = est.codigo_nuevo;
+      else entrar(est);
     });
 
   const importarGrupo = () =>
@@ -222,7 +254,7 @@
           <button type="submit" class="primario" disabled={ocupado || !estadoApp.escribible}>Crear mi perfil</button>
         </div>
       </form>
-    {:else}
+    {:else if modo === "restaurar"}
       <form onsubmit={(e) => { e.preventDefault(); restaurar(); }}>
         <p class="suave">
           ¿Trabajaste en otra computadora o en tu celular? Elige el archivo <strong>.rlp</strong> que exportaste allá
@@ -260,6 +292,49 @@
           <button type="submit" class="primario" disabled={ocupado || !estadoApp.escribible}>Continuar aquí</button>
         </div>
       </form>
+    {:else}
+      <form onsubmit={(e) => { e.preventDefault(); entrarConAcceso(); }} data-acceso>
+        <p class="suave">
+          Si olvidaste tu contraseña y tu código de recuperación, tu profesor puede darte un <strong>archivo de acceso</strong>
+          (.rlpa) y una contraseña temporal.
+        </p>
+        <div class="campo fila">
+          <button type="button" onclick={elegirAcceso} disabled={ocupado}>Elegir archivo de acceso…</button>
+          <span class="suave archivo">{infoAcceso ? `${infoAcceso.nombre} · ${infoAcceso.numero_control}` : "Ningún archivo elegido"}</span>
+        </div>
+        {#if infoAcceso}
+          <p class="info">Archivo de {infoAcceso.profesor} para <strong>{infoAcceso.nombre}</strong>.</p>
+          {#if !infoAcceso.perfil_local}
+            <div class="campo fila">
+              <button type="button" onclick={elegirEntrega} disabled={ocupado}>Elegir mi último .rlp…</button>
+              <span class="suave archivo">{rutaEntrega || "Tu perfil no está en esta computadora: elige tu último archivo de avances"}</span>
+            </div>
+          {/if}
+          <div class="campo">
+            <label for="temporal">Contraseña temporal (te la dio tu profesor)</label>
+            <input id="temporal" bind:value={temporal} autocomplete="off" placeholder="XXXX-XXXX-XXXX" />
+          </div>
+          <div class="campo">
+            <label for="anueva">Contraseña nueva</label>
+            <input id="anueva" type="password" bind:value={nueva} autocomplete="new-password" />
+          </div>
+          <div class="campo">
+            <label for="anueva2">Repite la contraseña nueva</label>
+            <input id="anueva2" type="password" bind:value={nueva2} autocomplete="new-password" />
+          </div>
+        {/if}
+        {#if error}<p class="error">{error}</p>{/if}
+        <div class="fila">
+          <button type="button" class="fantasma chico" onclick={() => (modo = estadoApp.perfiles.length ? "entrar" : "registro")}>← Volver</button>
+          <span class="espaciador"></span>
+          <button type="submit" class="primario" disabled={ocupado || !infoAcceso || !estadoApp.escribible}>Entrar</button>
+        </div>
+      </form>
+    {/if}
+    {#if modo !== "acceso"}
+      <button type="button" class="fantasma chico acceso-profesor" onclick={() => { modo = "acceso"; error = ""; }}>
+        ¿Olvidaste tu contraseña y tu código? Tengo un archivo de acceso de mi profesor
+      </button>
     {/if}
   </section>
   <p class="version suave">v{estadoApp.version} · {estadoApp.plataforma}{estadoApp.dev ? " · compilación de desarrollo" : ""}</p>
@@ -272,7 +347,7 @@
     <input type="checkbox" bind:checked={anotado} style="width: auto" /> Ya lo anoté en un lugar seguro
   </label>
   {#snippet acciones()}
-    <button class="primario" disabled={!anotado} onclick={continuar}>Empezar el curso</button>
+    <button class="primario" disabled={!anotado} onclick={continuar}>{modo === "acceso" ? "Continuar" : "Empezar el curso"}</button>
   {/snippet}
 </Modal>
 
@@ -287,6 +362,12 @@
     margin: 0 auto;
     padding: 2rem 1.5rem;
     position: relative;
+  }
+  .acceso-profesor {
+    margin-top: 0.8rem;
+    width: 100%;
+    justify-content: center;
+    white-space: normal;
   }
   .logo {
     font-size: 3rem;

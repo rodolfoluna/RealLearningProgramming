@@ -7,7 +7,8 @@ Apps **sin conexión** para aprender y enseñar programación en Python, en espa
   errores explicados en español, pistas, generación de `.exe` y entregas cifradas.
 - **RLP Profesor**: importa entregas, verifica que no se hayan modificado fuera de la app
   (reconstruye el código tecla a tecla), muestra avance y estadísticas (copias, intentos de pegar,
-  salidas de ventana), vuelve a correr las pruebas y exporta calificaciones a CSV.
+  salidas de ventana), **reproduce cómo se escribió** cada código, vuelve a correr las pruebas,
+  exporta a Excel y envía **retroalimentación firmada** a los alumnos.
 
 Windows ahora; Android (app del alumno) en la fase 2. El diseño completo está en
 [`docs/DISENO.md`](docs/DISENO.md).

@@ -35,6 +35,10 @@ export function crearBackendTauri(): Backend {
     registrarEvento: (tipo, actividad, datos) => invoke("registrar_evento", { tipo, actividad, datos }),
     exportar: (carpeta) => invoke("exportar", { carpeta }),
     importarAvances: (ruta) => invoke("importar_avances", { ruta }),
+    importarRetroalimentacion: (ruta) => invoke("importar_retroalimentacion", { ruta }),
+    leerAcceso: (ruta) => invoke("leer_acceso", { ruta }),
+    entrarConAcceso: (rutaAcceso, temporal, nueva, rutaEntrega) =>
+      invoke("entrar_con_acceso", { rutaAcceso, temporal, nueva, rutaEntrega }),
     cambiarContrasena: (actual, nueva) => invoke("cambiar_contrasena", { actual, nueva }),
     unirseGrupo: (ruta) => invoke("unirse_grupo", { ruta }),
     async generarEjecutable(nombre, codigo, alProgreso) {
