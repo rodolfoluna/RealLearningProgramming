@@ -229,13 +229,15 @@ Además el tablero marca si un mismo perfil aparece con otro número de control 
 ### 4.7 Llave de firma de la App Alumno
 
 - Desarrollo: llave pública fija (la App Profesor la acepta en **amarillo**).
-- Producción: `cargo run -p rlp-core --example generar_llave_app` genera un par. La semilla va al
-  secreto de CI `RLP_CLAVE_APP`; la pública, a `crates/rlp-core/llaves_app.txt` (o a la variable
-  `RLP_CLAVE_APP_PUBLICA`). La semilla se inyecta ofuscada por `build.rs`. La lista conserva las
-  llaves de versiones anteriores para seguir verificando sus entregas.
-- Al publicar (etiqueta `v*`), `cargo run -p rlp-core --example verificar_llave_app` detiene el
-  workflow si falta el secreto o si su llave pública no está en la lista: una versión publicada
-  nunca firma con la llave de desarrollo.
+- Producción: `cargo run -p rlp-core --example generar_llave_app` genera un par. La semilla se
+  queda con quien publica (`scripts/publicar-version.ps1` la pide al compilar en su PC; el secreto
+  `RLP_CLAVE_APP` solo lo usan los workflows manuales); la pública va a
+  `crates/rlp-core/llaves_app.txt` (o a la variable `RLP_CLAVE_APP_PUBLICA`). La semilla se inyecta
+  ofuscada por `build.rs`. La lista conserva las llaves de versiones anteriores para seguir
+  verificando sus entregas.
+- Al publicar, `cargo run -p rlp-core --example verificar_llave_app` detiene la compilación si
+  falta la semilla o si su llave pública no está en la lista: una versión publicada nunca firma
+  con la llave de desarrollo.
 - La App Profesor se compila **sin** la función `firmar`: no contiene ninguna llave privada. Cada
   app se compila por separado para que Cargo no unifique esa función.
 - **Versión web**: llave propia, secreto `RLP_CLAVE_APP_WEB`. Al compilar a WebAssembly,
@@ -339,15 +341,17 @@ Ambos: `{"contenido": "<JSON exacto>", "firma": "<Ed25519 del profesor>"}`.
 - Sin `.exe` (no hay PyInstaller en el celular).
 - **Compilación local** (`scripts/compilar-android.ps1`, Windows): toma el SDK de `ANDROID_HOME`
   o `E:\Android`, el NDK más nuevo y el Java de Android Studio; agrega los targets de Rust, genera
-  el proyecto con `tauri android init` si falta, compila arm64/armv7 (de prueba, o firmado con tu
-  keystore con `-Release`) y deja el APK en `dist-android\` (`-Instalar` lo instala con adb).
-- **CI** (`build-android.yml`, solo a mano y en etiquetas `v*`): genera el proyecto con
+  el proyecto con `tauri android init` si falta, compila arm64/armv7 **optimizado** y lo firma con
+  la llave de depuración de esa PC (`%USERPROFILE%\.android\debug.keystore`, la misma en cada
+  compilación) o con tu keystore (`-Keystore`/`-Alias`). Deja el APK en `dist-android\`
+  (`-Instalar` lo instala con adb; `-Depuracion` hace el build sin optimizar, para un emulador).
+- **CI** (`build-android.yml`, solo a mano, como respaldo): genera el proyecto con
   `tauri android init`, compila un APK de depuración x86_64 que se instala en un **emulador** y
   corre la autoprueba (activada con `autoprueba.txt` en la carpeta privada vía `adb shell run-as`;
   el resultado queda en `autoprueba_resultado.json`), y el APK para celulares (arm64 y armv7),
   firmado con el keystore de los secretos `ANDROID_KEYSTORE`, `ANDROID_KEYSTORE_PASSWORD` y
-  `ANDROID_KEY_ALIAS`. La firma debe ser siempre la misma, en local y en CI: Android solo
-  actualiza una app (conservando sus datos) si coincide.
+  `ANDROID_KEY_ALIAS` (sin ellos, uno de depuración con firma distinta en cada corrida). La firma
+  debe ser siempre la misma: Android solo actualiza una app (conservando sus datos) si coincide.
 
 ### Versión web (PWA)
 
@@ -471,15 +475,19 @@ Los diccionarios quedan como posible unidad opcional en una versión posterior.
 | Navegador | Pyodide con `input()`, detener, `time.sleep`, errores en español, pruebas con ciclo infinito; pegado por teclado, menú, evento y arrastre; política "propio"; flujos de interfaz de ambas apps | `pnpm exec playwright test` |
 | Curso | 118 actividades: soluciones, códigos iniciales y predicciones en CPython y Pyodide; pruebas del arnés | `python3 scripts/validar_curso.py`, `node scripts/validar-curso-pyodide.mjs`, `python3 -m unittest discover packages/python-worker/pruebas` |
 | Apps reales | profesor → alumno → profesor con Tauri, WebView y núcleo reales | `scripts/autoprueba.sh` (Linux/Xvfb), `scripts/autoprueba.ps1` (Windows/WebView2) |
-| Windows | compilación, runtime con PyInstaller que genera un `.exe` funcional, empaquetado | `.github/workflows/build-windows.yml` |
+| Windows | compilación, runtime con PyInstaller que genera un `.exe` funcional, empaquetado | `scripts/compilar-windows.ps1 -Autoprueba` (o el workflow manual `build-windows.yml`) |
 
 ---
 
 ## 11. Distribución
 
-- Cada push genera el artefacto `rlp-windows-portable` del workflow **Build Windows**; cada
-  etiqueta `v*` publica además un **Release** de GitHub con los dos zips y las notas de
-  `CHANGELOG.md` (el zip del profesor incluye `INSTALACION.md`).
+- Las versiones se compilan y publican **desde la PC de quien administra**:
+  `scripts/publicar-version.ps1` compila Windows (`compilar-windows.ps1`) y Android
+  (`compilar-android.ps1`), crea la etiqueta `v*` y sube los zips, el APK y las notas de
+  `CHANGELOG.md` al **Release** de GitHub (el zip del profesor incluye `INSTALACION.md` y los
+  manuales). Con la etiqueta, el workflow **Build Web** publica la versión web y agrega su zip.
+  En GitHub corren solo **CI** (pruebas) y **Build Web**; Build Windows y Build Android quedan
+  como respaldo manual.
 - Guía completa para un laboratorio (WebView2 sin internet, antivirus, equipos que se restauran al
   reiniciar, entregas, actualizar sin perder datos): [`docs/INSTALACION.md`](INSTALACION.md).
 - Resumen: el profesor descomprime `LP-Profesor`, crea sus llaves, **guarda el respaldo** y crea

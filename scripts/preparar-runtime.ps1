@@ -1,4 +1,4 @@
-# Prepara runtime\ : CPython portátil oficial (paquete NuGet "python") + PyInstaller, para que la
+﻿# Prepara runtime\ : CPython portátil oficial (paquete NuGet "python") + PyInstaller, para que la
 # App Alumno genere ejecutables .exe sin internet. Se ejecuta en la máquina que empaqueta (CI).
 param(
   [string]$Version = "3.13.7",

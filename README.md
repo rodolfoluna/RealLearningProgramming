@@ -59,19 +59,32 @@ El contenido está en `curso/` (Markdown + YAML + Python). Para agregar una acti
 
 ## Compilar y publicar
 
-El workflow **Build Windows** genera `LP-Alumno-*.zip` y `LP-Profesor-*.zip` (carpetas
-portables) en cada push. Para publicar una versión:
+Las apps de Windows y el APK de Android se compilan **en la computadora de quien publica**
+(Windows). En GitHub solo corren **CI** (pruebas en cada push y PR) y **Build Web** (la versión
+web); Build Windows y Build Android quedan como respaldo manual (Actions → Run workflow).
 
-1. Configura una sola vez el secreto `RLP_CLAVE_APP` (Settings → Secrets and variables →
-   Actions) con la semilla de la llave de firma de la App Alumno; su llave pública ya está en
-   `crates/rlp-core/llaves_app.txt`. Para cambiarla: `cargo run -p rlp-core --example
-   generar_llave_app` y agrega la nueva llave pública (conserva las anteriores para que las
-   entregas viejas se sigan verificando).
-2. Anota los cambios en `CHANGELOG.md` y sube la versión en `Cargo.toml`, los `package.json` y
-   los `tauri.conf.json` de las apps.
-3. Crea la etiqueta sobre `main` (`git tag v0.2.0 && git push origin v0.2.0`). El workflow
-   verifica la llave de producción, compila, corre la autoprueba y publica el **Release** con los
-   dos zips y las notas del `CHANGELOG.md`.
+```powershell
+.\scripts\compilar-windows.ps1                    # zips portables en dist-portable\ (-Autoprueba: flujo completo)
+.\scripts\compilar-android.ps1                    # APK optimizado en dist-android\
+.\scripts\publicar-version.ps1                    # compila ambos, crea la etiqueta y sube el Release
+```
+
+Para publicar una versión:
+
+1. Anota los cambios en `CHANGELOG.md` (`## [X.Y.Z] — AAAA-MM-DD`) y sube la versión en
+   `Cargo.toml`, los `package.json` (apps y `packages/alumno-ui`) y los `tauri.conf.json`. Fusiona
+   en `main`.
+2. En tu PC: `git checkout main`, `git pull` y `.\scripts\publicar-version.ps1`. Pide la semilla de
+   la llave de firma (`RLP_CLAVE_APP`, no se muestra), la verifica, compila Windows y Android, crea
+   la etiqueta `vX.Y.Z` y sube los zips, el APK y las notas del `CHANGELOG.md` al **Release**
+   (requiere [GitHub CLI](https://cli.github.com/): `winget install GitHub.cli`, `gh auth login`).
+3. Con la etiqueta, **Build Web** verifica la llave web, agrega `LP-Alumno-*-web.zip` al Release y
+   publica el sitio en GitHub Pages.
+
+Las llaves de firma (la nativa, que se queda en tu gestor de contraseñas, y la web, que va en el
+secreto `RLP_CLAVE_APP_WEB`), cómo cambiarlas y la configuración de GitHub Pages están en el
+[manual del profesor](docs/MANUAL-PROFESOR.md). Sus llaves públicas están en
+`crates/rlp-core/llaves_app.txt`.
 
 La guía para instalar en un laboratorio está en [`docs/INSTALACION.md`](docs/INSTALACION.md).
 Manuales de uso: [alumno](docs/MANUAL-ALUMNO.md) (incluye cómo pasar los avances entre Windows,
@@ -81,31 +94,30 @@ Android, GitHub Pages y cómo publicar una versión).
 ### Versión web
 
 El workflow **Build Web** genera el sitio (`LP-Alumno-*-web.zip`, archivos estáticos para
-cualquier hosting). Para publicar:
+cualquier hosting) en cada push a `main`. Para publicarlo con cada etiqueta `v*`:
 
-1. Configura una sola vez el secreto `RLP_CLAVE_APP_WEB` con la semilla de la llave web (su
-   llave pública ya está en `llaves_app.txt` con la marca `[web]`).
-2. Para que se publique en GitHub Pages: Settings → Pages → Source: **GitHub Actions**, y la
-   variable del repositorio `RLP_PAGES` = `1`.
-3. Con la etiqueta `v*`, el workflow verifica la llave, agrega el `.zip` al Release y publica el
-   sitio.
+1. El secreto `RLP_CLAVE_APP_WEB` con la semilla de la llave web (su llave pública está en
+   `llaves_app.txt` con la marca `[web]`).
+2. Para GitHub Pages: Settings → Pages → Source: **GitHub Actions**; la variable del repositorio
+   `RLP_PAGES` = `1`; y en Settings → Environments → **github-pages**, una regla que permita las
+   etiquetas `v*` (por defecto solo deja publicar desde `main`).
 
-### APK de Android en tu computadora
+### Windows y Android en tu computadora
 
-Requisitos (Windows): el SDK de Android con **NDK**, **Build-Tools** y **Platform-Tools** (desde
-el SDK Manager de Android Studio), Java 17 (el de Android Studio sirve) y `pnpm install` hecho.
-El script toma el SDK de `ANDROID_HOME` o, si no está definida, de `E:\Android`.
+Requisitos (Windows): Rust con las herramientas de C++ de Visual Studio, Node 22 y pnpm (`pnpm
+install` hecho). Para Android, además, el SDK con **NDK**, **Build-Tools** y **Platform-Tools**
+(desde el SDK Manager de Android Studio) y Java 17 (el de Android Studio sirve); el script toma el
+SDK de `ANDROID_HOME` o, si no está definida, de `E:\Android`.
 
 ```powershell
-.\scripts\compilar-android.ps1                    # APK de depuración (arm64 y armv7) en dist-android\
+.\scripts\compilar-android.ps1                    # APK optimizado (arm64 y armv7) en dist-android\
 .\scripts\compilar-android.ps1 -Instalar          # ... y lo instala con adb en el celular conectado
-.\scripts\compilar-android.ps1 -Targets x86_64    # para un emulador
-$env:RLP_CLAVE_APP = "<semilla>"                  # entregas en verde (la misma del secreto de CI)
-.\scripts\compilar-android.ps1 -Release -Keystore C:\llaves\lp-alumno.jks -Alias lp
+.\scripts\compilar-android.ps1 -Depuracion -Targets x86_64   # sin optimizar, para un emulador
+.\scripts\compilar-android.ps1 -Keystore C:\llaves\lp-alumno.jks -Alias lp   # con tu keystore
 ```
 
-El APK de depuración (el que se usa por ahora) cambia de firma: para pasar a uno firmado con `-Release` hay que
-desinstalar la app (se borran sus datos). Usa siempre el mismo keystore para que las
-actualizaciones conserven los datos. El workflow **Build Android** ya no corre en cada push: se
-lanza a mano (Actions → Build Android → Run workflow) o al crear una etiqueta `v*`, que agrega el
-APK al Release (de depuración mientras no haya keystore).
+Sin `-Keystore`, el APK se firma con la llave de depuración de tu PC
+(`%USERPROFILE%\.android\debug.keystore`), que no cambia entre compilaciones: las versiones nuevas
+se instalan encima y conservan los datos mientras compiles en la misma PC. Respalda ese archivo;
+con otra llave, para actualizar hay que desinstalar (se borran los datos de la app). Sin
+`RLP_CLAVE_APP`, las entregas salen con la firma de desarrollo (amarillo en LP Profesor).

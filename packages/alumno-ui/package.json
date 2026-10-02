@@ -1,6 +1,6 @@
 {
   "name": "@rlp/alumno-ui",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "type": "module",
   "description": "Interfaz de la App Alumno, compartida por la app nativa (Windows y Android: apps/alumno) y la versión web (apps/alumno-web).",

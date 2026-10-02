@@ -3,5 +3,5 @@
 # Formato: <llave-publica-base64> <descripción>. La marca [web] en la descripción indica la llave
 # de la versión web (RLP_CLAVE_APP_WEB): sus entregas se marcan en amarillo.
 # Genera un par nuevo con: cargo run -p rlp-core --example generar_llave_app
-y2sr3jlNxJDd3ySEv75Ljzr4VC6sMTzCNt8LJkyxEQ0= v0.2.0 (producción, 2026-09)
+6H+jOC8Ndk4Glv8wO5NjxzP/w/x/tNTT7HVaSJy/ODk= v0.2.1 (producción, 2026-10)
 4QD+9AlxVU6c17Jsgv7Xnm1SMwI1bZ04JW8DiIIOW7g= v0.2.0 [web] (producción, 2026-10)

@@ -3,6 +3,26 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Las versiones
 siguen [SemVer](https://semver.org/lang/es/). El curso tiene su propia versión (`curso/curso.yaml`).
 
+## [0.2.1] — sin publicar
+
+### Publicación desde la computadora
+
+- Las apps de Windows y el APK de Android se compilan en la computadora de quien publica:
+  `scripts/compilar-windows.ps1` (nuevo), `scripts/compilar-android.ps1` y
+  `scripts/publicar-version.ps1` (nuevo), que pide la semilla de la llave sin mostrarla, compila,
+  crea la etiqueta y sube los archivos y las notas al Release con GitHub CLI.
+- En GitHub corren solo las pruebas (CI) y la versión web (Build Web). Build Windows y Build
+  Android quedan como respaldo manual.
+- **APK optimizado** (mucho más chico que el de depuración), firmado con la llave de depuración
+  de la PC donde se compila: las versiones nuevas se instalan encima sin perder datos.
+  `-Depuracion` conserva el build sin optimizar para emuladores.
+- **Nueva llave de firma** de la app nativa (la de v0.2.0 nunca firmó una versión publicada).
+
+### Documentación
+
+- Manual del profesor y README con el flujo de publicación local, dónde vive cada llave y la
+  regla del entorno `github-pages` que permite publicar la versión web desde una etiqueta.
+
 ## [0.2.0] — 2026-10-02
 
 ### Nombre y manuales

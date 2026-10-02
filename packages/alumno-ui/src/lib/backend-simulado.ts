@@ -123,7 +123,7 @@ export function crearBackendSimulado(): Backend {
 
   return {
     estadoApp: async () => ({
-      version: "0.2.0-navegador",
+      version: "0.2.1-navegador",
       plataforma: new URLSearchParams(location.search).has("android") ? "android" : "navegador",
       carpeta_datos: "(memoria del navegador)",
       escribible: true,

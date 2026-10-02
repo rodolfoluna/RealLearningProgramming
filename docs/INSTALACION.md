@@ -73,9 +73,8 @@ de cada clase deben **exportar su entrega**, que también les sirve de respaldo.
 ## 5. Celulares Android
 
 Para quien no tiene computadora en casa hay un **APK** de LP Alumno. Viene en el Release
-(`LP-Alumno-<versión>-android-depuracion.apk`: por ahora es una versión de **depuración**) o se
-compila en una computadora con Windows y el SDK de Android con `scripts\compilar-android.ps1`
-(ver el README).
+(`LP-Alumno-<versión>-android.apk`) o se compila en una computadora con Windows y el SDK de
+Android con `scripts\compilar-android.ps1` (ver el README).
 
 1. En el celular, abre el APK y permite "instalar apps de origen desconocido" para el navegador o
    el administrador de archivos.
@@ -85,10 +84,11 @@ compila en una computadora con Windows y el SDK de Android con `scripts\compilar
    Drive y compartir desde ahí.
 
 > **Importante**: en Android los datos viven dentro de la app. **Desinstalarla los borra**:
-> exporta tu entrega antes. Las actualizaciones conservan los datos siempre que el APK esté firmado
-> con la misma llave. El APK de depuración cambia de firma en cada compilación: para instalar uno
-> nuevo hay que desinstalar el anterior, así que **exporta la entrega antes** y luego usa "Tengo mis
-> avances en un archivo".
+> exporta tu entrega antes. Una versión nueva se instala encima y conserva los datos siempre que el
+> APK esté firmado con la misma llave (la de la computadora donde se compila: ver el
+> [manual del profesor](MANUAL-PROFESOR.md#3-android)). Si Android no deja instalarla
+> ("conflicto con un paquete existente"), la llave cambió: **exporta la entrega**, desinstala,
+> instala la nueva y usa "Tengo mis avances en un archivo".
 
 ## 6. Versión web (sin instalar nada)
 
