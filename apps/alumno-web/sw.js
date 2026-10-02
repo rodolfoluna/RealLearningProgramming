@@ -76,6 +76,7 @@ self.addEventListener("fetch", (evento) => {
   evento.respondWith(
     (async () => {
       let respuesta = await caches.match(pedido, { ignoreSearch: true });
+      // La página se pide como "./" (o con otra ruta): siempre es index.html.
       if (!respuesta && pedido.mode === "navigate") {
         respuesta = await caches.match(new URL("index.html", self.registration.scope).href);
       }

@@ -37,15 +37,31 @@ export async function prepararPwa(): Promise<boolean> {
   }
   if (!crossOriginIsolated && !leer(sessionStorage, "rlp-aislar")) {
     guardar(sessionStorage, "rlp-aislar", "1"); // una sola vez: nunca recargar en bucle
-    if (navigator.serviceWorker.controller) location.reload();
-    else navigator.serviceWorker.addEventListener("controllerchange", () => location.reload(), { once: true });
-    return false;
+    if (navigator.serviceWorker.controller || (await primeraInstalacion(registro))) {
+      location.reload();
+      return false;
+    }
+    // No se pudo instalar: la app sigue sin aislamiento (la consola avisa si input() no está).
   }
   vigilarVersiones(registro);
   void precargar();
   void navigator.storage?.persist?.().catch(() => false);
   ofrecerInstalacion();
   return true;
+}
+
+/**
+ * Espera a que el primer service worker tome el control de la página. Devuelve `false` si su
+ * instalación falla o tarda demasiado (red muy lenta): mejor abrir la app sin aislamiento que
+ * dejarla en "Preparando…".
+ */
+function primeraInstalacion(registro: ServiceWorkerRegistration): Promise<boolean> {
+  return new Promise((resolver) => {
+    navigator.serviceWorker.addEventListener("controllerchange", () => resolver(true), { once: true });
+    const sw = registro.installing ?? registro.waiting;
+    sw?.addEventListener("statechange", () => sw.state === "redundant" && resolver(false));
+    setTimeout(() => resolver(false), 90_000);
+  });
 }
 
 /** Descarga Pyodide en segundo plano para que Python funcione sin conexión. */

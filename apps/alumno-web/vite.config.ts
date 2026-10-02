@@ -40,7 +40,7 @@ function serviceWorker(): Plugin {
       const sw = readFileSync(join(raiz, "sw.js"), "utf8")
         .replace("__VERSION__", huella.digest("hex").slice(0, 12))
         .replace("__VERSION_PYODIDE__", versionPyodide)
-        .replace("__ARCHIVOS_APP__", JSON.stringify(["./", ...app]))
+        .replace("__ARCHIVOS_APP__", JSON.stringify(app))
         .replace("__ARCHIVOS_PYODIDE__", JSON.stringify(pyodide));
       writeFileSync(join(dist, "sw.js"), sw);
     },
