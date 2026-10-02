@@ -70,9 +70,9 @@ de cada clase deben **exportar su entrega**, que también les sirve de respaldo.
 
 ## 5. Celulares Android
 
-Para quien no tiene computadora en casa hay un **APK** de la App Alumno (en el Release, si el
-repositorio tiene configurada su llave de firma de Android; si no, en los artefactos del workflow
-"Build Android" como versión de prueba).
+Para quien no tiene computadora en casa hay un **APK** de la App Alumno. Se compila en una
+computadora con Windows y el SDK de Android con `scripts\compilar-android.ps1` (ver el README), o
+viene en el Release si el repositorio tiene configurada su llave de firma de Android.
 
 1. En el celular, abre el APK y permite "instalar apps de origen desconocido" para el navegador o
    el administrador de archivos.

@@ -64,3 +64,22 @@ portables) en cada push. Para publicar una versión:
    dos zips y las notas del `CHANGELOG.md`.
 
 La guía para instalar en un laboratorio está en [`docs/INSTALACION.md`](docs/INSTALACION.md).
+
+### APK de Android en tu computadora
+
+Requisitos (Windows): el SDK de Android con **NDK**, **Build-Tools** y **Platform-Tools** (desde
+el SDK Manager de Android Studio), Java 17 (el de Android Studio sirve) y `pnpm install` hecho.
+El script toma el SDK de `ANDROID_HOME` o, si no está definida, de `E:\Android`.
+
+```powershell
+.\scripts\compilar-android.ps1                    # APK de prueba (arm64 y armv7) en dist-android\
+.\scripts\compilar-android.ps1 -Instalar          # ... y lo instala con adb en el celular conectado
+.\scripts\compilar-android.ps1 -Targets x86_64    # para un emulador
+$env:RLP_CLAVE_APP = "<semilla>"                  # entregas en verde (la misma del secreto de CI)
+.\scripts\compilar-android.ps1 -Release -Keystore C:\llaves\rlp.jks -Alias rlp
+```
+
+El APK de prueba usa una firma de depuración: para pasar a uno firmado con `-Release` hay que
+desinstalar la app (se borran sus datos). Usa siempre el mismo keystore para que las
+actualizaciones conserven los datos. El workflow **Build Android** ya no corre en cada push: se
+lanza a mano (Actions → Build Android → Run workflow) o al crear una etiqueta `v*`.

@@ -312,12 +312,17 @@ Ambos: `{"contenido": "<JSON exacto>", "firma": "<Ed25519 del profesor>"}`.
   operadores, flechas, deshacer): inserta como tecleo normal, así cuenta en el historial.
 - Cambiar de app (`visibilitychange`) cuenta como salida de la ventana.
 - Sin `.exe` (no hay PyInstaller en el celular).
-- **CI** (`build-android.yml`): genera el proyecto con `tauri android init`, compila un APK de
-  depuración x86_64 que se instala en un **emulador** y corre la autoprueba (activada con
-  `autoprueba.txt` en la carpeta privada vía `adb shell run-as`; el resultado queda en
-  `autoprueba_resultado.json`), y el APK para celulares (arm64 y armv7), firmado con el keystore de
-  los secretos `ANDROID_KEYSTORE`, `ANDROID_KEYSTORE_PASSWORD` y `ANDROID_KEY_ALIAS`. La firma debe
-  ser siempre la misma: Android solo actualiza una app (conservando sus datos) si coincide.
+- **Compilación local** (`scripts/compilar-android.ps1`, Windows): toma el SDK de `ANDROID_HOME`
+  o `E:\Android`, el NDK más nuevo y el Java de Android Studio; agrega los targets de Rust, genera
+  el proyecto con `tauri android init` si falta, compila arm64/armv7 (de prueba, o firmado con tu
+  keystore con `-Release`) y deja el APK en `dist-android\` (`-Instalar` lo instala con adb).
+- **CI** (`build-android.yml`, solo a mano y en etiquetas `v*`): genera el proyecto con
+  `tauri android init`, compila un APK de depuración x86_64 que se instala en un **emulador** y
+  corre la autoprueba (activada con `autoprueba.txt` en la carpeta privada vía `adb shell run-as`;
+  el resultado queda en `autoprueba_resultado.json`), y el APK para celulares (arm64 y armv7),
+  firmado con el keystore de los secretos `ANDROID_KEYSTORE`, `ANDROID_KEYSTORE_PASSWORD` y
+  `ANDROID_KEY_ALIAS`. La firma debe ser siempre la misma, en local y en CI: Android solo
+  actualiza una app (conservando sus datos) si coincide.
 
 ### Ejecución de Python
 

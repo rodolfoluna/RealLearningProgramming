@@ -36,7 +36,9 @@ siguen [SemVer](https://semver.org/lang/es/). El curso tiene su propia versión 
 
 ### Android
 
-- **APK de la App Alumno** (arm64 y armv7) generado en CI; autoprueba en un emulador.
+- **APK de la App Alumno** (arm64 y armv7): se compila en local con
+  `scripts/compilar-android.ps1` (SDK en `ANDROID_HOME` o `E:\Android`); el workflow de CI, con
+  autoprueba en un emulador, corre a mano y en las etiquetas `v*`.
 - Unirse al grupo escaneando el **QR** que muestra la App Profesor (Grupos → "QR para celulares").
 - **Barra de teclas de código** en pantallas táctiles; exportar con "Guardar como"; cambiar de
   app cuenta como salida.

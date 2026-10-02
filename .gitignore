@@ -24,6 +24,7 @@ mis_ejecutables/
 
 # Empaquetado
 dist-portable/
+dist-android/
 prueba-exe/
 
 # Playwright
