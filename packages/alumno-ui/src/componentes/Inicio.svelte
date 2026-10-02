@@ -182,6 +182,9 @@
     {/if}
     <p class="suave pie">
       Tus avances se guardan cifrados en {lugarDeDatos()}: nadie más puede abrirlos sin tu contraseña.
+      {#if esWeb()}
+        Si borras los datos de este sitio se borran también: exporta tu entrega seguido, te sirve de respaldo.
+      {/if}
     </p>
   </section>
 

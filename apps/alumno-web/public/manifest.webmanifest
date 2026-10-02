@@ -1,0 +1,20 @@
+{
+  "name": "RLP Alumno — Python desde cero",
+  "short_name": "RLP Alumno",
+  "description": "Aprende Python desde cero, sin conexión: curso, editor, consola y entregas cifradas para tu profesor.",
+  "lang": "es",
+  "dir": "ltr",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f6f9",
+  "theme_color": "#2458c6",
+  "categories": ["education"],
+  "icons": [
+    { "src": "iconos/icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "iconos/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "iconos/icono-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

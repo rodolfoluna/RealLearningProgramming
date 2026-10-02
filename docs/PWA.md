@@ -11,7 +11,7 @@ igual. Fuera de alcance: crear `.exe`, PWA del profesor, app nativa de iOS y ser
 | 1. Núcleo portable | **Hecha** |
 | 2. Crate `rlp-web` + paquete `nucleo-web` | **Hecha** |
 | 3. Interfaz compartida y `backend-web.ts` | **Hecha** |
-| 4. Cáscara PWA (manifest, service worker, instalación) | Pendiente |
+| 4. Cáscara PWA (manifest, service worker, instalación) | **Hecha** |
 | 5. Llave web → Amarillo; pruebas cruzadas con la App Profesor | Pendiente (el núcleo ya pasa las pruebas cruzadas, ver Fase 1) |
 | 6. CI, Playwright (Chromium + WebKit) y documentación | Pendiente (CI ya compila y prueba el núcleo web) |
 
@@ -117,6 +117,28 @@ respaldo) y aviso de que borrar los datos del sitio borra el perfil. Falta proba
 - Pruebas: proyecto `web` de Playwright (`web.flujo.spec.ts`) con el núcleo real: registro,
   `input()`, recarga conservando el perfil y descarga de la entrega.
 
+## Fase 4 — app instalable y sin conexión (hecha)
+
+- `public/manifest.webmanifest` (standalone, español, íconos 192/512 y *maskable* generados del
+  ícono de la app) y etiquetas para iOS (`apple-touch-icon`, `apple-mobile-web-app-capable`).
+- **Service worker** (`apps/alumno-web/sw.js`, plantilla que `vite.config.ts` completa al
+  compilar con la lista de archivos y una versión por contenido):
+  - guarda la app al instalarse y Pyodide en segundo plano, en una caché aparte que sobrevive a
+    las actualizaciones de la app mientras Pyodide no cambie;
+  - agrega **COOP/COEP** a cada respuesta, así que el sitio funciona en cualquier hosting estático
+    (GitHub Pages incluido). En la primera visita la página se recarga una sola vez para quedar
+    aislada;
+  - una versión nueva espera: aparece "Hay una versión nueva de la app" con **Actualizar**, que
+    primero guarda lo pendiente del editor.
+- `src/pwa.ts`: `navigator.storage.persist()`, aviso "la app ya funciona sin conexión", botón
+  **Instalar** (Chrome/Edge/Android) e instrucciones para iPhone/iPad ("Compartir → Agregar a
+  pantalla de inicio"), que se pueden cerrar para siempre.
+- Recordatorio de exportar la entrega si pasaron 7 días o más desde la última, y aviso en la
+  pantalla de inicio de que borrar los datos del sitio borra los avances.
+- Prueba `web.pwa.spec.ts`: el sitio compilado servido **sin encabezados y en una subcarpeta**
+  (como GitHub Pages) queda aislado, ofrece el manifest y, **sin red**, registra un perfil y corre
+  un programa con `input()`.
+
 ## Riesgos encontrados
 
 1. **Dos pestañas con el mismo perfil** agregarían eventos con los mismos números a la cadena del
@@ -125,8 +147,9 @@ respaldo) y aviso de que borrar los datos del sitio borra el perfil. Falta proba
 2. **Diario sin guardar** (se cerró la pestaña): la copia guardada queda en un estado anterior pero
    consistente (lo prueba `tests/web.rs`). **Resuelto** en la Fase 2: el Worker responde solo
    cuando IndexedDB confirmó.
-3. **Sin service worker** (primera visita sin conexión o navegador que lo bloquea): `input()` no
-   funciona. Desde la Fase 3 la consola lo dice claramente en lugar de quedarse esperando.
+3. **Sin service worker** (navegador que lo bloquea): `input()` no funciona. Desde la Fase 3 la
+   consola lo dice claramente en lugar de quedarse esperando; con el service worker de la Fase 4
+   no pasa en Chromium.
 
 ## Siguientes pasos
 

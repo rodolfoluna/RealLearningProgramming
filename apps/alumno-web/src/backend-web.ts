@@ -13,7 +13,7 @@ import type {
   ResumenImportacion,
   Retroalimentacion,
 } from "@rlp/alumno-ui";
-import { conDialogo } from "@rlp/alumno-ui";
+import { avisar, conDialogo } from "@rlp/alumno-ui";
 import { crearNucleoWeb } from "@rlp/nucleo-web";
 
 /** Archivos elegidos por el alumno, por nombre (lo que la interfaz llama "ruta"). */
@@ -72,13 +72,46 @@ function descargar(nombre: string, datos: Uint8Array) {
 /** El Worker devuelve el mismo JSON que los comandos de la app nativa. */
 const como = <T>(valor: unknown) => valor as T;
 
+/** Cada cuántos días se recuerda exportar la entrega (en el navegador también es el respaldo). */
+const DIAS_RESPALDO = 7;
+
+function clave(perfil: string) {
+  return `rlp-exportado-${perfil}`;
+}
+
+function recordarRespaldo(estado: EstadoAlumno) {
+  let ultima = estado.perfil.creado;
+  try {
+    ultima = Number(localStorage.getItem(clave(estado.perfil.perfil_id))) || ultima;
+  } catch {
+    /* sin localStorage: se cuenta desde el registro */
+  }
+  const dias = Math.floor((Date.now() - ultima) / 86_400_000);
+  if (dias >= DIAS_RESPALDO) {
+    setTimeout(() => avisar(`Hace ${dias} días que no exportas tu entrega. Expórtala: también es tu respaldo.`, 9000), 2500);
+  }
+}
+
 export function crearBackendWeb(): Backend {
   const nucleo = crearNucleoWeb();
   const sesion = async <T>(operacion: string, args: object = {}) => como<T>(await nucleo.sesion(operacion, args));
+  let perfil: string | null = null;
+
+  /** Recuerda qué perfil está abierto (para el recordatorio de respaldo). */
+  function abierto(estado: EstadoAlumno): EstadoAlumno {
+    perfil = estado.perfil.perfil_id;
+    recordarRespaldo(estado);
+    return estado;
+  }
 
   async function exportar(): Promise<string> {
     const { nombre, archivo } = await nucleo.exportar();
     descargar(nombre, archivo);
+    try {
+      if (perfil) localStorage.setItem(clave(perfil), String(Date.now()));
+    } catch {
+      /* sin localStorage */
+    }
     return nombre;
   }
 
@@ -106,12 +139,18 @@ export function crearBackendWeb(): Backend {
     importarGrupo: async (ruta) => como<GrupoInfo>(await nucleo.instalarGrupo(await leer(ruta))),
     importarGrupoQr: async (contenido) => como<GrupoInfo>(await nucleo.instalarGrupoQr(contenido)),
     unirseGrupoQr: async (contenido) => como<GrupoInfo>(await nucleo.unirseGrupoQr(contenido)),
-    registrar: async (numeroControl, nombre, contrasena) =>
-      como<{ estado: EstadoAlumno; codigo: string }>(await nucleo.registrar(numeroControl, nombre, contrasena)),
+    registrar: async (numeroControl, nombre, contrasena) => {
+      const r = como<{ estado: EstadoAlumno; codigo: string }>(await nucleo.registrar(numeroControl, nombre, contrasena));
+      perfil = r.estado.perfil.perfil_id;
+      return r;
+    },
     // En la web, la "carpeta" de un perfil es su identificador.
-    iniciarSesion: async (perfil, secreto) => como<EstadoAlumno>(await nucleo.iniciarSesion(perfil, secreto)),
-    restaurar: async (ruta, secreto) => como<EstadoAlumno>(await nucleo.restaurar(await leer(ruta), secreto)),
-    cerrarSesion: () => nucleo.cerrarSesion(),
+    iniciarSesion: async (id, secreto) => abierto(como<EstadoAlumno>(await nucleo.iniciarSesion(id, secreto))),
+    restaurar: async (ruta, secreto) => abierto(como<EstadoAlumno>(await nucleo.restaurar(await leer(ruta), secreto))),
+    cerrarSesion: async () => {
+      perfil = null;
+      await nucleo.cerrarSesion();
+    },
     estado: () => sesion<EstadoAlumno>("estado"),
     estadisticas: () => sesion<Estadisticas>("estadisticas"),
     abrirActividad: (id, codigoInicial) => sesion<EstadoActividad>("abrir_actividad", { id, codigo_inicial: codigoInicial }),
@@ -133,8 +172,10 @@ export function crearBackendWeb(): Backend {
       como<Retroalimentacion>(await nucleo.importarRetroalimentacion(await leer(ruta))),
     leerAcceso: async (ruta) => como<InfoAcceso>(await nucleo.leerAcceso(await leerTexto(ruta))),
     entrarConAcceso: async (rutaAcceso, temporal, nueva, rutaEntrega) =>
-      como<EstadoAlumno>(
-        await nucleo.entrarConAcceso(await leerTexto(rutaAcceso), temporal, nueva, rutaEntrega ? await leer(rutaEntrega) : null),
+      abierto(
+        como<EstadoAlumno>(
+          await nucleo.entrarConAcceso(await leerTexto(rutaAcceso), temporal, nueva, rutaEntrega ? await leer(rutaEntrega) : null),
+        ),
       ),
     cambiarContrasena: async (actual, nueva) => {
       await sesion("cambiar_contrasena", { actual, nueva });

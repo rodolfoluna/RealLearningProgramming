@@ -11,7 +11,7 @@ import { opciones, type OpcionesApp } from "./lib/opciones";
 
 export type { Backend } from "./lib/backend";
 export { backend } from "./lib/backend";
-export { app, curso, prepararCierre, python } from "./lib/app.svelte";
+export { app, avisar, curso, prepararCierre, python } from "./lib/app.svelte";
 export { conDialogo } from "./lib/dialogos";
 export type { OpcionesApp } from "./lib/opciones";
 export type * from "./lib/tipos";
@@ -25,5 +25,6 @@ export function iniciarApp(o: OpcionesApp, objetivo = document.getElementById("a
     const t = e.target as HTMLElement;
     if (!t.closest("input, textarea")) e.preventDefault();
   });
+  objetivo.replaceChildren(); // quita el "Cargando…" del HTML
   return mount(App, { target: objetivo });
 }
