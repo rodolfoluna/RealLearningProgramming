@@ -66,9 +66,13 @@ jobs:
           pnpm --filter @rlp/alumno-web check
           pnpm --filter @rlp/profesor check
           pnpm --filter @rlp/nucleo-web check
-      - name: Pruebas de interfaz (Playwright, Chromium)
+      - name: Sitio web (PWA) compilado, para probarlo sin conexión
+        run: pnpm --filter @rlp/alumno-web build
+      - name: Pruebas de interfaz (Playwright; la versión web también en WebKit)
+        env:
+          PLAYWRIGHT_WEBKIT: "1"
         run: |
-          pnpm exec playwright install --with-deps chromium
+          pnpm exec playwright install --with-deps chromium webkit
           pnpm exec playwright test
       - name: Autoprueba con las apps reales (Tauri + WebKitGTK + PyInstaller)
         run: |

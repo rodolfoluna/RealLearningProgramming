@@ -85,13 +85,41 @@ viene en el Release si el repositorio tiene configurada su llave de firma de And
 > exporta tu entrega antes. Las actualizaciones conservan los datos siempre que el APK esté firmado
 > con la misma llave.
 
-## 6. Continuar en casa
+## 6. Versión web (sin instalar nada)
 
-El alumno exporta su `.rlp` y, en otra computadora con la App Alumno, elige
+La App Alumno también funciona **en el navegador**: es la misma app, con el mismo curso y las
+mismas entregas `.rlp`. Sirve para celulares (también iPhone), tabletas y computadoras donde no se
+puede copiar la carpeta portable.
+
+**Publicarla** (una vez, quien administra el repositorio): el workflow "Build Web" la publica en
+GitHub Pages (ver el README) o genera un `.zip` con archivos estáticos que se pueden subir a
+cualquier hosting, también una carpeta del servidor de la escuela. No necesita configuración
+especial del servidor.
+
+**Para el alumno:**
+
+1. Abre la dirección de la app en Chrome, Edge o Safari.
+2. **Instálala**: en Chrome/Edge/Android aparece el botón *Instalar*; en iPhone/iPad toca
+   **Compartir → Agregar a pantalla de inicio**. Ya instalada, funciona **sin conexión** (avisa
+   cuando termina de descargar Python).
+3. Para unirse al grupo: escanear el **QR** que proyecta el profesor o importar el `.rlpg`.
+4. **Exportar entrega** descarga el `.rlp` (queda en *Descargas*); se entrega igual que siempre.
+
+> **Importante**: en la versión web los avances viven en el navegador de ese equipo. No uses una
+> ventana privada, no borres los datos del sitio y **exporta tu entrega seguido**: la app lo
+> recuerda cada 7 días. En iPhone, instálala en la pantalla de inicio para que Safari no la borre.
+
+En la App Profesor, las entregas hechas en la versión web marcan en **amarillo** "Firma de la app"
+(el código de una página web se puede descargar, así que su firma no prueba nada por sí sola). El
+resto de las revisiones, incluida la reproducción tecla a tecla, funcionan igual.
+
+## 7. Continuar en casa
+
+El alumno exporta su `.rlp` y, en otra computadora con la App Alumno (o en la versión web), elige
 **"Tengo mis avances en un archivo"** e ingresa su contraseña. Para volver, exporta allá e
 importa acá con **"Importar avances de otro equipo"**.
 
-## 7. Actualizar a una versión nueva
+## 8. Actualizar a una versión nueva
 
 Los datos viven en la carpeta de cada app, así que al actualizar **no borres**:
 
@@ -102,7 +130,7 @@ Pasos: descomprime la versión nueva y copia encima **solo** el `.exe`, `runtime
 o copia las carpetas `datos`/`config` (o `datos_profesor`) de la instalación anterior a la nueva.
 Las entregas de versiones anteriores se siguen verificando.
 
-## 8. Olvidé mi contraseña
+## 9. Olvidé mi contraseña
 
 - **Alumno**: en la pantalla de inicio, "Olvidé mi contraseña" con su código de recuperación.
   Si también lo perdió: en la App Profesor, en el detalle del alumno, **Archivo de acceso** crea un

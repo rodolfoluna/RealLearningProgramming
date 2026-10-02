@@ -52,6 +52,22 @@ export default defineConfig({
       testMatch: /web\..*spec\.ts/,
       use: { baseURL: "http://localhost:1422", viewport: { width: 1366, height: 800 } },
     },
+    // La versión web también en WebKit (el motor de Safari), si está instalado (CI).
+    ...(process.env.PLAYWRIGHT_WEBKIT
+      ? [
+          {
+            name: "web-webkit",
+            testMatch: /web\..*spec\.ts/,
+            use: {
+              browserName: "webkit" as const,
+              baseURL: "http://localhost:1422",
+              viewport: { width: 1366, height: 800 },
+              permissions: [],
+              launchOptions: {},
+            },
+          },
+        ]
+      : []),
     {
       name: "profesor",
       testMatch: /profesor\..*spec\.ts/,

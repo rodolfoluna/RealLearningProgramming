@@ -1,7 +1,7 @@
-# Versión web (PWA) de RLP Alumno — estado del trabajo
+# Versión web (PWA) de RLP Alumno
 
-La App Alumno tendrá, además de la app nativa (Windows y Android), una versión web instalable
-(`apps/alumno-web`). El núcleo Rust (`rlp-core`) se compila a WebAssembly para que el cifrado, el
+La App Alumno tiene, junto a la app nativa (Windows y Android), una versión web instalable
+(`apps/alumno-web`). Las tres comparten la interfaz (`packages/alumno-ui`). El núcleo Rust (`rlp-core`) se compila a WebAssembly para que el cifrado, el
 historial firmado y los archivos `.rlp/.rlpg/.rlpa/.rlpr` sean idénticos y la App Profesor los abra
 igual. Fuera de alcance: crear `.exe`, PWA del profesor, app nativa de iOS y servidor propio.
 
@@ -13,7 +13,7 @@ igual. Fuera de alcance: crear `.exe`, PWA del profesor, app nativa de iOS y ser
 | 3. Interfaz compartida y `backend-web.ts` | **Hecha** |
 | 4. Cáscara PWA (manifest, service worker, instalación) | **Hecha** |
 | 5. Llave web → Amarillo; pruebas cruzadas con la App Profesor | **Hecha** |
-| 6. CI, Playwright (Chromium + WebKit) y documentación | Pendiente (CI ya compila y prueba el núcleo web) |
+| 6. CI, Playwright (Chromium + WebKit) y documentación | **Hecha** |
 
 ## Fase 0 — resultados
 
@@ -157,6 +157,22 @@ respaldo) y aviso de que borrar los datos del sitio borra el perfil. Falta proba
   - manual: el wasm compilado con la llave de producción generó una entrega que la App Profesor
     marcó en amarillo solo en firma e historial, con la reconstrucción tecla a tecla en verde.
 
+## Fase 6 — CI, publicación y documentación (hecha)
+
+- `ci.yml`:
+  - núcleo sin SQLite y clippy para wasm de `rlp-core` y `rlp-web`; `cargo test -p rlp-web`;
+  - `wasm-bindgen-cli` con la versión del `Cargo.lock` y `pnpm wasm`;
+  - tipos de `alumno-web` y `nucleo-web`, build del sitio;
+  - Playwright con el proyecto `web` en Chromium y también en **WebKit** (`web-webkit`, activado
+    con `PLAYWRIGHT_WEBKIT=1`).
+- `build-web.yml`:
+  - en `main`, el sitio como artefacto;
+  - en las etiquetas `v*`, verifica la llave web, agrega `RLP-Alumno-<versión>-web.zip` al
+    Release y lo publica en **GitHub Pages** si la variable del repositorio `RLP_PAGES` vale `1`.
+- Documentación: README (desarrollo y publicación), `docs/INSTALACION.md` (versión web para
+  alumnos y profesores), `docs/LEEME-alumno.txt`, `CHANGELOG.md` y `docs/DISENO.md`.
+- `pnpm dev:alumno-web` arranca la versión web con el núcleo real.
+
 ## Riesgos encontrados
 
 1. **Dos pestañas con el mismo perfil** agregarían eventos con los mismos números a la cadena del
@@ -169,9 +185,12 @@ respaldo) y aviso de que borrar los datos del sitio borra el perfil. Falta proba
    consola lo dice claramente en lugar de quedarse esperando; con el service worker de la Fase 4
    no pasa en Chromium.
 
-## Siguientes pasos
+## Pendiente fuera del repositorio
 
-- Antes de la Fase 3, probar en un iPhone/iPad y un Android reales el sitio de prueba de la
-  Fase 0 (Pyodide + `input()` + Argon2id).
-- La app nativa de Android no cambia; tras las Fases 1 y 3 se recompila el APK en local con
-  `scripts/compilar-android.ps1` para confirmarlo.
+- **Probar en dispositivos reales**: un iPhone/iPad (Safari, instalada en la pantalla de inicio)
+  y un Android (Chrome). Ahí se confirman el aislamiento con el service worker, el tiempo de
+  Argon2id, la cámara para el QR y que Safari conserve los datos de la app instalada.
+- **Secretos y opciones del repositorio**: `RLP_CLAVE_APP_WEB` (semilla de la llave web) y, para
+  GitHub Pages, Source "GitHub Actions" y la variable `RLP_PAGES=1`.
+- Android no cambió de comportamiento, pero su interfaz ahora sale de `packages/alumno-ui`:
+  recompilar el APK en local con `scripts/compilar-android.ps1` y probarlo una vez.
