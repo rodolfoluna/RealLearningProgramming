@@ -14,7 +14,7 @@
 
 <div class="principal">
   <header class="barra">
-    <strong class="marca">🧑‍🏫 RLP Profesor</strong>
+    <strong class="marca">🧑‍🏫 LP Profesor</strong>
     <nav class="fila">
       <button class:activa={app.vista.tipo === "tablero" || app.vista.tipo === "detalle"} onclick={() => (app.vista = { tipo: "tablero" })}>📊 Tablero</button>
       <button class:activa={app.vista.tipo === "importar"} onclick={() => (app.vista = { tipo: "importar" })}>📥 Importar entregas</button>

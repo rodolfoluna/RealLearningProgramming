@@ -65,7 +65,7 @@
     menuAbierto = false;
     try {
       const b = await backend();
-      const r = await b.elegirArchivo("Elige el archivo .rlp de tu otro equipo", "rlp", "Avances de RLP");
+      const r = await b.elegirArchivo("Elige el archivo .rlp de tu otro equipo", "rlp", "Avances de LP");
       if (!r) return;
       // Cierra la actividad abierta (guarda lo pendiente) para que el editor recargue lo importado.
       app.seleccion = { tipo: "inicio" };
@@ -84,7 +84,7 @@
     menuAbierto = false;
     try {
       const b = await backend();
-      const r = await b.elegirArchivo("Elige el archivo de retroalimentación de tu profesor", "rlpr", "Retroalimentación de RLP");
+      const r = await b.elegirArchivo("Elige el archivo de retroalimentación de tu profesor", "rlpr", "Retroalimentación de LP");
       if (!r) return;
       const retro = await b.importarRetroalimentacion(r);
       app.alumno = await b.estado();
@@ -99,7 +99,7 @@
     menuAbierto = false;
     try {
       const b = await backend();
-      const r = await b.elegirArchivo("Elige el archivo de grupo (.rlpg)", "rlpg", "Grupo de RLP");
+      const r = await b.elegirArchivo("Elige el archivo de grupo (.rlpg)", "rlpg", "Grupo de LP");
       if (!r) return;
       const info = await b.unirseGrupo(r);
       app.alumno = await b.estado();

@@ -114,13 +114,18 @@ jobs:
           cat >> notas.md <<'FIN'
 
           ---
-          Descarga los dos .zip, descomprímelos y sigue la guía
-          [docs/INSTALACION.md](${{ github.server_url }}/${{ github.repository }}/blob/main/docs/INSTALACION.md). No requieren instalación ni internet.
+          **Windows**: descarga los dos `-windows.zip` (LP Alumno y LP Profesor) y descomprímelos; no
+          requieren instalación ni internet. **Web**: `-web.zip` es el sitio de LP Alumno para cualquier
+          hosting. **Android**: `-android-depuracion.apk` (versión de prueba de LP Alumno).
+
+          Guías: [instalación](${{ github.server_url }}/${{ github.repository }}/blob/main/docs/INSTALACION.md),
+          [manual del alumno](${{ github.server_url }}/${{ github.repository }}/blob/main/docs/MANUAL-ALUMNO.md) y
+          [manual del profesor](${{ github.server_url }}/${{ github.repository }}/blob/main/docs/MANUAL-PROFESOR.md).
           FIN
           cat notas.md
       - uses: softprops/action-gh-release@v2
         with:
-          name: RLP ${{ github.ref_name }}
+          name: LP ${{ github.ref_name }}
           body_path: notas.md
           files: dist/*.zip
           prerelease: ${{ contains(github.ref_name, '-') }}

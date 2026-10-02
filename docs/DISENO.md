@@ -2,13 +2,19 @@
 
 Dos aplicaciones para enseñar y aprender programación en Python **sin conexión a internet**:
 
-- **RLP Alumno**: curso integrado, editor con el pegado bloqueado, consola, pruebas automáticas,
-  generación de ejecutables y exportación de avances protegida. Windows ahora; Android en la fase 2.
-- **RLP Profesor**: importa las entregas, detecta si se modificaron fuera de la app, muestra el
+- **LP Alumno**: curso integrado, editor con el pegado bloqueado, consola, pruebas automáticas,
+  generación de ejecutables y exportación de avances protegida. Windows, Android y web (PWA).
+- **LP Profesor**: importa las entregas, detecta si se modificaron fuera de la app, muestra el
   avance y las estadísticas de cada alumno y permite calificar.
 
+**Nombre corto: LP.** Es el que ve la gente (apps, ventanas, archivos que se descargan). Los
+identificadores internos conservan `rlp` por compatibilidad: extensiones `.rlp/.rlpg/.rlpa/.rlpr/
+.rlpk`, paquetes `@rlp/*` y crates `rlp-*`, variables `RLP_*`, el identificador de Android y los
+contextos de firma. Cambiarlos dejaría sin abrir las entregas y los perfiles que ya existen.
+
 Este documento explica las decisiones, la arquitectura, la seguridad, los formatos y el plan por
-fases. El código está organizado igual que aquí se describe.
+fases. El código está organizado igual que aquí se describe. Los manuales de uso están en
+[`MANUAL-ALUMNO.md`](MANUAL-ALUMNO.md) y [`MANUAL-PROFESOR.md`](MANUAL-PROFESOR.md).
 
 ---
 
@@ -476,6 +482,6 @@ Los diccionarios quedan como posible unidad opcional en una versión posterior.
   `CHANGELOG.md` (el zip del profesor incluye `INSTALACION.md`).
 - Guía completa para un laboratorio (WebView2 sin internet, antivirus, equipos que se restauran al
   reiniciar, entregas, actualizar sin perder datos): [`docs/INSTALACION.md`](INSTALACION.md).
-- Resumen: el profesor descomprime `RLP-Profesor`, crea sus llaves, **guarda el respaldo** y crea
-  el grupo; con "Instalar en carpeta de la App Alumno" coloca el grupo en la carpeta `RLP-Alumno`
+- Resumen: el profesor descomprime `LP-Profesor`, crea sus llaves, **guarda el respaldo** y crea
+  el grupo; con "Instalar en carpeta de la App Alumno" coloca el grupo en la carpeta `LP-Alumno`
   y la copia a las PCs o memorias USB (o entrega el `.rlpg` para que cada alumno lo importe).

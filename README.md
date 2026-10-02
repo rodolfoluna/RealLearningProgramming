@@ -2,10 +2,10 @@
 
 Apps **sin conexión** para aprender y enseñar programación en Python, en español:
 
-- **RLP Alumno**: curso con 42 lecciones y 118 actividades (fundamentos, condiciones, ciclos,
+- **LP Alumno**: curso con 42 lecciones y 118 actividades (fundamentos, condiciones, ciclos,
   funciones, cadenas, listas y 8 proyectos integradores), editor con el pegado bloqueado, consola con `input()`, pruebas automáticas,
   errores explicados en español, pistas, generación de `.exe` y entregas cifradas.
-- **RLP Profesor**: importa entregas, verifica que no se hayan modificado fuera de la app
+- **LP Profesor**: importa entregas, verifica que no se hayan modificado fuera de la app
   (reconstruye el código tecla a tecla), muestra avance y estadísticas (copias, intentos de pegar,
   salidas de ventana), **reproduce cómo se escribió** cada código, vuelve a correr las pruebas,
   exporta a Excel y envía **retroalimentación firmada** a los alumnos.
@@ -59,7 +59,7 @@ El contenido está en `curso/` (Markdown + YAML + Python). Para agregar una acti
 
 ## Compilar y publicar
 
-El workflow **Build Windows** genera `RLP-Alumno-*.zip` y `RLP-Profesor-*.zip` (carpetas
+El workflow **Build Windows** genera `LP-Alumno-*.zip` y `LP-Profesor-*.zip` (carpetas
 portables) en cada push. Para publicar una versión:
 
 1. Configura una sola vez el secreto `RLP_CLAVE_APP` (Settings → Secrets and variables →
@@ -74,10 +74,13 @@ portables) en cada push. Para publicar una versión:
    dos zips y las notas del `CHANGELOG.md`.
 
 La guía para instalar en un laboratorio está en [`docs/INSTALACION.md`](docs/INSTALACION.md).
+Manuales de uso: [alumno](docs/MANUAL-ALUMNO.md) (incluye cómo pasar los avances entre Windows,
+Android y la web) y [profesor](docs/MANUAL-PROFESOR.md) (llaves del profesor, claves de firma,
+Android, GitHub Pages y cómo publicar una versión).
 
 ### Versión web
 
-El workflow **Build Web** genera el sitio (`RLP-Alumno-*-web.zip`, archivos estáticos para
+El workflow **Build Web** genera el sitio (`LP-Alumno-*-web.zip`, archivos estáticos para
 cualquier hosting). Para publicar:
 
 1. Configura una sola vez el secreto `RLP_CLAVE_APP_WEB` con la semilla de la llave web (su
@@ -94,14 +97,15 @@ el SDK Manager de Android Studio), Java 17 (el de Android Studio sirve) y `pnpm 
 El script toma el SDK de `ANDROID_HOME` o, si no está definida, de `E:\Android`.
 
 ```powershell
-.\scripts\compilar-android.ps1                    # APK de prueba (arm64 y armv7) en dist-android\
+.\scripts\compilar-android.ps1                    # APK de depuración (arm64 y armv7) en dist-android\
 .\scripts\compilar-android.ps1 -Instalar          # ... y lo instala con adb en el celular conectado
 .\scripts\compilar-android.ps1 -Targets x86_64    # para un emulador
 $env:RLP_CLAVE_APP = "<semilla>"                  # entregas en verde (la misma del secreto de CI)
-.\scripts\compilar-android.ps1 -Release -Keystore C:\llaves\rlp.jks -Alias rlp
+.\scripts\compilar-android.ps1 -Release -Keystore C:\llaves\lp-alumno.jks -Alias lp
 ```
 
-El APK de prueba usa una firma de depuración: para pasar a uno firmado con `-Release` hay que
+El APK de depuración (el que se usa por ahora) cambia de firma: para pasar a uno firmado con `-Release` hay que
 desinstalar la app (se borran sus datos). Usa siempre el mismo keystore para que las
 actualizaciones conserven los datos. El workflow **Build Android** ya no corre en cada push: se
-lanza a mano (Actions → Build Android → Run workflow) o al crear una etiqueta `v*`.
+lanza a mano (Actions → Build Android → Run workflow) o al crear una etiqueta `v*`, que agrega el
+APK al Release (de depuración mientras no haya keystore).

@@ -6,7 +6,8 @@ name: Build Android
 # `tauri android init` (apps/alumno/src-tauri/gen/ no se versiona).
 #  - APK de depuración x86_64: se instala en un emulador y corre la autoprueba.
 #  - APK para celulares (arm64 y armv7): firmado si existen los secretos ANDROID_KEYSTORE
-#    (base64 del .jks), ANDROID_KEYSTORE_PASSWORD y ANDROID_KEY_ALIAS; si no, uno de prueba.
+#    (base64 del .jks), ANDROID_KEYSTORE_PASSWORD y ANDROID_KEY_ALIAS; si no, uno de depuración.
+#    En las etiquetas v* se agrega al Release el que haya (firmado o de depuración).
 
 on:
   push:
@@ -83,7 +84,7 @@ jobs:
           if [ -n "$ANDROID_KEYSTORE" ]; then
             pnpm tauri android build --apk --target aarch64 --target armv7
           else
-            echo "::warning::Sin ANDROID_KEYSTORE: se genera un APK de prueba (firma de depuración que cambia en cada compilación; para actualizar habría que desinstalar y se perderían los datos)."
+            echo "::warning::Sin ANDROID_KEYSTORE: se genera un APK de depuración (su firma cambia en cada compilación; para actualizar hay que desinstalar y se pierden los datos)."
             pnpm tauri android build --debug --apk --target aarch64 --target armv7
           fi
       - name: Firmar y nombrar el APK
@@ -97,23 +98,24 @@ jobs:
             echo "$ANDROID_KEYSTORE" | base64 -d > "$RUNNER_TEMP/rlp.jks"
             "$herramientas/zipalign" -f 4 "$sin_firmar" "$RUNNER_TEMP/alineado.apk"
             "$herramientas/apksigner" sign --ks "$RUNNER_TEMP/rlp.jks" --ks-pass env:ANDROID_KEYSTORE_PASSWORD \
-              --ks-key-alias "$ANDROID_KEY_ALIAS" --out "dist-android/RLP-Alumno-$version-android.apk" "$RUNNER_TEMP/alineado.apk"
-            "$herramientas/apksigner" verify "dist-android/RLP-Alumno-$version-android.apk"
+              --ks-key-alias "$ANDROID_KEY_ALIAS" --out "dist-android/LP-Alumno-$version-android.apk" "$RUNNER_TEMP/alineado.apk"
+            "$herramientas/apksigner" verify "dist-android/LP-Alumno-$version-android.apk"
             rm -f "$RUNNER_TEMP/rlp.jks"
           else
             cp "$(find "$salida" -name '*debug*.apk' -newer dist-android/rlp-alumno-emulador.apk | head -1)" \
-              "dist-android/RLP-Alumno-$version-android-prueba.apk"
+              "dist-android/LP-Alumno-$version-android-depuracion.apk"
           fi
           ls -la dist-android
       - uses: actions/upload-artifact@v4
         with:
           name: rlp-android
-          path: dist-android/RLP-Alumno-*.apk
+          path: dist-android/LP-Alumno-*.apk
       - name: Agregar el APK al Release
-        if: github.ref_type == 'tag' && env.ANDROID_KEYSTORE != ''
+        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
-          files: dist-android/RLP-Alumno-*-android.apk
+          files: dist-android/LP-Alumno-*.apk
+          prerelease: ${{ contains(github.ref_name, '-') }}
 
   emulador:
     name: Autoprueba en emulador Android

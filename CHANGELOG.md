@@ -5,6 +5,15 @@ siguen [SemVer](https://semver.org/lang/es/). El curso tiene su propia versión 
 
 ## [0.2.0] — sin publicar
 
+### Nombre y manuales
+
+- Nombre corto **LP**: **LP Alumno** y **LP Profesor** (ventanas, ícono de Android y web, carpetas
+  y archivos que se descargan). Las extensiones `.rlp/.rlpg/.rlpa/.rlpr/.rlpk` no cambian.
+- **Manual del alumno** (`docs/MANUAL-ALUMNO.md`), con cómo pasar los avances entre Windows,
+  Android y la web, y **manual del profesor** (`docs/MANUAL-PROFESOR.md`): llaves, claves de firma,
+  Android y publicación. Van dentro de los zips.
+- El Release incluye el APK de Android de depuración mientras no haya keystore.
+
 ### Curso 1.1
 
 - Unidades nuevas: **4 Funciones**, **5 Cadenas**, **6 Listas** y **7 Proyectos integradores**

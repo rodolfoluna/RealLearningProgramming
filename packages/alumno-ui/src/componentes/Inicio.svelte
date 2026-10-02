@@ -82,7 +82,7 @@
 
   const elegirRespaldo = () =>
     accion(async () => {
-      const r = await (await backend()).elegirArchivo("Elige tu archivo de avances", "rlp", "Avances de RLP");
+      const r = await (await backend()).elegirArchivo("Elige tu archivo de avances", "rlp", "Avances de LP");
       if (r) archivo = r;
     });
 
@@ -101,7 +101,7 @@
   const elegirAcceso = () =>
     accion(async () => {
       const b = await backend();
-      const r = await b.elegirArchivo("Elige el archivo de acceso que te dio tu profesor", "rlpa", "Acceso de RLP");
+      const r = await b.elegirArchivo("Elige el archivo de acceso que te dio tu profesor", "rlpa", "Acceso de LP");
       if (!r) return;
       infoAcceso = await b.leerAcceso(r);
       rutaAcceso = r;
@@ -109,7 +109,7 @@
 
   const elegirEntrega = () =>
     accion(async () => {
-      const r = await (await backend()).elegirArchivo("Elige tu último archivo de avances", "rlp", "Avances de RLP");
+      const r = await (await backend()).elegirArchivo("Elige tu último archivo de avances", "rlp", "Avances de LP");
       if (r) rutaEntrega = r;
     });
 
@@ -127,7 +127,7 @@
   const importarGrupo = () =>
     accion(async () => {
       const b = await backend();
-      const r = await b.elegirArchivo("Elige el archivo de grupo que te dio tu profesor", "rlpg", "Grupo de RLP");
+      const r = await b.elegirArchivo("Elige el archivo de grupo que te dio tu profesor", "rlpg", "Grupo de LP");
       if (!r) return;
       await b.importarGrupo(r);
       await cargarEstadoApp();

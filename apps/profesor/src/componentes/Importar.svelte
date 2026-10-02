@@ -24,7 +24,7 @@
   const archivos = () =>
     importar(async () => {
       const b = await backend();
-      const rutas = await b.elegirArchivos("Elige las entregas (.rlp)", "rlp", "Entregas de RLP", true);
+      const rutas = await b.elegirArchivos("Elige las entregas (.rlp)", "rlp", "Entregas de LP", true);
       return rutas.length ? b.importarEntregas(rutas, codigosIniciales) : null;
     });
 

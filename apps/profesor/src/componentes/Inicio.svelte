@@ -63,7 +63,7 @@
 <main class="inicio">
   <section>
     <div class="logo" aria-hidden="true">🧑‍🏫</div>
-    <h1>RLP Profesor</h1>
+    <h1>LP Profesor</h1>
     <p class="suave">Revisa las entregas de tus alumnos, verifica que no se hayan modificado fuera de la app y sigue su avance.</p>
     <ul class="suave puntos">
       <li>Tus llaves se guardan cifradas con tu contraseña en <code>{estado.carpeta}</code>.</li>
