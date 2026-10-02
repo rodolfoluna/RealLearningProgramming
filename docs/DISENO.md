@@ -228,6 +228,10 @@ Además el tablero marca si un mismo perfil aparece con otro número de control 
 
 ### `alumno.db` (SQLite, una por perfil en `datos/perfiles/<perfil_id>/`)
 
+El núcleo guarda estas filas a través del trait `Deposito` (`deposito.rs`): SQLite en escritorio y
+Android; en memoria con un diario de cambios que la versión web guarda en IndexedDB (ver
+[`PWA.md`](PWA.md)). El contenido cifrado es el mismo en ambos.
+
 ```sql
 meta(clave, valor)                         -- JSON en claro: perfil público, dispositivo, envolturas, grupo
 actividades(id, datos)                     -- AES-GCM(DEK, AAD="act|perfil|id", EstadoActividad JSON)
@@ -417,6 +421,7 @@ Los diccionarios quedan como posible unidad opcional en una versión posterior.
   **QR**, exportar con "Guardar como", pausa de la app como salida, autoprueba en emulador;
   **hecho**, pendiente afinar las heurísticas de IME con teclados reales). Después: problemas de
   Parsons, historial de versiones, consola interactiva.
+- **Versión web (PWA) de la App Alumno**: en curso; estado por fase en [`PWA.md`](PWA.md).
 - **Fase 3**: **detección de similitud** entre alumnos (huellas de tokens/AST); visualizador paso a
   paso (tipo Python Tutor); editor del curso y paquetes `.curso` firmados; insignias y rachas;
   tablero de dificultades por actividad.

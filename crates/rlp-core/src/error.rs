@@ -11,8 +11,12 @@ pub enum Error {
     Formato(String),
     #[error("{0}")]
     Validacion(String),
+    #[cfg(feature = "sqlite")]
     #[error("Error de base de datos: {0}")]
     Bd(#[from] rusqlite::Error),
+    /// Fallo del lugar donde se guardan los datos (p. ej. un depósito inconsistente).
+    #[error("Error al guardar los datos: {0}")]
+    Almacenamiento(String),
     #[error("Error de archivo: {0}")]
     Io(#[from] std::io::Error),
     #[error("Datos inválidos: {0}")]

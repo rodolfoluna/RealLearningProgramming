@@ -7,6 +7,7 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "sqlite")]
 use crate::bd_profesor::BdProfesor;
 use crate::crypto::{b64, cifrar, de_b64, de_b64_32, descifrar, verificar, Llave};
 use crate::error::{Error, Resultado};
@@ -90,6 +91,7 @@ pub fn crear(
 
 /// Para la App Profesor: retroalimentación de todos los alumnos calificados de un grupo (o de
 /// todos). Devuelve el archivo y cuántos alumnos incluye.
+#[cfg(feature = "sqlite")]
 pub fn crear_desde_bd(
     identidad: &IdentidadProfesor,
     bd: &BdProfesor,

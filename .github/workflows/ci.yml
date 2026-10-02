@@ -24,6 +24,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
+          targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
       - name: Dependencias del sistema (WebKitGTK para compilar Tauri, Xvfb)
         run: |
@@ -44,6 +45,10 @@ jobs:
           cargo clippy --workspace --all-targets -- -D warnings
       - name: Pruebas del núcleo (Rust)
         run: cargo test -p rlp-core --features excel
+      - name: Núcleo sin SQLite (versión web) y compilado a WebAssembly
+        run: |
+          cargo test -p rlp-core --no-default-features --features firmar
+          cargo clippy -p rlp-core --target wasm32-unknown-unknown --no-default-features --features firmar -- -D warnings
       - name: Pruebas unitarias (TypeScript)
         run: pnpm vitest run
       - name: Revisión de tipos (Svelte)

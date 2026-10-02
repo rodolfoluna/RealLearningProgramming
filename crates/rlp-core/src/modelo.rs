@@ -4,11 +4,18 @@ use serde::{Deserialize, Serialize};
 
 use crate::crypto::{EnvolturaPublica, EnvolturaSecreto};
 
+#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
 pub fn ahora_ms() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_millis() as i64)
         .unwrap_or(0)
+}
+
+/// En el navegador `SystemTime` no existe: se usa `Date.now()`.
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+pub fn ahora_ms() -> i64 {
+    js_sys::Date::now() as i64
 }
 
 pub fn nuevo_id() -> String {

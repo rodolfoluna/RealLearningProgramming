@@ -7,12 +7,15 @@ license.workspace = true
 authors.workspace = true
 
 [features]
-default = ["firmar"]
+default = ["firmar", "sqlite"]
 # Incluye la llave privada con la que la App Alumno firma eventos y entregas.
 # La App Profesor se compila sin esta función: solo verifica.
 firmar = []
+# Perfiles del alumno y base de datos del profesor en SQLite (escritorio y Android). La versión
+# web se compila sin ella y guarda los perfiles con el depósito en memoria (`deposito.rs`).
+sqlite = ["dep:rusqlite"]
 # Exportación a Excel (.xlsx) de la App Profesor.
-excel = ["dep:rust_xlsxwriter"]
+excel = ["dep:rust_xlsxwriter", "sqlite"]
 
 [dependencies]
 aes-gcm = "0.10"
@@ -26,7 +29,7 @@ hkdf = "0.12"
 rand_core = { version = "0.6", features = ["getrandom"] }
 regex = "1"
 rust_xlsxwriter = { version = "0.99", optional = true }
-rusqlite = { version = "0.37", features = ["bundled"] }
+rusqlite = { version = "0.37", features = ["bundled"], optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
@@ -35,6 +38,14 @@ uuid = { version = "1", features = ["v4"] }
 x25519-dalek = { version = "2", features = ["static_secrets"] }
 zeroize = "1"
 zip = { version = "2", default-features = false, features = ["deflate"] }
+
+# WebAssembly en el navegador (versión web de la App Alumno): azar con crypto.getRandomValues
+# y reloj con Date.
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+chrono = { version = "0.4", default-features = false, features = ["clock", "std", "wasmbind"] }
+getrandom = { version = "0.2", features = ["js"] }
+js-sys = "0.3"
+uuid = { version = "1", features = ["v4", "js"] }
 
 [build-dependencies]
 base64 = "0.22"

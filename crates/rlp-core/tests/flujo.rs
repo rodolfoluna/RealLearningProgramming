@@ -1,5 +1,6 @@
 //! Flujo completo: registro → edición → exportación → verificación del profesor, continuación en
 //! otro dispositivo y detección de manipulaciones.
+#![cfg(all(feature = "firmar", feature = "sqlite"))]
 
 use std::collections::HashMap;
 use std::io::{Cursor, Read, Write};

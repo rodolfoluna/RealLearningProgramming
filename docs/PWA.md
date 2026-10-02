@@ -1,0 +1,99 @@
+# Versión web (PWA) de RLP Alumno — estado del trabajo
+
+La App Alumno tendrá, además de la app nativa (Windows y Android), una versión web instalable
+(`apps/alumno-web`). El núcleo Rust (`rlp-core`) se compila a WebAssembly para que el cifrado, el
+historial firmado y los archivos `.rlp/.rlpg/.rlpa/.rlpr` sean idénticos y la App Profesor los abra
+igual. Fuera de alcance: crear `.exe`, PWA del profesor, app nativa de iOS y servidor propio.
+
+| Fase | Estado |
+|---|---|
+| 0. Pruebas de riesgo | **Hecha en Chromium**; falta confirmar en iPhone/iPad y Chrome Android |
+| 1. Núcleo portable | **Hecha** |
+| 2. Crate `rlp-web` + paquete `nucleo-web` | Pendiente |
+| 3. Interfaz compartida y `backend-web.ts` | Pendiente |
+| 4. Cáscara PWA (manifest, service worker, instalación) | Pendiente |
+| 5. Llave web → Amarillo; pruebas cruzadas con la App Profesor | Pendiente (el núcleo ya pasa las pruebas cruzadas, ver Fase 1) |
+| 6. CI, Playwright (Chromium + WebKit) y documentación | Pendiente (CI ya compila el núcleo a wasm) |
+
+## Fase 0 — resultados
+
+**0.1 Pyodide e `input()` sin encabezados del servidor.** La app compilada se sirvió como sitio
+estático **sin** COOP/COEP, con un service worker que agrega esos encabezados a cada respuesta y
+una recarga inicial (patrón *coi-serviceworker*). En Chromium:
+
+| | `crossOriginIsolated` | `input()` en la consola |
+|---|---|---|
+| Con el service worker | sí | funciona; Python listo ~2.9 s después de "Ejecutar" (primera vez) |
+| Sin service worker | no | **no**: el programa se queda esperando (modo "limitado") |
+
+Decisión: no hace falta un puente de `input()` propio en el service worker; se reutiliza el modo
+"memoria" (SharedArrayBuffer) del escritorio y el sitio puede estar en cualquier hosting, incluido
+GitHub Pages. Si en Safari falla, se usa el modo "puente" ya existente con una URL que atienda el
+service worker. Peso de Pyodide: 13 MB (≈6 MB con gzip): `pyodide.asm.wasm` 9.2 MB,
+`python_stdlib.zip` 2.5 MB, `pyodide.asm.mjs` 1.2 MB; se descarga al instalar.
+
+**0.2 Núcleo en WebAssembly.** `rlp-core` sin SQLite compila a `wasm32-unknown-unknown`. Un
+módulo de prueba con wasm-bindgen pesa 1.5 MB (0.52 MB con gzip). En un Worker de Chromium (y en
+Node), en el servidor de pruebas:
+
+| Operación | Tiempo |
+|---|---|
+| Argon2id estándar (32 MiB, t=3) | 100–140 ms |
+| Argon2id 19 MiB, t=2 | ~40 ms |
+| Registro (2 derivaciones) + 25 ediciones + exportar `.rlp` | 230–280 ms |
+
+Un celular de gama media es de 3 a 6 veces más lento: ~0.5–0.8 s por derivación. Se conservan
+los parámetros estándar (los mismos de la app nativa); falta medir en un iPhone real.
+
+**0.3 Persistencia.** Se usará IndexedDB con `navigator.storage.persist()`. Safari puede borrar los
+datos de un sitio **no instalado** tras 7 días sin uso; la PWA agregada a la pantalla de inicio
+queda exenta. Por eso: guía de instalación, recordatorios de exportar la entrega (también es el
+respaldo) y aviso de que borrar los datos del sitio borra el perfil. Falta probarlo en Safari.
+
+## Fase 1 — núcleo portable (hecha)
+
+- `crates/rlp-core/src/deposito.rs`: el trait `Deposito` guarda filas ya cifradas (meta,
+  actividades, eventos) y escribe cada `Lote` completo o nada.
+  - `DepositoSqlite` (función `sqlite`, por omisión): el `alumno.db` de siempre, mismo esquema.
+  - `DepositoMemoria`: para la web. Lleva un **diario** de cambios (`tomar_diario()`) que la app
+    guarda en IndexedDB después de cada operación, y se vuelve a cargar con una **instantánea**
+    (`DepositoMemoria::desde`). Los lotes viajan como JSON con los bytes en base64.
+- `almacen.rs` trabaja sobre cualquier `Deposito`; `alumno.rs` sobre el trait `Perfiles`:
+  `CarpetaPerfiles` (carpetas con SQLite) o `PerfilesEnMemoria` (la app web le pasa los perfiles
+  que tiene). Nuevas: `SesionAlumno::registrar_en`, `abrir_en`, `restaurar_en`, `ubicacion()` y
+  `tomar_diario()`; `cerrar()` devuelve el último diario. Las funciones con rutas
+  (`registrar`, `abrir`, `restaurar`, `listar_perfiles`, `carpeta()`) siguen igual para Tauri.
+- Sin SQLite: `bd_profesor`, `excel` y `retroalimentacion::crear_desde_bd` quedan tras la función
+  `sqlite` (la App Profesor la pide explícitamente).
+- WebAssembly: reloj con `Date.now()` y azar con `crypto.getRandomValues` (getrandom `js`, uuid
+  `js`, chrono `wasmbind`), como dependencias solo para `wasm32-unknown-unknown`: no hace falta una
+  función `web`.
+- Formatos sin cambios: las 16 pruebas de `tests/flujo.rs` pasan igual. `tests/web.rs` prueba el
+  perfil web (diario, reapertura, diario perdido) y la continuación web ↔ escritorio verificada por
+  el profesor.
+- CI: pruebas del núcleo sin SQLite y clippy para `wasm32-unknown-unknown`.
+
+## Riesgos encontrados
+
+1. **Dos pestañas con el mismo perfil** agregarían eventos con los mismos números a la cadena del
+   mismo dispositivo y romperían el historial guardado. En la Fase 3: un candado por perfil con la
+   Web Locks API (`navigator.locks`); la segunda pestaña avisa "ya está abierto en otra pestaña".
+2. **Diario sin guardar** (se cerró la pestaña): la copia guardada queda en un estado anterior pero
+   consistente (lo prueba `tests/web.rs`). La interfaz debe esperar a que IndexedDB confirme antes
+   de dar por guardado un cambio.
+3. **Sin service worker** (primera visita sin conexión o navegador que lo bloquea): `input()` no
+   funciona. La interfaz debe decirlo claramente en lugar de quedarse esperando.
+
+## Siguientes pasos
+
+- **Fase 2**: `crates/rlp-web` (wasm-bindgen) con la API de los comandos de
+  `apps/alumno/src-tauri/src/lib.rs`, devolviendo el diario en cada respuesta;
+  `scripts/compilar-wasm.mjs` (requiere `wasm-bindgen-cli` con la versión de `Cargo.lock`) y
+  `packages/nucleo-web` corriendo en un Worker; llave `RLP_CLAVE_APP_WEB`.
+- **Fase 3**: extraer la interfaz a `packages/alumno-ui`, quitar los `import` de Tauri fuera del
+  backend (`app.svelte.ts`, `App.svelte`, `autoprueba.ts`), `apps/alumno-web` y `backend-web.ts`
+  (IndexedDB, archivos con `<input type=file>` y descargas, QR con `getUserMedia`).
+- Antes de la Fase 3, probar en un iPhone/iPad y un Android reales el sitio de prueba de la
+  Fase 0 (Pyodide + `input()` + Argon2id).
+- La app nativa de Android no cambia; tras las Fases 1 y 3 se recompila el APK en local con
+  `scripts/compilar-android.ps1` para confirmarlo.
