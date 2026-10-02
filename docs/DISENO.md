@@ -50,17 +50,18 @@ fases. El código está organizado igual que aquí se describe.
 ## 2. Arquitectura
 
 ```
-┌──────────────────────── App Alumno (Tauri 2) ────────────────────────┐
-│  Interfaz Svelte 5 + TypeScript                                       │
+┌───────── App Alumno: Windows y Android (Tauri 2) · Web (PWA) ─────────┐
+│  Interfaz Svelte 5 + TypeScript (@rlp/alumno-ui, igual en las tres)   │
 │   ├─ Editor CodeMirror 6 ── bloqueo de pegado, conteo de copias,      │
 │   │                         captura de operaciones de edición         │
 │   ├─ Worker de Python (Pyodide = CPython en WebAssembly)              │
-│   │     input() con SharedArrayBuffer  ó  puente rlpentrada:// (Rust)  │
+│   │     input() con SharedArrayBuffer  ó  puente rlpentrada:// (Rust) │
 │   └─ Lecciones Markdown con ejemplos ejecutables                      │
 │  Rust                                                                 │
 │   ├─ rlp-core: cifrado, historial firmado, SQLite, entregas .rlp      │
 │   ├─ rlp-puente: entrada síncrona sin SharedArrayBuffer               │
 │   └─ PyInstaller desde runtime\ (CPython portátil) → .exe             │
+│  Web: rlp-core en WebAssembly (rlp-web) en un Worker + IndexedDB      │
 └───────────────────────────────────────────────────────────────────────┘
           │ .rlp (cifrado y firmado)            ▲ .rlpg (grupo firmado)
           ▼                                     │
@@ -77,7 +78,8 @@ fases. El código está organizado igual que aquí se describe.
 crates/rlp-core/        Núcleo en Rust (compartido; se prueba con cargo test)
   src/crypto.rs         AES-256-GCM, Argon2id, X25519+HKDF (envolturas), Ed25519, códigos
   src/llave_app.rs      Llave de firma de la App Alumno (inyectada al compilar) y llaves de confianza
-  src/almacen.rs        SQLite del alumno: meta, actividades cifradas, eventos encadenados
+  src/almacen.rs        Perfil del alumno: meta, actividades cifradas, eventos encadenados
+  src/deposito.rs       Dónde se guarda: SQLite (nativa) o memoria + diario (web)
   src/eventos.rs        Formato de eventos, cadena de hashes y firma
   src/replay.rs         Reproducción del historial (UTF-16), segmentos, ritmo de escritura
   src/estadisticas.rs   Contadores calculados desde el historial
@@ -88,13 +90,18 @@ crates/rlp-core/        Núcleo en Rust (compartido; se prueba con cargo test)
   src/verificacion.rs   Revisión de entregas (semáforo verde/amarillo/rojo)
   src/bd_profesor.rs    SQLite del profesor: grupos, entregas, tablero, calificaciones, CSV
   tests/flujo.rs        Flujo completo y manipulaciones
+  tests/web.rs          Perfiles en memoria (versión web) y continuación web ↔ escritorio
 crates/rlp-puente/      Protocolo rlpentrada:// (input y sleep sin SharedArrayBuffer)
-apps/alumno/            Interfaz (src/) y app Tauri (src-tauri/)
+crates/rlp-web/         Núcleo de la versión web (WebAssembly): llamar(método, json)
+apps/alumno/            App Alumno nativa (Windows y Android): cáscara Tauri + backend (src/, src-tauri/)
+apps/alumno-web/        App Alumno web (PWA): cáscara web + backend con el núcleo WebAssembly
 apps/profesor/          Interfaz (src/) y app Tauri (src-tauri/)
+packages/alumno-ui/     Interfaz de la App Alumno, compartida por la nativa y la web
 packages/editor/        Extensiones de CodeMirror (pegado, copias, operaciones, menú)
 packages/python-worker/ Worker de Pyodide, harness.py (ejecución, pruebas) y errores_es.py
 packages/ui-comun/      Tema claro/oscuro, Markdown con resaltado, modal, semáforo
 packages/curso/         Tipos del curso y JSON compilado (generado)
+packages/nucleo-web/    Worker con el núcleo WebAssembly y los perfiles en IndexedDB
 curso/                  Contenido del curso (YAML + Markdown + Python)
 scripts/                Compilar/validar curso, copiar Pyodide, runtime, empaquetar, autoprueba
 tests/                  Banco de pruebas y pruebas de interfaz (Playwright)

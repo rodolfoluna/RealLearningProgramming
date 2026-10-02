@@ -10,7 +10,7 @@ igual. Fuera de alcance: crear `.exe`, PWA del profesor, app nativa de iOS y ser
 | 0. Pruebas de riesgo | **Hecha en Chromium**; falta confirmar en iPhone/iPad y Chrome Android |
 | 1. Núcleo portable | **Hecha** |
 | 2. Crate `rlp-web` + paquete `nucleo-web` | **Hecha** |
-| 3. Interfaz compartida y `backend-web.ts` | Pendiente |
+| 3. Interfaz compartida y `backend-web.ts` | **Hecha** |
 | 4. Cáscara PWA (manifest, service worker, instalación) | Pendiente |
 | 5. Llave web → Amarillo; pruebas cruzadas con la App Profesor | Pendiente (el núcleo ya pasa las pruebas cruzadas, ver Fase 1) |
 | 6. CI, Playwright (Chromium + WebKit) y documentación | Pendiente (CI ya compila y prueba el núcleo web) |
@@ -97,6 +97,26 @@ respaldo) y aviso de que borrar los datos del sitio borra el perfil. Falta proba
   incorrecta, continuar en otro navegador) y Playwright en Chromium (`banco.nucleo.spec.ts`:
   Worker e IndexedDB reales, recarga y segunda pestaña bloqueada).
 
+## Fase 3 — una interfaz, dos cáscaras (hecha)
+
+- **`packages/alumno-ui`**: toda la interfaz de la App Alumno (componentes, estado, simulación del
+  núcleo). Se arranca con `iniciarApp({ backend, puenteEntrada?, alIniciar?, autoprueba? })`; ya
+  no importa nada de Tauri.
+- **`apps/alumno`** (Windows y Android) quedó como cáscara: `main.ts` conecta los comandos de Tauri,
+  el puente `rlpentrada://` y el cierre de la ventana; `backend-tauri.ts` y `autoprueba.ts` siguen
+  ahí. Sin cambios de comportamiento: Playwright, la autoprueba de escritorio y (en local) el APK.
+- **`apps/alumno-web`**: `main.ts` + `backend-web.ts`, que implementa la misma interfaz `Backend`
+  con `@rlp/nucleo-web`:
+  - archivos con el selector del navegador (sin filtro de extensión en iPhone/iPad, que bloquea
+    las extensiones propias);
+  - exportar **descarga** el `.rlp` con el nombre que pone el núcleo;
+  - QR del grupo con la cámara (`getUserMedia` + jsQR, porque Safari no tiene BarcodeDetector);
+  - sin `.exe`; los textos dicen "este navegador" en lugar de "la carpeta de la app".
+- Pyodide se carga con ruta relativa a la base del sitio (`base: "./"`), para servirlo en una
+  subcarpeta. Si la página no está aislada, la consola avisa que `input()` no está disponible.
+- Pruebas: proyecto `web` de Playwright (`web.flujo.spec.ts`) con el núcleo real: registro,
+  `input()`, recarga conservando el perfil y descarga de la entrega.
+
 ## Riesgos encontrados
 
 1. **Dos pestañas con el mismo perfil** agregarían eventos con los mismos números a la cadena del
@@ -106,13 +126,10 @@ respaldo) y aviso de que borrar los datos del sitio borra el perfil. Falta proba
    consistente (lo prueba `tests/web.rs`). **Resuelto** en la Fase 2: el Worker responde solo
    cuando IndexedDB confirmó.
 3. **Sin service worker** (primera visita sin conexión o navegador que lo bloquea): `input()` no
-   funciona. La interfaz debe decirlo claramente en lugar de quedarse esperando.
+   funciona. Desde la Fase 3 la consola lo dice claramente en lugar de quedarse esperando.
 
 ## Siguientes pasos
 
-- **Fase 3**: extraer la interfaz a `packages/alumno-ui`, quitar los `import` de Tauri fuera del
-  backend (`app.svelte.ts`, `App.svelte`, `autoprueba.ts`), `apps/alumno-web` y `backend-web.ts`
-  (IndexedDB, archivos con `<input type=file>` y descargas, QR con `getUserMedia`).
 - Antes de la Fase 3, probar en un iPhone/iPad y un Android reales el sitio de prueba de la
   Fase 0 (Pyodide + `input()` + Argon2id).
 - La app nativa de Android no cambia; tras las Fases 1 y 3 se recompila el APK en local con

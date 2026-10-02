@@ -1,5 +1,6 @@
-// Acceso al núcleo. En la app de escritorio/Android usa los comandos de Tauri; en un navegador
-// normal (desarrollo y pruebas de interfaz) usa una simulación en memoria.
+// Acceso al núcleo. Cada cáscara elige el suyo al arrancar (`iniciarApp`): comandos de Tauri en
+// Windows y Android, el núcleo en WebAssembly en la versión web, o una simulación en memoria para
+// desarrollar y probar la interfaz.
 
 import type { LoteOperaciones } from "@rlp/editor";
 import type {
@@ -55,17 +56,18 @@ export interface Backend {
   generarEjecutable(nombre: string, codigo: string, alProgreso: (linea: string) => void): Promise<string>;
 }
 
-export function enTauri(): boolean {
-  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-}
-
+let proveedor: (() => Promise<Backend>) | null = null;
 let instancia: Promise<Backend> | null = null;
+
+export function configurarBackend(crear: () => Promise<Backend>) {
+  proveedor = crear;
+  instancia = null;
+}
 
 export function backend(): Promise<Backend> {
   if (!instancia) {
-    instancia = enTauri()
-      ? import("./backend-tauri").then((m) => m.crearBackendTauri())
-      : import("./backend-simulado").then((m) => m.crearBackendSimulado());
+    if (!proveedor) return Promise.reject(new Error("La app no configuró su núcleo (iniciarApp)."));
+    instancia = proveedor();
   }
   return instancia;
 }

@@ -121,12 +121,25 @@
       </form>
     {/if}
   </div>
+  {#if python.modo === "limitado"}
+    <p class="limitado" role="note">
+      Aquí tus programas no pueden pedir datos con <code>input()</code>: este navegador no aisló la página.
+      Recarga la página; si sigue igual, instala la app o usa otro navegador.
+    </p>
+  {/if}
   {#if error}
     <ErrorPy {error} {alIrALinea} />
   {/if}
 </div>
 
 <style>
+  .limitado {
+    margin: 0;
+    padding: 0.4em 0.75em;
+    font-size: 0.85em;
+    background: var(--aviso-suave);
+    color: var(--aviso);
+  }
   .consola {
     display: flex;
     flex-direction: column;

@@ -2,25 +2,20 @@
   import { onMount } from "svelte";
   import Inicio from "./componentes/Inicio.svelte";
   import Principal from "./componentes/Principal.svelte";
-  import { app, aplicarTema, cargarEstadoApp, prepararCierre } from "./lib/app.svelte";
-  import { enTauri } from "./lib/backend";
+  import { app, aplicarTema, cargarEstadoApp } from "./lib/app.svelte";
+  import { opciones } from "./lib/opciones";
   import { mensajeError } from "@rlp/ui-comun";
 
   let errorFatal = $state("");
 
   onMount(async () => {
     aplicarTema(app.tema);
-    if (enTauri()) {
-      const [{ listen }, { invoke }] = await Promise.all([import("@tauri-apps/api/event"), import("@tauri-apps/api/core")]);
-      void listen("cerrando", async () => {
-        await prepararCierre();
-        await invoke("cerrar_app");
-      });
-    }
     try {
+      await opciones.alIniciar?.();
       await cargarEstadoApp();
       app.vista = "inicio";
-      if (app.estadoApp?.autoprueba) void import("./lib/autoprueba").then((m) => m.autoprueba(app.estadoApp!.autoprueba!));
+      const fase = app.estadoApp?.autoprueba;
+      if (fase && opciones.autoprueba) void opciones.autoprueba(fase);
     } catch (e) {
       errorFatal = mensajeError(e);
     }

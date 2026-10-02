@@ -1,24 +1,19 @@
 {
-  "name": "@rlp/alumno",
+  "name": "@rlp/alumno-web",
   "version": "0.2.0",
   "private": true,
   "type": "module",
+  "description": "Versión web instalable (PWA) de la App Alumno: la misma interfaz que la app nativa, con el núcleo en WebAssembly y los datos en el navegador.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json",
-    "tauri": "tauri"
+    "check": "svelte-check --tsconfig ./tsconfig.json"
   },
   "dependencies": {
     "@rlp/alumno-ui": "workspace:*",
-    "@rlp/curso": "workspace:*",
-    "@rlp/editor": "workspace:*",
-    "@rlp/python-worker": "workspace:*",
-    "@rlp/ui-comun": "workspace:*",
-    "@tauri-apps/api": "^2.8.0",
-    "@tauri-apps/plugin-barcode-scanner": "^2.5.0",
-    "@tauri-apps/plugin-dialog": "^2.4.0"
+    "@rlp/nucleo-web": "workspace:*",
+    "jsqr": "^1.4.0"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^6.2.0",

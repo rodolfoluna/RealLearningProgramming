@@ -6,8 +6,7 @@
 
 import { ubicar } from "@rlp/curso";
 import { invoke } from "@tauri-apps/api/core";
-import { backend } from "./backend";
-import { curso, python } from "./app.svelte";
+import { backend, curso, python } from "@rlp/alumno-ui";
 
 type Paso = { paso: string; ok: boolean; detalle?: unknown };
 

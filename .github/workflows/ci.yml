@@ -63,6 +63,7 @@ jobs:
       - name: Revisión de tipos (Svelte y TypeScript)
         run: |
           pnpm --filter @rlp/alumno check
+          pnpm --filter @rlp/alumno-web check
           pnpm --filter @rlp/profesor check
           pnpm --filter @rlp/nucleo-web check
       - name: Pruebas de interfaz (Playwright, Chromium)

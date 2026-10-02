@@ -27,6 +27,12 @@ export default defineConfig({
       timeout: 60_000,
     },
     {
+      command: "pnpm --filter @rlp/alumno-web exec vite --port 1422 --strictPort",
+      url: "http://localhost:1422",
+      reuseExistingServer: true,
+      timeout: 60_000,
+    },
+    {
       command: "pnpm --filter @rlp/profesor exec vite --port 1421 --strictPort",
       url: "http://localhost:1421",
       reuseExistingServer: true,
@@ -39,6 +45,12 @@ export default defineConfig({
       name: "alumno",
       testMatch: /alumno\..*spec\.ts/,
       use: { baseURL: "http://localhost:1420", viewport: { width: 1366, height: 800 } },
+    },
+    {
+      // Versión web (PWA): núcleo real en WebAssembly e IndexedDB (requiere `pnpm wasm`).
+      name: "web",
+      testMatch: /web\..*spec\.ts/,
+      use: { baseURL: "http://localhost:1422", viewport: { width: 1366, height: 800 } },
     },
     {
       name: "profesor",

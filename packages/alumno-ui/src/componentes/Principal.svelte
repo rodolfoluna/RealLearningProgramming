@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Modal, mensajeError } from "@rlp/ui-comun";
   import { backend } from "../lib/backend";
-  import { app, aplicarTema, avisar, cargarEstadoApp, curso, esMovil, fechaArchivo, salir } from "../lib/app.svelte";
+  import { app, aplicarTema, avisar, cargarEstadoApp, curso, esWeb, exportarConNombre, fechaArchivo, puedeEscanearQr, salir } from "../lib/app.svelte";
   import Temario from "./Temario.svelte";
   import Bienvenida from "./Bienvenida.svelte";
   import Leccion from "./Leccion.svelte";
@@ -40,7 +40,7 @@
     menuAbierto = false;
     try {
       const b = await backend();
-      if (esMovil()) {
+      if (exportarConNombre()) {
         const nombre = `${alumno.perfil.numero_control.replace(/[^\p{L}\p{N}]/gu, "")}_${fechaArchivo()}.rlp`;
         const destino = await b.elegirDestino("Guardar mi entrega", nombre);
         if (!destino) return;
@@ -169,7 +169,7 @@
           <button role="menuitem" onclick={importarRetroalimentacion}>📬 Importar retroalimentación del profesor</button>
           <button role="menuitem" onclick={() => { menuAbierto = false; ir({ tipo: "estadisticas" }); }}>📊 Mis estadísticas</button>
           <button role="menuitem" onclick={unirseGrupo}>👥 {alumno.grupo ? "Cambiar de grupo" : "Unirme a un grupo"}</button>
-          {#if esMovil()}
+          {#if puedeEscanearQr()}
             <button role="menuitem" onclick={unirseConQr}>📷 Unirme con el QR del grupo</button>
           {/if}
           <button role="menuitem" onclick={() => { menuAbierto = false; modalClave = true; }}>🔑 Cambiar contraseña</button>
@@ -210,7 +210,7 @@
   {:else if exportado === "error"}
     <p class="error">{errorModal}</p>
   {:else}
-    <p class="exito-msg">Listo. Tu entrega se guardó en:</p>
+    <p class="exito-msg">{esWeb() ? "Listo. Se descargó tu entrega (búscala en Descargas):" : "Listo. Tu entrega se guardó en:"}</p>
     <p class="ruta">{exportado}</p>
     <p class="suave">
       Entrega este archivo a tu profesor. También te sirve para continuar en otro equipo o en tu celular
