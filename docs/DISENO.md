@@ -343,6 +343,18 @@ Ambos: `{"contenido": "<JSON exacto>", "firma": "<Ed25519 del profesor>"}`.
   `ANDROID_KEY_ALIAS`. La firma debe ser siempre la misma, en local y en CI: Android solo
   actualiza una app (conservando sus datos) si coincide.
 
+### Versión web (PWA)
+
+- La misma interfaz (`packages/alumno-ui`) con otra cáscara (`apps/alumno-web`): el núcleo
+  `rlp-core` compilado a WebAssembly corre en un Worker y los perfiles se guardan cifrados en
+  IndexedDB, con las mismas filas que el `alumno.db`. Un perfil se abre en una sola pestaña a la
+  vez (Web Locks).
+- Instalable y sin conexión: el service worker guarda la app y Pyodide, y agrega COOP/COEP para
+  que `input()` funcione en cualquier hosting estático.
+- Archivos con el selector del navegador; la entrega se descarga; QR con la cámara; sin `.exe`.
+  Los datos viven en el navegador: la app recuerda exportar la entrega como respaldo.
+- Detalle, decisiones y resultados de las pruebas en [`PWA.md`](PWA.md).
+
 ### Ejecución de Python
 
 - Pyodide corre en un Web Worker. Con `SharedArrayBuffer` (WebView2 en Windows), `input()` espera
@@ -436,7 +448,8 @@ Los diccionarios quedan como posible unidad opcional en una versión posterior.
   **QR**, exportar con "Guardar como", pausa de la app como salida, autoprueba en emulador;
   **hecho**, pendiente afinar las heurísticas de IME con teclados reales). Después: problemas de
   Parsons, historial de versiones, consola interactiva.
-- **Versión web (PWA) de la App Alumno**: en curso; estado por fase en [`PWA.md`](PWA.md).
+- **Versión web (PWA) de la App Alumno** (**hecha**; falta probarla en iPhone y Android reales):
+  misma interfaz y núcleo en WebAssembly, instalable y sin conexión. Detalle en [`PWA.md`](PWA.md).
 - **Fase 3**: **detección de similitud** entre alumnos (huellas de tokens/AST); visualizador paso a
   paso (tipo Python Tutor); editor del curso y paquetes `.curso` firmados; insignias y rachas;
   tablero de dificultades por actividad.

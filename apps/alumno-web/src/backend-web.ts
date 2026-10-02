@@ -104,9 +104,11 @@ export function crearBackendWeb(): Backend {
     return estado;
   }
 
-  async function exportar(): Promise<string> {
-    const { nombre, archivo } = await nucleo.exportar();
-    descargar(nombre, archivo);
+  /** Descarga la entrega; `destino` es el nombre que la interfaz ya le mostró al alumno. */
+  async function exportar(destino?: string): Promise<string> {
+    const r = await nucleo.exportar();
+    const nombre = destino || r.nombre;
+    descargar(nombre, r.archivo);
     try {
       if (perfil) localStorage.setItem(clave(perfil), String(Date.now()));
     } catch {
@@ -166,7 +168,7 @@ export function crearBackendWeb(): Backend {
       await sesion("registrar_evento", { tipo, actividad, datos });
     },
     exportar: () => exportar(),
-    exportarA: () => exportar(),
+    exportarA: (destino) => exportar(destino),
     importarAvances: async (ruta) => como<ResumenImportacion>(await nucleo.importarAvances(await leer(ruta))),
     importarRetroalimentacion: async (ruta) =>
       como<Retroalimentacion>(await nucleo.importarRetroalimentacion(await leer(ruta))),
