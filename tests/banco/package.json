@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@rlp/editor": "workspace:*",
+    "@rlp/nucleo-web": "workspace:*",
     "@rlp/python-worker": "workspace:*"
   },
   "devDependencies": {

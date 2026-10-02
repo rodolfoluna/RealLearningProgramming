@@ -49,12 +49,22 @@ jobs:
         run: |
           cargo test -p rlp-core --no-default-features --features firmar
           cargo clippy -p rlp-core --target wasm32-unknown-unknown --no-default-features --features firmar -- -D warnings
+          cargo clippy -p rlp-web --target wasm32-unknown-unknown -- -D warnings
+          cargo test -p rlp-web
+          echo "WASM_BINDGEN=$(grep -A1 '^name = "wasm-bindgen"$' Cargo.lock | sed -n 's/^version = "\(.*\)"/\1/p')" >> "$GITHUB_ENV"
+      - name: wasm-bindgen (misma versión que Cargo.lock)
+        uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-bindgen-cli@${{ env.WASM_BINDGEN }}
+      - name: Núcleo web (pnpm wasm)
+        run: pnpm wasm
       - name: Pruebas unitarias (TypeScript)
         run: pnpm vitest run
-      - name: Revisión de tipos (Svelte)
+      - name: Revisión de tipos (Svelte y TypeScript)
         run: |
           pnpm --filter @rlp/alumno check
           pnpm --filter @rlp/profesor check
+          pnpm --filter @rlp/nucleo-web check
       - name: Pruebas de interfaz (Playwright, Chromium)
         run: |
           pnpm exec playwright install --with-deps chromium

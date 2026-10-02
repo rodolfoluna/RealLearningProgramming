@@ -9,6 +9,9 @@ build/
 # Curso compilado (se genera con `pnpm curso`)
 packages/curso/generado/
 
+# Núcleo web en WebAssembly (se genera con `pnpm wasm`)
+packages/nucleo-web/generado/
+
 # Assets de Pyodide copiados desde node_modules
 apps/*/public/pyodide/
 tests/banco/public/pyodide/

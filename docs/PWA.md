@@ -9,11 +9,11 @@ igual. Fuera de alcance: crear `.exe`, PWA del profesor, app nativa de iOS y ser
 |---|---|
 | 0. Pruebas de riesgo | **Hecha en Chromium**; falta confirmar en iPhone/iPad y Chrome Android |
 | 1. Núcleo portable | **Hecha** |
-| 2. Crate `rlp-web` + paquete `nucleo-web` | Pendiente |
+| 2. Crate `rlp-web` + paquete `nucleo-web` | **Hecha** |
 | 3. Interfaz compartida y `backend-web.ts` | Pendiente |
 | 4. Cáscara PWA (manifest, service worker, instalación) | Pendiente |
 | 5. Llave web → Amarillo; pruebas cruzadas con la App Profesor | Pendiente (el núcleo ya pasa las pruebas cruzadas, ver Fase 1) |
-| 6. CI, Playwright (Chromium + WebKit) y documentación | Pendiente (CI ya compila el núcleo a wasm) |
+| 6. CI, Playwright (Chromium + WebKit) y documentación | Pendiente (CI ya compila y prueba el núcleo web) |
 
 ## Fase 0 — resultados
 
@@ -73,23 +73,43 @@ respaldo) y aviso de que borrar los datos del sitio borra el perfil. Falta proba
   el profesor.
 - CI: pruebas del núcleo sin SQLite y clippy para `wasm32-unknown-unknown`.
 
+## Fase 2 — núcleo web (hecha)
+
+- **`crates/rlp-web`**: una sola función, `Nucleo.llamar(metodo, args_json) → json`, con las mismas
+  operaciones que los comandos de la app nativa (`registrar`, `iniciar_sesion`, `restaurar`,
+  `entrar_con_acceso`, `abrir_actividad`, `guardar_edicion`, `exportar`, `importar_avances`…),
+  pero con archivos en base64 en lugar de rutas. `diario` devuelve los cambios de cada perfil
+  (también los de una sesión recién cerrada). Se prueba en Rust nativo (`tests/nucleo.rs`).
+- **Llave web**: al compilar a WebAssembly, `rlp-core/build.rs` lee solo `RLP_CLAVE_APP_WEB`;
+  la semilla nativa nunca entra a la versión web. En `llaves_app.txt`, la marca `[web]` identifica
+  su llave pública (`LlaveConocida.web`).
+- **`pnpm wasm`** (`scripts/compilar-wasm.mjs`): compila `rlp-web` y genera
+  `packages/nucleo-web/generado/` (1.7 MB; 0.6 MB con gzip). Comprueba el target de Rust y que
+  `wasm-bindgen-cli` sea la versión del `Cargo.lock`. No forma parte de `pnpm preparar`: Windows y
+  Android no lo necesitan.
+- **`@rlp/nucleo-web`**: `crearNucleoWeb()` devuelve un cliente cuyos métodos corren en un Worker
+  (`worker.ts`) con el núcleo y la base `rlp-alumno` de IndexedDB (`idb.ts`). `servicio.ts`:
+  - guarda el diario **antes** de responder; si IndexedDB falla, deja de aceptar cambios y pide
+    recargar (lo guardado sigue siendo consistente);
+  - abre cada perfil en **una sola pestaña** (Web Locks): resuelve el riesgo 1;
+  - atiende las llamadas en orden y guarda el grupo instalado del navegador.
+- Pruebas: vitest con el wasm real y `fake-indexeddb` (registro, recarga, candado, contraseña
+  incorrecta, continuar en otro navegador) y Playwright en Chromium (`banco.nucleo.spec.ts`:
+  Worker e IndexedDB reales, recarga y segunda pestaña bloqueada).
+
 ## Riesgos encontrados
 
 1. **Dos pestañas con el mismo perfil** agregarían eventos con los mismos números a la cadena del
-   mismo dispositivo y romperían el historial guardado. En la Fase 3: un candado por perfil con la
-   Web Locks API (`navigator.locks`); la segunda pestaña avisa "ya está abierto en otra pestaña".
+   mismo dispositivo y romperían el historial guardado. **Resuelto** en la Fase 2: candado por
+   perfil con Web Locks; la segunda pestaña avisa que ya está abierto en otra.
 2. **Diario sin guardar** (se cerró la pestaña): la copia guardada queda en un estado anterior pero
-   consistente (lo prueba `tests/web.rs`). La interfaz debe esperar a que IndexedDB confirme antes
-   de dar por guardado un cambio.
+   consistente (lo prueba `tests/web.rs`). **Resuelto** en la Fase 2: el Worker responde solo
+   cuando IndexedDB confirmó.
 3. **Sin service worker** (primera visita sin conexión o navegador que lo bloquea): `input()` no
    funciona. La interfaz debe decirlo claramente en lugar de quedarse esperando.
 
 ## Siguientes pasos
 
-- **Fase 2**: `crates/rlp-web` (wasm-bindgen) con la API de los comandos de
-  `apps/alumno/src-tauri/src/lib.rs`, devolviendo el diario en cada respuesta;
-  `scripts/compilar-wasm.mjs` (requiere `wasm-bindgen-cli` con la versión de `Cargo.lock`) y
-  `packages/nucleo-web` corriendo en un Worker; llave `RLP_CLAVE_APP_WEB`.
 - **Fase 3**: extraer la interfaz a `packages/alumno-ui`, quitar los `import` de Tauri fuera del
   backend (`app.svelte.ts`, `App.svelte`, `autoprueba.ts`), `apps/alumno-web` y `backend-web.ts`
   (IndexedDB, archivos con `<input type=file>` y descargas, QR con `getUserMedia`).

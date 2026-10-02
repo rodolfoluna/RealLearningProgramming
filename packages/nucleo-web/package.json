@@ -1,0 +1,16 @@
+{
+  "name": "@rlp/nucleo-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Núcleo de la App Alumno para el navegador: rlp-core en WebAssembly dentro de un Worker, con los perfiles en IndexedDB. Se compila con `pnpm wasm`.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "^6.2.5"
+  }
+}

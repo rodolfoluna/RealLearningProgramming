@@ -31,10 +31,16 @@ pnpm dev:profesor             # http://localhost:1421 (contraseña de demo: prof
 pnpm --filter @rlp/alumno tauri dev   # app real
 ```
 
+Versión web (PWA) de la App Alumno: el núcleo se compila a WebAssembly con `pnpm wasm`. Requiere,
+una sola vez, `rustup target add wasm32-unknown-unknown` y
+`cargo install wasm-bindgen-cli --version 0.2.129 --locked` (la versión de `wasm-bindgen` en
+`Cargo.lock`). Estado y diseño en [`docs/PWA.md`](docs/PWA.md).
+
 ## Pruebas
 
 ```bash
 cargo test -p rlp-core                 # núcleo: cifrado, historial, entregas, manipulaciones
+cargo test -p rlp-web                  # núcleo de la versión web (perfiles en memoria + diario)
 pnpm vitest run                        # lógica del editor
 python3 scripts/validar_curso.py       # soluciones del curso en CPython
 node scripts/validar-curso-pyodide.mjs # ... y en Pyodide

@@ -3289,6 +3289,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rlp-web"
+version = "0.2.0"
+dependencies = [
+ "rlp-core",
+ "serde",
+ "serde_json",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "rusqlite"
 version = "0.37.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

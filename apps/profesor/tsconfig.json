@@ -13,5 +13,6 @@
     "types": ["vite/client"],
     "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker.ImportScripts"]
   },
-  "include": ["src/**/*.ts", "src/**/*.svelte", "../../packages/*/src/**/*.ts", "../../packages/*/src/**/*.svelte"]
+  "include": ["src/**/*.ts", "src/**/*.svelte", "../../packages/*/src/**/*.ts", "../../packages/*/src/**/*.svelte"],
+  "exclude": ["../../packages/nucleo-web/**"]
 }
