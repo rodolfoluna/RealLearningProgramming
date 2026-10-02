@@ -164,7 +164,9 @@ respaldo) y aviso de que borrar los datos del sitio borra el perfil. Falta proba
   - `wasm-bindgen-cli` con la versión del `Cargo.lock` y `pnpm wasm`;
   - tipos de `alumno-web` y `nucleo-web`, build del sitio;
   - Playwright con el proyecto `web` en Chromium y también en **WebKit** (`web-webkit`, activado
-    con `PLAYWRIGHT_WEBKIT=1`).
+    con `PLAYWRIGHT_WEBKIT=1`). WebKit prueba el sitio compilado (`vite preview`), que es lo que
+    usan los alumnos: bloquea, bajo COEP, los módulos que el servidor de desarrollo de Vite sirve
+    al worker de Python.
 - `build-web.yml`:
   - en `main`, el sitio como artefacto;
   - en las etiquetas `v*`, verifica la llave web, agrega `RLP-Alumno-<versión>-web.zip` al
