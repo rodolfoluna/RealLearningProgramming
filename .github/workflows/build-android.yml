@@ -1,17 +1,16 @@
 name: Build Android
 
-# APK de la App Alumno. Normalmente se compila en local con scripts/compilar-android.ps1; este
-# workflow corre solo a mano (Actions → Build Android → Run workflow) y en las etiquetas v*, para
-# adjuntar el APK firmado al Release. El proyecto de Android se genera en cada compilación con
-# `tauri android init` (apps/alumno/src-tauri/gen/ no se versiona).
+# Respaldo: el APK de LP Alumno se compila en local con scripts/compilar-android.ps1 y se publica
+# con scripts/publicar-version.ps1. Este workflow solo corre a mano (Actions → Build Android → Run
+# workflow); si en "Use workflow from" eliges una etiqueta v*, agrega el APK al Release. El
+# proyecto de Android se genera en cada compilación con `tauri android init`
+# (apps/alumno/src-tauri/gen/ no se versiona).
 #  - APK de depuración x86_64: se instala en un emulador y corre la autoprueba.
 #  - APK para celulares (arm64 y armv7): firmado si existen los secretos ANDROID_KEYSTORE
-#    (base64 del .jks), ANDROID_KEYSTORE_PASSWORD y ANDROID_KEY_ALIAS; si no, uno de depuración.
-#    En las etiquetas v* se agrega al Release el que haya (firmado o de depuración).
+#    (base64 del .jks), ANDROID_KEYSTORE_PASSWORD y ANDROID_KEY_ALIAS; si no, uno de depuración
+#    (sin optimizar y con una firma distinta en cada corrida).
 
 on:
-  push:
-    tags: ["v*"]
   workflow_dispatch:
 
 # Compilar para Android tarda: una sola corrida por rama o etiqueta (la más reciente).

@@ -14,7 +14,7 @@ La app es la misma en las tres; elige la que tengas a la mano (o usa varias, ver
 | Versión | Dónde se usa | Cómo se instala |
 |---|---|---|
 | **Windows** | Computadoras de la escuela o de casa | Carpeta `LP-Alumno` (portable): se copia y se abre `LP Alumno.exe`. Puede ir en tu memoria USB. |
-| **Android** | Tu celular o tableta | Archivo `LP-Alumno-…-android-depuracion.apk`: ábrelo y permite "instalar apps de origen desconocido". |
+| **Android** | Tu celular o tableta | Archivo `LP-Alumno-…-android.apk`: ábrelo y permite "instalar apps de origen desconocido". |
 | **Web** | Cualquier navegador: iPhone, iPad, Android, computadora | Abre la dirección que te dé tu profesor e **instálala**: en Chrome/Edge, botón *Instalar*; en iPhone/iPad, **Compartir → Agregar a pantalla de inicio**. |
 
 Solo la versión de Windows puede **crear programas `.exe`**. Todo lo demás funciona igual.
@@ -129,7 +129,7 @@ los comentarios en cada actividad.
 | Versión | Dónde viven tus avances | Cuidado con… |
 |---|---|---|
 | Windows | Carpeta `datos` dentro de `LP-Alumno` | No borrar la carpeta. Si la PC se restaura al reiniciar, usa tu USB. |
-| Android | Dentro de la app | **Desinstalarla los borra.** La versión de prueba (depuración) se reemplaza desinstalando: exporta antes. |
+| Android | Dentro de la app | **Desinstalarla los borra.** Una versión nueva se instala encima y conserva tus datos; si Android no te deja ("conflicto con un paquete existente"), exporta antes de desinstalar. |
 | Web | Dentro del navegador de ese equipo | No usar **ventana privada** ni **borrar los datos del sitio**. En iPhone, instálala en la pantalla de inicio. |
 
 En todos los casos: **exporta tu entrega seguido**. La versión web te lo recuerda cada 7 días.

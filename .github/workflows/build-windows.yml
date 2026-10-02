@@ -1,10 +1,10 @@
 name: Build Windows
 
+# Respaldo: las apps de Windows se compilan en local con scripts/compilar-windows.ps1 y se publican
+# con scripts/publicar-version.ps1. Este workflow solo corre a mano (Actions → Build Windows → Run
+# workflow); si en "Use workflow from" eliges una etiqueta v*, además publica el Release.
+
 on:
-  push:
-    branches: [main, "claude/**"]
-    tags: ["v*"]
-  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -116,7 +116,7 @@ jobs:
           ---
           **Windows**: descarga los dos `-windows.zip` (LP Alumno y LP Profesor) y descomprímelos; no
           requieren instalación ni internet. **Web**: `-web.zip` es el sitio de LP Alumno para cualquier
-          hosting. **Android**: `-android-depuracion.apk` (versión de prueba de LP Alumno).
+          hosting. **Android**: `-android.apk` (LP Alumno).
 
           Guías: [instalación](${{ github.server_url }}/${{ github.repository }}/blob/main/docs/INSTALACION.md),
           [manual del alumno](${{ github.server_url }}/${{ github.repository }}/blob/main/docs/MANUAL-ALUMNO.md) y

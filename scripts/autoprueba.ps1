@@ -1,4 +1,4 @@
-# Versión Windows de scripts/autoprueba.sh (WebView2): flujo profesor → alumno → profesor con las
+﻿# Versión Windows de scripts/autoprueba.sh (WebView2): flujo profesor → alumno → profesor con las
 # apps reales compiladas en modo desarrollo con el frontend incluido.
 $ErrorActionPreference = "Stop"
 $bin = if ($env:BIN) { $env:BIN } else { "target\debug" }

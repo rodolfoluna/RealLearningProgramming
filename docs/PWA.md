@@ -193,6 +193,8 @@ respaldo) y aviso de que borrar los datos del sitio borra el perfil. Falta proba
   y un Android (Chrome). Ahí se confirman el aislamiento con el service worker, el tiempo de
   Argon2id, la cámara para el QR y que Safari conserve los datos de la app instalada.
 - **Secretos y opciones del repositorio**: `RLP_CLAVE_APP_WEB` (semilla de la llave web) y, para
-  GitHub Pages, Source "GitHub Actions" y la variable `RLP_PAGES=1`.
+  GitHub Pages, Source "GitHub Actions", la variable `RLP_PAGES=1` y, en el entorno
+  `github-pages`, una regla que permita las etiquetas `v*` (por defecto solo deja publicar desde
+  `main`).
 - Android no cambió de comportamiento, pero su interfaz ahora sale de `packages/alumno-ui`:
   recompilar el APK en local con `scripts/compilar-android.ps1` y probarlo una vez.

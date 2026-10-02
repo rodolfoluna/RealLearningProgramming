@@ -1,9 +1,14 @@
-﻿# Compila el APK de la App Alumno en esta computadora (Windows). El APK queda en dist-android\.
+﻿# Compila el APK de LP Alumno en esta computadora (Windows). El APK queda en dist-android\.
 #
-#   .\scripts\compilar-android.ps1                          # APK de depuración (de prueba)
+#   .\scripts\compilar-android.ps1                          # APK optimizado (el que se publica)
 #   .\scripts\compilar-android.ps1 -Instalar                # además lo instala con adb
-#   .\scripts\compilar-android.ps1 -Targets x86_64          # para un emulador
-#   .\scripts\compilar-android.ps1 -Release -Keystore C:\llaves\lp-alumno.jks -Alias lp
+#   .\scripts\compilar-android.ps1 -Depuracion -Targets x86_64   # sin optimizar, para un emulador
+#   .\scripts\compilar-android.ps1 -Keystore C:\llaves\lp-alumno.jks -Alias lp   # con tu keystore
+#
+# Sin -Keystore, el APK se firma con la llave de depuración de esta PC
+# (%USERPROFILE%\.android\debug.keystore), que no cambia entre compilaciones: el APK se actualiza
+# sin desinstalar mientras se compile en esta PC. Respalda ese archivo; con otra llave, para
+# actualizar hay que desinstalar la app y se borran sus datos.
 #
 # Requisitos: pnpm install hecho, Rust (rustup), SDK de Android con NDK, build-tools y
 # platform-tools, y Java 17 (el JBR de Android Studio sirve). Para que las entregas salgan en
@@ -13,8 +18,9 @@ param(
   [string]$Sdk = $(if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { "E:\Android" }),
   # aarch64 y armv7 para celulares; x86_64 o i686 para emuladores.
   [string[]]$Targets = @("aarch64", "armv7"),
-  # APK firmado con tu keystore (actualizable sin perder datos). Sin esto: APK de prueba.
-  [switch]$Release,
+  # Compilación de depuración sin optimizar: compila más rápido, pero pesa unas 10 veces más.
+  [switch]$Depuracion,
+  # Firma con tu keystore en lugar de la llave de depuración de esta PC.
   [string]$Keystore = $env:ANDROID_KEYSTORE_FILE,
   [string]$Alias = $env:ANDROID_KEY_ALIAS,
   # Instala el APK con adb en el celular o emulador conectado.
@@ -87,17 +93,31 @@ $instalados = rustup target list --installed
 $faltan = $Targets | ForEach-Object { $triples[$_] } | Where-Object { $instalados -notcontains $_ }
 if ($faltan) { Ejecutar "rustup" (@("target", "add") + $faltan) }
 
-if ($Release) {
-  if (-not $Keystore -or -not (Test-Path $Keystore)) { throw "Con -Release indica tu keystore: -Keystore ruta\al\archivo.jks" }
-  if (-not $Alias) { throw "Con -Release indica el alias de la llave: -Alias nombre" }
+# --- Llave del APK ---
+if ($Depuracion) {
+  if ($Keystore) { throw "-Keystore no se combina con -Depuracion (ese APK usa la firma de depuración de Gradle)." }
+} elseif ($Keystore) {
+  if (-not (Test-Path $Keystore)) { throw "No encontré el keystore '$Keystore'." }
+  if (-not $Alias) { throw "Indica el alias de la llave del keystore: -Alias nombre" }
   if (-not $env:ANDROID_KEYSTORE_PASSWORD) {
     $segura = Read-Host "Contraseña del keystore" -AsSecureString
-    $env:ANDROID_KEYSTORE_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
-      [Runtime.InteropServices.Marshal]::SecureStringToBSTR($segura))
+    $env:ANDROID_KEYSTORE_PASSWORD = [System.Net.NetworkCredential]::new("", $segura).Password
   }
-  if (-not $env:RLP_CLAVE_APP) {
-    Write-Warning "Sin RLP_CLAVE_APP: las entregas de este APK saldrán con la firma de desarrollo (amarillo en la App Profesor)."
+  $pase = "env:ANDROID_KEYSTORE_PASSWORD"
+} else {
+  # La llave de depuración de esta PC: la misma que usan Android Studio y Gradle.
+  $Keystore = Join-Path $env:USERPROFILE ".android\debug.keystore"
+  $Alias = "androiddebugkey"
+  $pase = "pass:android"
+  if (-not (Test-Path $Keystore)) {
+    Write-Host "Creando la llave de depuración de esta PC en $Keystore…"
+    New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Keystore) | Out-Null
+    Ejecutar "keytool" @("-genkeypair", "-keystore", $Keystore, "-storepass", "android", "-keypass", "android",
+      "-alias", $Alias, "-keyalg", "RSA", "-keysize", "2048", "-validity", "10000", "-dname", "CN=Android Debug,O=Android,C=US")
   }
+}
+if (-not $env:RLP_CLAVE_APP) {
+  Write-Warning "Sin RLP_CLAVE_APP: las entregas de este APK saldrán con la firma de desarrollo (amarillo en LP Profesor)."
 }
 
 # --- Compilar ---
@@ -110,7 +130,7 @@ try {
     Ejecutar "pnpm" @("tauri", "icon", "src-tauri\icons\icon.png")
   }
   $argumentos = @("tauri", "android", "build", "--apk")
-  if (-not $Release) { $argumentos += "--debug" }
+  if ($Depuracion) { $argumentos += "--debug" }
   foreach ($t in $Targets) { $argumentos += @("--target", $t) }
   $inicio = Get-Date
   Ejecutar "pnpm" $argumentos
@@ -122,24 +142,25 @@ try {
 $version = (Get-Content "apps\alumno\package.json" -Raw | ConvertFrom-Json).version
 $apks = "apps\alumno\src-tauri\gen\android\app\build\outputs\apk"
 New-Item -ItemType Directory -Force -Path "dist-android" | Out-Null
-$patron = if ($Release) { "*release-unsigned.apk" } else { "*debug.apk" }
+$patron = if ($Depuracion) { "*debug.apk" } else { "*release-unsigned.apk" }
 $generado = Get-ChildItem $apks -Recurse -Filter $patron |
   Where-Object { $_.LastWriteTime -ge $inicio } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if (-not $generado) { throw "No encontré el APK compilado ($patron) en $apks." }
 
-if ($Release) {
+if ($Depuracion) {
+  $destino = "dist-android\LP-Alumno-$version-android-depuracion-$($Targets -join '-').apk"
+  Copy-Item $generado.FullName $destino -Force
+} else {
   $herramientas = MasNueva (Join-Path $Sdk "build-tools")
   if (-not $herramientas) { throw "No hay build-tools en '$Sdk\build-tools' (SDK Manager > SDK Tools > Android SDK Build-Tools)." }
   $alineado = Join-Path $env:TEMP "rlp-alineado.apk"
   $destino = "dist-android\LP-Alumno-$version-android.apk"
   Ejecutar (Join-Path $herramientas.FullName "zipalign.exe") @("-f", "4", $generado.FullName, $alineado)
   Ejecutar (Join-Path $herramientas.FullName "apksigner.bat") @("sign", "--ks", $Keystore,
-    "--ks-pass", "env:ANDROID_KEYSTORE_PASSWORD", "--ks-key-alias", $Alias, "--out", $destino, $alineado)
+    "--ks-pass", $pase, "--ks-key-alias", $Alias, "--out", $destino, $alineado)
   Ejecutar (Join-Path $herramientas.FullName "apksigner.bat") @("verify", $destino)
   Remove-Item $alineado -ErrorAction SilentlyContinue
-} else {
-  $destino = "dist-android\LP-Alumno-$version-android-depuracion-$($Targets -join '-').apk"
-  Copy-Item $generado.FullName $destino -Force
+  Write-Host "Firmado con $Keystore (alias $Alias)."
 }
 Write-Host ""
 Write-Host "APK listo: $destino" -ForegroundColor Green

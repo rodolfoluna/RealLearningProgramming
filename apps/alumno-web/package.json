@@ -1,6 +1,6 @@
 {
   "name": "@rlp/alumno-web",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "type": "module",
   "description": "Versión web instalable (PWA) de la App Alumno: la misma interfaz que la app nativa, con el núcleo en WebAssembly y los datos en el navegador.",
