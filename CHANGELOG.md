@@ -3,7 +3,7 @@
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/). Las versiones
 siguen [SemVer](https://semver.org/lang/es/). El curso tiene su propia versión (`curso/curso.yaml`).
 
-## [0.2.1] — sin publicar
+## [0.2.1] — 2026-10-02
 
 ### Publicación desde la computadora
 
