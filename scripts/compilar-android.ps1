@@ -1,9 +1,9 @@
 ﻿# Compila el APK de la App Alumno en esta computadora (Windows). El APK queda en dist-android\.
 #
-#   .\scripts\compilar-android.ps1                          # APK de prueba (firma de depuración)
+#   .\scripts\compilar-android.ps1                          # APK de depuración (de prueba)
 #   .\scripts\compilar-android.ps1 -Instalar                # además lo instala con adb
 #   .\scripts\compilar-android.ps1 -Targets x86_64          # para un emulador
-#   .\scripts\compilar-android.ps1 -Release -Keystore C:\llaves\rlp.jks -Alias rlp
+#   .\scripts\compilar-android.ps1 -Release -Keystore C:\llaves\lp-alumno.jks -Alias lp
 #
 # Requisitos: pnpm install hecho, Rust (rustup), SDK de Android con NDK, build-tools y
 # platform-tools, y Java 17 (el JBR de Android Studio sirve). Para que las entregas salgan en
@@ -131,14 +131,14 @@ if ($Release) {
   $herramientas = MasNueva (Join-Path $Sdk "build-tools")
   if (-not $herramientas) { throw "No hay build-tools en '$Sdk\build-tools' (SDK Manager > SDK Tools > Android SDK Build-Tools)." }
   $alineado = Join-Path $env:TEMP "rlp-alineado.apk"
-  $destino = "dist-android\RLP-Alumno-$version-android.apk"
+  $destino = "dist-android\LP-Alumno-$version-android.apk"
   Ejecutar (Join-Path $herramientas.FullName "zipalign.exe") @("-f", "4", $generado.FullName, $alineado)
   Ejecutar (Join-Path $herramientas.FullName "apksigner.bat") @("sign", "--ks", $Keystore,
     "--ks-pass", "env:ANDROID_KEYSTORE_PASSWORD", "--ks-key-alias", $Alias, "--out", $destino, $alineado)
   Ejecutar (Join-Path $herramientas.FullName "apksigner.bat") @("verify", $destino)
   Remove-Item $alineado -ErrorAction SilentlyContinue
 } else {
-  $destino = "dist-android\RLP-Alumno-$version-android-prueba-$($Targets -join '-').apk"
+  $destino = "dist-android\LP-Alumno-$version-android-depuracion-$($Targets -join '-').apk"
   Copy-Item $generado.FullName $destino -Force
 }
 Write-Host ""

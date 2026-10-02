@@ -1,8 +1,8 @@
-RLP Profesor — Revisión de entregas
+LP Profesor — Revisión de entregas
 ===================================
 
 Primer uso
-  1. Abre "RLP Profesor.exe" y crea tus llaves con una contraseña de al menos 10 caracteres.
+  1. Abre "LP Profesor.exe" y crea tus llaves con una contraseña de al menos 10 caracteres.
   2. GUARDA EL RESPALDO de tus llaves (.rlpk) en una memoria USB o en tu nube. Sin tus llaves no
      podrás abrir las entregas de tus alumnos.
   3. En "Grupos" crea tu grupo (formato del número de control, política de pegado...).
@@ -31,3 +31,7 @@ Alumno que olvidó su contraseña y su código de recuperación
 
 Datos
   Todo se guarda en la carpeta "datos_profesor" junto a la app. Funciona sin internet.
+
+Más información
+  INSTALACION.md: preparar un laboratorio. MANUAL-PROFESOR.md: tus llaves, las claves de firma
+  de las apps y cómo publicar una versión. MANUAL-ALUMNO.md: para compartir con tus alumnos.

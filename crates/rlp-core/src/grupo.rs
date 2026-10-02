@@ -61,7 +61,7 @@ pub fn desde_texto_qr(texto: &str) -> Resultado<(GrupoFirmado, GrupoInfo)> {
     let datos = texto
         .trim()
         .strip_prefix(PREFIJO_QR)
-        .ok_or_else(|| Error::Formato("ese código QR no es de un grupo de RLP".into()))?;
+        .ok_or_else(|| Error::Formato("ese código QR no es de un grupo de LP".into()))?;
     let comprimido = base64::engine::general_purpose::URL_SAFE_NO_PAD
         .decode(datos)
         .map_err(|_| Error::Formato("código QR de grupo dañado".into()))?;

@@ -1,12 +1,14 @@
-RLP Alumno — Programación en Python desde cero
+LP Alumno — Programación en Python desde cero
 ==============================================
 
 Esta carpeta es PORTABLE: puedes copiarla a tu memoria USB o a Documentos.
+El manual completo está en MANUAL-ALUMNO.md (también cómo pasar tus avances entre la
+computadora, el celular y la versión web).
 Tus avances se guardan cifrados dentro de la carpeta "datos". Nadie puede abrirlos sin tu
 contraseña (tu profesor sí puede abrir las entregas que le envíes).
 
 Primer uso
-  1. Abre "RLP Alumno.exe".
+  1. Abre "LP Alumno.exe".
   2. Si tu profesor te dio un archivo de grupo (.rlpg), impórtalo.
   3. Elige "Soy nuevo", escribe tu número de control, tu nombre y una contraseña.
   4. ANOTA tu código de recuperación: lo necesitas si olvidas tu contraseña.

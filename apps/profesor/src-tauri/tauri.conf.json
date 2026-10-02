@@ -1,6 +1,6 @@
 {
   "$schema": "../../../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "RLP Profesor",
+  "productName": "LP Profesor",
   "version": "0.2.0",
   "identifier": "mx.reallearningprogramming.profesor",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "RLP Profesor — Revisión de entregas",
+        "title": "LP Profesor — Revisión de entregas",
         "width": 1360,
         "height": 860,
         "minWidth": 900,

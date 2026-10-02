@@ -1,4 +1,4 @@
-# Versión web (PWA) de RLP Alumno
+# Versión web (PWA) de LP Alumno
 
 La App Alumno tiene, junto a la app nativa (Windows y Android), una versión web instalable
 (`apps/alumno-web`). Las tres comparten la interfaz (`packages/alumno-ui`). El núcleo Rust (`rlp-core`) se compila a WebAssembly para que el cifrado, el
@@ -169,7 +169,7 @@ respaldo) y aviso de que borrar los datos del sitio borra el perfil. Falta proba
     al worker de Python.
 - `build-web.yml`:
   - en `main`, el sitio como artefacto;
-  - en las etiquetas `v*`, verifica la llave web, agrega `RLP-Alumno-<versión>-web.zip` al
+  - en las etiquetas `v*`, verifica la llave web, agrega `LP-Alumno-<versión>-web.zip` al
     Release y lo publica en **GitHub Pages** si la variable del repositorio `RLP_PAGES` vale `1`.
 - Documentación: README (desarrollo y publicación), `docs/INSTALACION.md` (versión web para
   alumnos y profesores), `docs/LEEME-alumno.txt`, `CHANGELOG.md` y `docs/DISENO.md`.

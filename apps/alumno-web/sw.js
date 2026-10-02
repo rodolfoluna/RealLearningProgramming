@@ -1,4 +1,4 @@
-// Service worker de RLP Alumno (versión web). Esta es la plantilla: al compilar, vite.config.ts
+// Service worker de LP Alumno (versión web). Esta es la plantilla: al compilar, vite.config.ts
 // la copia a dist/sw.js con la versión y la lista de archivos de esa compilación.
 //
 // - Guarda la app y Pyodide para usarla sin conexión (Pyodide en una caché aparte, que se conserva

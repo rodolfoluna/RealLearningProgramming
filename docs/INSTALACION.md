@@ -1,14 +1,16 @@
 # Instalación en un laboratorio
 
-Guía para poner a funcionar **RLP Alumno** y **RLP Profesor** en las computadoras de una escuela.
+Guía para poner a funcionar **LP Alumno** y **LP Profesor** en las computadoras de una escuela.
+Para el uso diario están el [manual del alumno](MANUAL-ALUMNO.md) y el
+[manual del profesor](MANUAL-PROFESOR.md) (llaves, claves de firma y publicación).
 Ninguna de las dos apps necesita internet ni permisos de administrador.
 
 ## 1. Descargar
 
 En la página de **Releases** del repositorio descarga los dos archivos de la versión más reciente:
 
-- `RLP-Alumno-<versión>-windows.zip` (≈ 60 MB; incluye Python para crear ejecutables)
-- `RLP-Profesor-<versión>-windows.zip`
+- `LP-Alumno-<versión>-windows.zip` (≈ 60 MB; incluye Python para crear ejecutables)
+- `LP-Profesor-<versión>-windows.zip`
 
 Requisitos: Windows 10 u 11 de 64 bits con **Microsoft Edge WebView2**. Windows 11 ya lo trae y
 Windows 10 lo recibe con Windows Update. Si una computadora no lo tiene y no hay internet,
@@ -17,8 +19,8 @@ página de WebView2 de Microsoft y ejecútalo en cada equipo.
 
 ## 2. Preparar la App Profesor (una sola vez)
 
-1. Descomprime `RLP-Profesor` en tu computadora (por ejemplo, en `Documentos`).
-2. Abre **RLP Profesor.exe** y crea tus llaves con una contraseña de al menos 10 caracteres.
+1. Descomprime `LP-Profesor` en tu computadora (por ejemplo, en `Documentos`).
+2. Abre **LP Profesor.exe** y crea tus llaves con una contraseña de al menos 10 caracteres.
 3. **Guarda el respaldo de tus llaves** (`.rlpk`) en una memoria USB o en tu nube.
    Sin tus llaves no se pueden abrir las entregas de tus alumnos.
 4. En **Grupos**, crea un grupo por cada clase (nombre, formato del número de control, política
@@ -30,14 +32,14 @@ Tus datos quedan en la carpeta `datos_profesor`, junto a la app. Respáldala de 
 
 La carpeta es **portable**: se copia, no se instala.
 
-1. Descomprime `RLP-Alumno` una vez.
+1. Descomprime `LP-Alumno` una vez.
 2. En la App Profesor, en tu grupo, elige **"Instalar en carpeta de la App Alumno"** y selecciona
    esa carpeta: así cada alumno queda unido al grupo desde el primer uso.
    (Otra opción: **"Guardar archivo de grupo"** y compartir el `.rlpg` para que cada alumno lo
    importe.)
-3. Copia la carpeta a cada computadora, por ejemplo a `C:\RLP-Alumno` o a `D:\`, en un lugar
+3. Copia la carpeta a cada computadora, por ejemplo a `C:\LP-Alumno` o a `D:\`, en un lugar
    donde los alumnos **puedan escribir**. También pueden llevarla en su memoria USB.
-4. Crea un acceso directo a `RLP Alumno.exe` en el escritorio.
+4. Crea un acceso directo a `LP Alumno.exe` en el escritorio.
 
 Cada alumno se registra con su número de control, su nombre y una contraseña, y **anota su
 código de recuperación**. Varias personas pueden usar la misma carpeta: cada perfil está cifrado
@@ -70,9 +72,10 @@ de cada clase deben **exportar su entrega**, que también les sirve de respaldo.
 
 ## 5. Celulares Android
 
-Para quien no tiene computadora en casa hay un **APK** de la App Alumno. Se compila en una
-computadora con Windows y el SDK de Android con `scripts\compilar-android.ps1` (ver el README), o
-viene en el Release si el repositorio tiene configurada su llave de firma de Android.
+Para quien no tiene computadora en casa hay un **APK** de LP Alumno. Viene en el Release
+(`LP-Alumno-<versión>-android-depuracion.apk`: por ahora es una versión de **depuración**) o se
+compila en una computadora con Windows y el SDK de Android con `scripts\compilar-android.ps1`
+(ver el README).
 
 1. En el celular, abre el APK y permite "instalar apps de origen desconocido" para el navegador o
    el administrador de archivos.
@@ -83,7 +86,9 @@ viene en el Release si el repositorio tiene configurada su llave de firma de And
 
 > **Importante**: en Android los datos viven dentro de la app. **Desinstalarla los borra**:
 > exporta tu entrega antes. Las actualizaciones conservan los datos siempre que el APK esté firmado
-> con la misma llave.
+> con la misma llave. El APK de depuración cambia de firma en cada compilación: para instalar uno
+> nuevo hay que desinstalar el anterior, así que **exporta la entrega antes** y luego usa "Tengo mis
+> avances en un archivo".
 
 ## 6. Versión web (sin instalar nada)
 

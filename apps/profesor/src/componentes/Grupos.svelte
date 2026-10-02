@@ -51,7 +51,7 @@
   async function instalar(g: GrupoInfo) {
     try {
       const b = await backend();
-      const carpeta = await b.elegirCarpeta("Elige la carpeta de la App Alumno (la que contiene RLP Alumno.exe)");
+      const carpeta = await b.elegirCarpeta("Elige la carpeta de la App Alumno (la que contiene LP Alumno.exe)");
       if (carpeta) avisar(`Grupo instalado en ${await b.instalarGrupo(g.grupo_id, carpeta)}`, 6000);
     } catch (e) {
       avisar(mensajeError(e), 6000);
