@@ -3,8 +3,10 @@
 //! La App Alumno firma cada evento del historial y cada entrega con una llave Ed25519 incluida
 //! en su binario. La llave privada de producción se inyecta al compilar con la variable
 //! `RLP_CLAVE_APP` (semilla de 32 bytes en base64, guardada como secreto de CI) y nunca se sube
-//! al repositorio. Sin esa variable se usa una llave de desarrollo pública que la App Profesor
-//! acepta, pero marca como "firma de desarrollo".
+//! al repositorio. La versión web usa otra llave (`RLP_CLAVE_APP_WEB`), marcada `[web]` en
+//! `llaves_app.txt`: su código se puede descargar, así que su firma no prueba nada por sí sola.
+//! Sin esas variables se usa una llave de desarrollo pública que la App Profesor acepta, pero
+//! marca como "firma de desarrollo".
 //!
 //! Limitación conocida: alguien con conocimientos de ingeniería inversa podría extraer la llave
 //! del binario. Por eso la verificación también reproduce el historial de edición.
@@ -17,6 +19,8 @@ pub struct LlaveConocida {
     pub publica: [u8; 32],
     pub nombre: String,
     pub dev: bool,
+    /// Llave de la versión web (marca `[web]` en `llaves_app.txt`).
+    pub web: bool,
 }
 
 const SEMILLA_DEV: &[u8] = b"rlp-llave-de-desarrollo-no-usar-en-produccion";
@@ -38,19 +42,18 @@ pub fn llaves_confiables() -> Vec<LlaveConocida> {
         publica: publica_dev(),
         nombre: "desarrollo".into(),
         dev: true,
+        web: false,
     }];
-    let mut agregar = |texto: &str, nombre: &str| {
-        if let Ok(publica) = de_b64_32(texto) {
-            if !llaves.iter().any(|l| l.publica == publica) {
-                llaves.push(LlaveConocida {
-                    publica,
-                    nombre: nombre.into(),
-                    dev: false,
-                });
-            }
-        }
-    };
-    for linea in include_str!("../llaves_app.txt").lines() {
+    agregar_lista(&mut llaves, include_str!("../llaves_app.txt"));
+    if let Some(p) = option_env!("RLP_CLAVE_APP_PUBLICA") {
+        agregar_lista(&mut llaves, &format!("{p} compilación actual"));
+    }
+    llaves
+}
+
+/// Agrega las llaves de un texto con el formato de `llaves_app.txt`.
+fn agregar_lista(llaves: &mut Vec<LlaveConocida>, texto: &str) {
+    for linea in texto.lines() {
         let linea = linea.trim();
         if linea.is_empty() || linea.starts_with('#') {
             continue;
@@ -58,12 +61,22 @@ pub fn llaves_confiables() -> Vec<LlaveConocida> {
         let mut partes = linea.splitn(2, char::is_whitespace);
         let llave = partes.next().unwrap_or_default();
         let nombre = partes.next().unwrap_or("versión publicada").trim();
-        agregar(llave, nombre);
+        let Ok(publica) = de_b64_32(llave) else {
+            continue;
+        };
+        if !llaves.iter().any(|l| l.publica == publica) {
+            llaves.push(LlaveConocida {
+                publica,
+                nombre: nombre
+                    .replace("[web]", "")
+                    .split_whitespace()
+                    .collect::<Vec<_>>()
+                    .join(" "),
+                dev: false,
+                web: nombre.contains("[web]"),
+            });
+        }
     }
-    if let Some(p) = option_env!("RLP_CLAVE_APP_PUBLICA") {
-        agregar(p, "compilación actual");
-    }
-    llaves
 }
 
 pub fn buscar_confiable(publica_b64: &str) -> Option<LlaveConocida> {
@@ -133,3 +146,25 @@ mod privada {
 
 #[cfg(feature = "firmar")]
 pub use privada::{llave_app, LlaveApp};
+
+#[cfg(test)]
+mod pruebas {
+    use super::*;
+    use crate::crypto::b64;
+
+    #[test]
+    fn marca_web_en_la_lista() {
+        let nativa = b64(&[1u8; 32]);
+        let web = b64(&[2u8; 32]);
+        let mut llaves = Vec::new();
+        agregar_lista(
+            &mut llaves,
+            &format!("# comentario\n{nativa} v1 (producción)\n{web} v1 [web] (producción)\nbasura\n{nativa} repetida"),
+        );
+        assert_eq!(llaves.len(), 2);
+        assert!(!llaves[0].web && llaves[1].web);
+        assert_eq!(llaves[1].nombre, "v1 (producción)");
+        // La lista publicada no tiene llaves web todavía mal marcadas como de desarrollo.
+        assert!(llaves_confiables().iter().all(|l| !(l.dev && l.web)));
+    }
+}

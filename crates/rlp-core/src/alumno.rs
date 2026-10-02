@@ -1,18 +1,19 @@
 //! Operaciones de la App Alumno sobre su perfil local.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs;
-use std::path::{Path, PathBuf};
+#[cfg(feature = "sqlite")]
+use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use zeroize::Zeroizing;
 
-use crate::almacen::{leer_meta, Almacen, MetaPerfil, ARCHIVO_BD};
+use crate::almacen::{meta_de, Almacen, MetaPerfil};
 use crate::crypto::{
     abrir_con_secreto, aleatorio, codigo_recuperacion, de_b64_32, envolver_con_secreto,
     envolver_para, normalizar_codigo, Llave, ParametrosKdf,
 };
+use crate::deposito::{Deposito, DepositoMemoria, Lote};
 use crate::entrega::{self, EntregaLeida};
 use crate::error::{Error, Resultado};
 use crate::estadisticas::{calcular, Estadisticas};
@@ -160,30 +161,84 @@ fn envolturas_profesor(
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PerfilLocal {
     pub perfil: PerfilPublico,
+    /// Ubicación del perfil: su carpeta en escritorio y Android; su identificador en la web.
     pub carpeta: String,
     pub grupo: Option<String>,
 }
 
-pub fn listar_perfiles(dir_perfiles: &Path) -> Vec<PerfilLocal> {
-    let mut v = Vec::new();
-    let Ok(entradas) = fs::read_dir(dir_perfiles) else {
-        return v;
-    };
-    for e in entradas.flatten() {
-        let bd = e.path().join(ARCHIVO_BD);
-        if let Ok(meta) = leer_meta(&bd) {
-            let grupo = meta
+/// Dónde guarda los perfiles este equipo.
+pub trait Perfiles {
+    /// Metadatos de los perfiles guardados, con su ubicación.
+    fn listar(&self) -> Vec<(String, MetaPerfil)>;
+    /// Depósito vacío para un perfil nuevo, con su ubicación.
+    fn crear(&self, perfil_id: &str) -> Resultado<(String, Box<dyn Deposito>)>;
+}
+
+/// Perfiles en carpetas (`<dir>/<perfil_id>/alumno.db`): escritorio y Android.
+#[cfg(feature = "sqlite")]
+pub struct CarpetaPerfiles<'a>(pub &'a Path);
+
+#[cfg(feature = "sqlite")]
+impl Perfiles for CarpetaPerfiles<'_> {
+    fn listar(&self) -> Vec<(String, MetaPerfil)> {
+        let Ok(entradas) = std::fs::read_dir(self.0) else {
+            return Vec::new();
+        };
+        entradas
+            .flatten()
+            .filter_map(|e| {
+                let meta = crate::almacen::leer_meta(&e.path().join(ARCHIVO_BD)).ok()?;
+                Some((e.path().to_string_lossy().into_owned(), meta))
+            })
+            .collect()
+    }
+
+    fn crear(&self, perfil_id: &str) -> Resultado<(String, Box<dyn Deposito>)> {
+        let carpeta = self.0.join(perfil_id);
+        std::fs::create_dir_all(&carpeta)?;
+        let dep = crate::deposito::DepositoSqlite::crear(&carpeta.join(ARCHIVO_BD))?;
+        Ok((carpeta.to_string_lossy().into_owned(), Box::new(dep)))
+    }
+}
+
+/// Perfiles que guarda la app por su cuenta (la versión web, en IndexedDB): se le pasan los que
+/// ya tiene y los nuevos se crean en memoria; la ubicación es el `perfil_id`.
+#[derive(Default)]
+pub struct PerfilesEnMemoria {
+    pub existentes: Vec<MetaPerfil>,
+}
+
+impl Perfiles for PerfilesEnMemoria {
+    fn listar(&self) -> Vec<(String, MetaPerfil)> {
+        self.existentes
+            .iter()
+            .map(|m| (m.perfil.perfil_id.clone(), m.clone()))
+            .collect()
+    }
+
+    fn crear(&self, perfil_id: &str) -> Resultado<(String, Box<dyn Deposito>)> {
+        Ok((perfil_id.to_string(), Box::new(DepositoMemoria::nuevo())))
+    }
+}
+
+/// Base de datos de cada perfil dentro de su carpeta.
+#[cfg(feature = "sqlite")]
+pub const ARCHIVO_BD: &str = "alumno.db";
+
+pub fn perfiles_locales(perfiles: &dyn Perfiles) -> Vec<PerfilLocal> {
+    let mut v: Vec<PerfilLocal> = perfiles
+        .listar()
+        .into_iter()
+        .map(|(carpeta, meta)| PerfilLocal {
+            grupo: meta
                 .grupo
                 .as_ref()
                 .and_then(|g| verificar_grupo(g).ok())
-                .map(|g| g.nombre);
-            v.push(PerfilLocal {
-                perfil: meta.perfil,
-                carpeta: e.path().to_string_lossy().into_owned(),
-                grupo,
-            });
-        }
-    }
+                .map(|g| g.nombre),
+            perfil: meta.perfil,
+            carpeta,
+        })
+        .collect();
     v.sort_by(|a, b| {
         a.perfil
             .nombre
@@ -191,6 +246,11 @@ pub fn listar_perfiles(dir_perfiles: &Path) -> Vec<PerfilLocal> {
             .cmp(&b.perfil.nombre.to_lowercase())
     });
     v
+}
+
+#[cfg(feature = "sqlite")]
+pub fn listar_perfiles(dir_perfiles: &Path) -> Vec<PerfilLocal> {
+    perfiles_locales(&CarpetaPerfiles(dir_perfiles))
 }
 
 /// Resultado de guardar un lote de ediciones.
@@ -231,7 +291,7 @@ const CLAVE_RETRO: &str = "retroalimentacion";
 
 pub struct SesionAlumno {
     almacen: Almacen,
-    carpeta: PathBuf,
+    ubicacion: String,
     kdf: ParametrosKdf,
     codigo_nuevo: Option<String>,
 }
@@ -239,8 +299,28 @@ pub struct SesionAlumno {
 impl SesionAlumno {
     /// Crea un perfil nuevo en `dir_perfiles/<perfil_id>/`. Devuelve la sesión y el código de
     /// recuperación (se muestra una sola vez).
+    #[cfg(feature = "sqlite")]
     pub fn registrar(
         dir_perfiles: &Path,
+        numero_control: &str,
+        nombre: &str,
+        contrasena: &str,
+        grupo: Option<&GrupoFirmado>,
+        kdf: ParametrosKdf,
+    ) -> Resultado<(Self, String)> {
+        Self::registrar_en(
+            &CarpetaPerfiles(dir_perfiles),
+            numero_control,
+            nombre,
+            contrasena,
+            grupo,
+            kdf,
+        )
+    }
+
+    /// Crea un perfil nuevo en `perfiles`.
+    pub fn registrar_en(
+        perfiles: &dyn Perfiles,
         numero_control: &str,
         nombre: &str,
         contrasena: &str,
@@ -260,9 +340,10 @@ impl SesionAlumno {
             return Err(Error::validacion("Escribe tu nombre completo."));
         }
         validar_contrasena(contrasena)?;
-        if listar_perfiles(dir_perfiles)
+        if perfiles
+            .listar()
             .iter()
-            .any(|p| p.perfil.numero_control == numero_control)
+            .any(|(_, m)| m.perfil.numero_control == numero_control)
         {
             return Err(Error::validacion(
                 "Ya existe un perfil con ese número de control en esta carpeta. Inicia sesión o usa \"Recuperar mis trabajos\".",
@@ -285,8 +366,7 @@ impl SesionAlumno {
                 None => Vec::new(),
             },
         };
-        let carpeta = dir_perfiles.join(&perfil.perfil_id);
-        fs::create_dir_all(&carpeta)?;
+        let (ubicacion, dep) = perfiles.crear(&perfil.perfil_id)?;
         let meta = MetaPerfil {
             formato: 1,
             perfil: perfil.clone(),
@@ -294,7 +374,7 @@ impl SesionAlumno {
             envolturas,
             grupo: grupo.cloned(),
         };
-        let mut almacen = Almacen::crear(&carpeta.join(ARCHIVO_BD), meta, dek)?;
+        let mut almacen = Almacen::crear(dep, meta, dek)?;
         almacen.agregar(
             vec![
                 (
@@ -317,7 +397,7 @@ impl SesionAlumno {
         Ok((
             SesionAlumno {
                 almacen,
-                carpeta,
+                ubicacion,
                 kdf,
                 codigo_nuevo: None,
             },
@@ -326,12 +406,28 @@ impl SesionAlumno {
     }
 
     /// Abre un perfil existente (carpeta del perfil).
+    #[cfg(feature = "sqlite")]
     pub fn abrir(carpeta: &Path, secreto: &Secreto, kdf: ParametrosKdf) -> Resultado<Self> {
-        let bd = carpeta.join(ARCHIVO_BD);
-        let meta = leer_meta(&bd)?;
+        let dep = crate::deposito::DepositoSqlite::abrir(&carpeta.join(ARCHIVO_BD))?;
+        Self::abrir_en(
+            carpeta.to_string_lossy().into_owned(),
+            Box::new(dep),
+            secreto,
+            kdf,
+        )
+    }
+
+    /// Abre el perfil guardado en `dep`; `ubicacion` es la que devuelve [`Self::ubicacion`].
+    pub fn abrir_en(
+        ubicacion: String,
+        dep: Box<dyn Deposito>,
+        secreto: &Secreto,
+        kdf: ParametrosKdf,
+    ) -> Resultado<Self> {
+        let meta = meta_de(dep.as_ref())?;
         let a = abrir_dek(&meta.envolturas, &meta.perfil.perfil_id, secreto, &kdf)?;
         // Abrir el almacén descifra el historial: comprueba que la llave de datos es la buena.
-        let mut almacen = Almacen::abrir(&bd, *a.dek)?;
+        let mut almacen = Almacen::abrir(dep, *a.dek)?;
         validar_firma_acceso(&a.firma_acceso, almacen.meta.grupo.as_ref())?;
         let mut eventos = vec![(
             "sesion_inicio".to_string(),
@@ -351,15 +447,26 @@ impl SesionAlumno {
         almacen.agregar(eventos, &[])?;
         Ok(SesionAlumno {
             almacen,
-            carpeta: carpeta.to_path_buf(),
+            ubicacion,
             kdf,
             codigo_nuevo: a.codigo_nuevo,
         })
     }
 
     /// Crea un perfil local a partir de una entrega `.rlp` (continuar en otro dispositivo).
+    #[cfg(feature = "sqlite")]
     pub fn restaurar(
         dir_perfiles: &Path,
+        archivo: &[u8],
+        secreto: &Secreto,
+        kdf: ParametrosKdf,
+    ) -> Resultado<Self> {
+        Self::restaurar_en(&CarpetaPerfiles(dir_perfiles), archivo, secreto, kdf)
+    }
+
+    /// Crea en `perfiles` un perfil a partir de una entrega `.rlp`.
+    pub fn restaurar_en(
+        perfiles: &dyn Perfiles,
         archivo: &[u8],
         secreto: &Secreto,
         kdf: ParametrosKdf,
@@ -371,9 +478,10 @@ impl SesionAlumno {
             ));
         }
         let m = &leida.manifiesto;
-        if listar_perfiles(dir_perfiles)
+        if perfiles
+            .listar()
             .iter()
-            .any(|p| p.perfil.perfil_id == m.perfil_id)
+            .any(|(_, p)| p.perfil.perfil_id == m.perfil_id)
         {
             return Err(Error::validacion(
                 "Este perfil ya existe en esta carpeta: inicia sesión y usa \"Importar avances\".",
@@ -385,8 +493,7 @@ impl SesionAlumno {
             return Err(Error::Alterado("perfil inconsistente".into()));
         }
         validar_firma_acceso(&a.firma_acceso, payload.grupo.as_ref())?;
-        let carpeta = dir_perfiles.join(&m.perfil_id);
-        fs::create_dir_all(&carpeta)?;
+        let (ubicacion, dep) = perfiles.crear(&m.perfil_id)?;
         let meta = MetaPerfil {
             formato: 1,
             perfil: payload.perfil.clone(),
@@ -394,10 +501,10 @@ impl SesionAlumno {
             envolturas: a.nuevas.unwrap_or_else(|| m.envolturas.clone()),
             grupo: payload.grupo.clone(),
         };
-        let almacen = Almacen::crear(&carpeta.join(ARCHIVO_BD), meta, *a.dek)?;
+        let almacen = Almacen::crear(dep, meta, *a.dek)?;
         let mut sesion = SesionAlumno {
             almacen,
-            carpeta,
+            ubicacion,
             kdf,
             codigo_nuevo: a.codigo_nuevo,
         };
@@ -416,8 +523,20 @@ impl SesionAlumno {
         &self.almacen.meta.perfil
     }
 
+    /// Carpeta del perfil (escritorio y Android).
+    #[cfg(feature = "sqlite")]
     pub fn carpeta(&self) -> &Path {
-        &self.carpeta
+        Path::new(&self.ubicacion)
+    }
+
+    /// Dónde está guardado el perfil: su carpeta, o su `perfil_id` en la versión web.
+    pub fn ubicacion(&self) -> &str {
+        &self.ubicacion
+    }
+
+    /// Cambios que la app aún no guarda (versión web: los escribe en IndexedDB).
+    pub fn tomar_diario(&mut self) -> Option<Lote> {
+        self.almacen.tomar_diario()
     }
 
     pub fn dispositivo(&self) -> &str {
@@ -495,10 +614,11 @@ impl SesionAlumno {
         Ok(r)
     }
 
-    pub fn cerrar(mut self) -> Resultado<()> {
+    /// Cierra la sesión. Devuelve los últimos cambios que la app debe guardar (versión web).
+    pub fn cerrar(mut self) -> Resultado<Option<Lote>> {
         self.almacen
             .agregar(vec![("sesion_fin".into(), None, json!({}))], &[])?;
-        Ok(())
+        Ok(self.tomar_diario())
     }
 
     pub fn cambiar_contrasena(&mut self, actual: &str, nueva: &str) -> Resultado<()> {

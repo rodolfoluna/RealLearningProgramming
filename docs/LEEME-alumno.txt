@@ -26,6 +26,8 @@ Olvidé mi contraseña
 Trabajar en otra computadora
   En la otra computadora abre la app y elige "Tengo mis avances en un archivo", luego tu .rlp y
   tu contraseña. Para regresar, exporta allá e importa acá con "Importar avances de otro equipo".
+  También puedes continuar en la versión web de la app (en el navegador, incluso en tu celular),
+  si tu profesor te dio su dirección.
 
 Notas
   - En el editor no se puede pegar texto: escribe tu código. Las copias, los intentos de pegar y

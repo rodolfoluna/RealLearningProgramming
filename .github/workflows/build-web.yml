@@ -1,0 +1,97 @@
+name: Build Web
+
+# Versión web (PWA) de la App Alumno: el núcleo en WebAssembly y el sitio estático listo para
+# cualquier hosting (el service worker agrega los encabezados que necesita input()).
+#  - En cada push a main: el sitio como artefacto (rlp-web).
+#  - En las etiquetas v*: verifica la llave web de producción, agrega el .zip al Release y, si la
+#    variable del repositorio RLP_PAGES vale 1 (Settings → Pages → Source: GitHub Actions), lo
+#    publica en GitHub Pages.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Sitio de la App Alumno (PWA)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    env:
+      # Llave de firma de la versión web (secreto). Sin ella se usa la llave de desarrollo.
+      RLP_CLAVE_APP_WEB: ${{ secrets.RLP_CLAVE_APP_WEB }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: web
+      - name: Llave web de producción (solo al publicar)
+        if: github.ref_type == 'tag'
+        run: cargo run -p rlp-core --example verificar_llave_app -- web
+      - name: Versión de wasm-bindgen (la del Cargo.lock)
+        run: echo "WASM_BINDGEN=$(grep -A1 '^name = "wasm-bindgen"$' Cargo.lock | sed -n 's/^version = "\(.*\)"/\1/p')" >> "$GITHUB_ENV"
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-bindgen-cli@${{ env.WASM_BINDGEN }}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm preparar
+      - run: pnpm wasm
+      - run: pnpm --filter @rlp/alumno-web build
+      - name: Empaquetar el sitio
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          [ "$GITHUB_REF_TYPE" = "tag" ] || version="$(node -p 'require("./apps/alumno-web/package.json").version')-${GITHUB_SHA::7}"
+          mkdir -p dist-web
+          (cd apps/alumno-web/dist && zip -qr "$GITHUB_WORKSPACE/dist-web/RLP-Alumno-$version-web.zip" .)
+          ls -la dist-web
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rlp-web
+          path: dist-web/*.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rlp-web-sitio
+          path: apps/alumno-web/dist
+      - name: Agregar el sitio al Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist-web/*.zip
+          prerelease: ${{ contains(github.ref_name, '-') }}
+
+  pages:
+    name: Publicar en GitHub Pages
+    if: github.ref_type == 'tag' && vars.RLP_PAGES == '1'
+    needs: web
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: rlp-web-sitio
+          path: sitio
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: sitio
+      - id: despliegue
+        uses: actions/deploy-pages@v4

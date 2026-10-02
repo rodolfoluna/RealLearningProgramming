@@ -11,7 +11,7 @@ const origen = dirname(require.resolve("pyodide/package.json"));
 const archivos = ["pyodide.mjs", "pyodide.asm.mjs", "pyodide.asm.wasm", "python_stdlib.zip", "pyodide-lock.json", "package.json"];
 const destinos = process.argv.slice(2).length
   ? process.argv.slice(2)
-  : ["apps/alumno/public/pyodide", "apps/profesor/public/pyodide", "tests/banco/public/pyodide"];
+  : ["apps/alumno/public/pyodide", "apps/alumno-web/public/pyodide", "apps/profesor/public/pyodide", "tests/banco/public/pyodide"];
 
 for (const destino of destinos) {
   const dir = join(raiz, destino);

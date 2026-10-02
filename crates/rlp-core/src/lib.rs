@@ -1,7 +1,8 @@
 //! Núcleo de RealLearningProgramming.
 //!
-//! Compartido por la App Alumno y la App Profesor (Windows ahora, Android después):
-//! cifrado de los avances, historial verificable, formato de entrega y verificación.
+//! Compartido por la App Alumno (Windows, Android y web) y la App Profesor: cifrado de los
+//! avances, historial verificable, formato de entrega y verificación. Sin la función `sqlite`
+//! compila a WebAssembly (`wasm32-unknown-unknown`).
 
 pub mod acceso;
 pub mod crypto;
@@ -20,7 +21,9 @@ pub mod retroalimentacion;
 pub mod almacen;
 #[cfg(feature = "firmar")]
 pub mod alumno;
+pub mod deposito;
 
+#[cfg(feature = "sqlite")]
 pub mod bd_profesor;
 #[cfg(feature = "excel")]
 pub mod excel;

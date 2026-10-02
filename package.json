@@ -5,8 +5,10 @@
   "scripts": {
     "curso": "node scripts/compilar-curso.mjs",
     "pyodide": "node scripts/copiar-pyodide.mjs",
+    "wasm": "node scripts/compilar-wasm.mjs",
     "preparar": "pnpm curso && pnpm pyodide",
     "dev:alumno": "pnpm preparar && pnpm --filter @rlp/alumno dev",
+    "dev:alumno-web": "pnpm preparar && pnpm wasm && pnpm --filter @rlp/alumno-web dev",
     "dev:profesor": "pnpm preparar && pnpm --filter @rlp/profesor dev",
     "build": "pnpm preparar && pnpm -r --filter ./apps/* build",
     "check": "pnpm -r check",

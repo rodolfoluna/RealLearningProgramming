@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Modal, mensajeError } from "@rlp/ui-comun";
   import { backend } from "../lib/backend";
-  import { app, cargarEstadoApp, curso, entrar, esMovil } from "../lib/app.svelte";
+  import { app, cargarEstadoApp, curso, entrar, esWeb, lugarDeDatos, puedeEscanearQr } from "../lib/app.svelte";
   import type { EstadoAlumno, InfoAcceso, PerfilLocal } from "../lib/tipos";
 
   type Modo = "entrar" | "registro" | "restaurar" | "acceso";
@@ -163,21 +163,28 @@
         <strong>Sin grupo.</strong> Para entregar tus avances, importa el archivo de grupo (.rlpg) que te dio tu profesor.
         Mientras tanto puedes practicar.
         <div class="fila" style="margin-top: 0.5em">
-          {#if esMovil()}
+          {#if puedeEscanearQr()}
             <button class="primario" onclick={escanearGrupo} disabled={ocupado}>📷 Escanear QR del grupo</button>
           {/if}
           <button onclick={importarGrupo} disabled={ocupado}>Importar archivo de grupo</button>
         </div>
       </div>
     {/if}
-    {#if !estadoApp.escribible}
+    {#if !estadoApp.escribible && esWeb()}
+      <p class="error">
+        Este navegador no permite guardar datos (¿es una ventana privada?). Abre la app en una ventana normal.
+      </p>
+    {:else if !estadoApp.escribible}
       <p class="error">
         Esta carpeta no permite guardar datos ({estadoApp.carpeta_datos}). Copia la carpeta de la app a Documentos
         o a tu memoria USB y ábrela desde ahí.
       </p>
     {/if}
     <p class="suave pie">
-      Tus avances se guardan cifrados en la carpeta de la app: nadie más puede abrirlos sin tu contraseña.
+      Tus avances se guardan cifrados en {lugarDeDatos()}: nadie más puede abrirlos sin tu contraseña.
+      {#if esWeb()}
+        Si borras los datos de este sitio se borran también: exporta tu entrega seguido, te sirve de respaldo.
+      {/if}
     </p>
   </section>
 
@@ -242,7 +249,7 @@
       {/if}
     {:else if modo === "registro"}
       <form onsubmit={(e) => { e.preventDefault(); registrarse(); }}>
-        <p class="suave">Esto se hace solo la primera vez en esta carpeta.</p>
+        <p class="suave">Esto se hace solo la primera vez en {esWeb() ? "este navegador" : "esta carpeta"}.</p>
         <div class="campo">
           <label for="nc">Número de control</label>
           <input id="nc" bind:value={numeroControl} autocomplete="off" inputmode="numeric" />
@@ -319,7 +326,7 @@
           {#if !infoAcceso.perfil_local}
             <div class="campo fila">
               <button type="button" onclick={elegirEntrega} disabled={ocupado}>Elegir mi último .rlp…</button>
-              <span class="suave archivo">{rutaEntrega || "Tu perfil no está en esta computadora: elige tu último archivo de avances"}</span>
+              <span class="suave archivo">{rutaEntrega || "Tu perfil no está aquí: elige tu último archivo de avances"}</span>
             </div>
           {/if}
           <div class="campo">

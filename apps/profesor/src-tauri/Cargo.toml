@@ -15,7 +15,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 # Sin la función "firmar": la App Profesor solo verifica, no contiene la llave de la App Alumno.
-rlp-core = { path = "../../../crates/rlp-core", default-features = false, features = ["excel"] }
+rlp-core = { path = "../../../crates/rlp-core", default-features = false, features = ["sqlite", "excel"] }
 rlp-puente = { path = "../../../crates/rlp-puente" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

@@ -11,6 +11,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@rlp/alumno-ui": "workspace:*",
     "@rlp/curso": "workspace:*",
     "@rlp/editor": "workspace:*",
     "@rlp/python-worker": "workspace:*",

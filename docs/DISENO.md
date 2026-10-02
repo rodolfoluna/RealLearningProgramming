@@ -50,17 +50,18 @@ fases. El código está organizado igual que aquí se describe.
 ## 2. Arquitectura
 
 ```
-┌──────────────────────── App Alumno (Tauri 2) ────────────────────────┐
-│  Interfaz Svelte 5 + TypeScript                                       │
+┌───────── App Alumno: Windows y Android (Tauri 2) · Web (PWA) ─────────┐
+│  Interfaz Svelte 5 + TypeScript (@rlp/alumno-ui, igual en las tres)   │
 │   ├─ Editor CodeMirror 6 ── bloqueo de pegado, conteo de copias,      │
 │   │                         captura de operaciones de edición         │
 │   ├─ Worker de Python (Pyodide = CPython en WebAssembly)              │
-│   │     input() con SharedArrayBuffer  ó  puente rlpentrada:// (Rust)  │
+│   │     input() con SharedArrayBuffer  ó  puente rlpentrada:// (Rust) │
 │   └─ Lecciones Markdown con ejemplos ejecutables                      │
 │  Rust                                                                 │
 │   ├─ rlp-core: cifrado, historial firmado, SQLite, entregas .rlp      │
 │   ├─ rlp-puente: entrada síncrona sin SharedArrayBuffer               │
 │   └─ PyInstaller desde runtime\ (CPython portátil) → .exe             │
+│  Web: rlp-core en WebAssembly (rlp-web) en un Worker + IndexedDB      │
 └───────────────────────────────────────────────────────────────────────┘
           │ .rlp (cifrado y firmado)            ▲ .rlpg (grupo firmado)
           ▼                                     │
@@ -77,7 +78,8 @@ fases. El código está organizado igual que aquí se describe.
 crates/rlp-core/        Núcleo en Rust (compartido; se prueba con cargo test)
   src/crypto.rs         AES-256-GCM, Argon2id, X25519+HKDF (envolturas), Ed25519, códigos
   src/llave_app.rs      Llave de firma de la App Alumno (inyectada al compilar) y llaves de confianza
-  src/almacen.rs        SQLite del alumno: meta, actividades cifradas, eventos encadenados
+  src/almacen.rs        Perfil del alumno: meta, actividades cifradas, eventos encadenados
+  src/deposito.rs       Dónde se guarda: SQLite (nativa) o memoria + diario (web)
   src/eventos.rs        Formato de eventos, cadena de hashes y firma
   src/replay.rs         Reproducción del historial (UTF-16), segmentos, ritmo de escritura
   src/estadisticas.rs   Contadores calculados desde el historial
@@ -88,13 +90,18 @@ crates/rlp-core/        Núcleo en Rust (compartido; se prueba con cargo test)
   src/verificacion.rs   Revisión de entregas (semáforo verde/amarillo/rojo)
   src/bd_profesor.rs    SQLite del profesor: grupos, entregas, tablero, calificaciones, CSV
   tests/flujo.rs        Flujo completo y manipulaciones
+  tests/web.rs          Perfiles en memoria (versión web) y continuación web ↔ escritorio
 crates/rlp-puente/      Protocolo rlpentrada:// (input y sleep sin SharedArrayBuffer)
-apps/alumno/            Interfaz (src/) y app Tauri (src-tauri/)
+crates/rlp-web/         Núcleo de la versión web (WebAssembly): llamar(método, json)
+apps/alumno/            App Alumno nativa (Windows y Android): cáscara Tauri + backend (src/, src-tauri/)
+apps/alumno-web/        App Alumno web (PWA): cáscara web + backend con el núcleo WebAssembly
 apps/profesor/          Interfaz (src/) y app Tauri (src-tauri/)
+packages/alumno-ui/     Interfaz de la App Alumno, compartida por la nativa y la web
 packages/editor/        Extensiones de CodeMirror (pegado, copias, operaciones, menú)
 packages/python-worker/ Worker de Pyodide, harness.py (ejecución, pruebas) y errores_es.py
 packages/ui-comun/      Tema claro/oscuro, Markdown con resaltado, modal, semáforo
 packages/curso/         Tipos del curso y JSON compilado (generado)
+packages/nucleo-web/    Worker con el núcleo WebAssembly y los perfiles en IndexedDB
 curso/                  Contenido del curso (YAML + Markdown + Python)
 scripts/                Compilar/validar curso, copiar Pyodide, runtime, empaquetar, autoprueba
 tests/                  Banco de pruebas y pruebas de interfaz (Playwright)
@@ -193,6 +200,10 @@ Además el tablero marca si un mismo perfil aparece con otro número de control 
   ventana y una breve **defensa oral** del código son los mejores complementos.
 - En Android (fase 2) el bloqueo de pegado es menos hermético (teclados de terceros): se bloquea el
   menú y las inserciones grandes o de varias líneas, y todo se registra.
+- En la **versión web** cualquiera puede descargar el código, así que su llave de firma no es
+  secreta: la App Profesor marca en **amarillo** la firma de esas entregas y el historial escrito
+  en la web ("confía en el historial y en la reproducción de la escritura"). El resto de las
+  revisiones (descifrado, cadena, reproducción tecla a tecla, fechas, identidad) son las mismas.
 
 ### 4.6 Del profesor al alumno: retroalimentación y acceso
 
@@ -221,12 +232,20 @@ Además el tablero marca si un mismo perfil aparece con otro número de control 
   nunca firma con la llave de desarrollo.
 - La App Profesor se compila **sin** la función `firmar`: no contiene ninguna llave privada. Cada
   app se compila por separado para que Cargo no unifique esa función.
+- **Versión web**: llave propia, secreto `RLP_CLAVE_APP_WEB`. Al compilar a WebAssembly,
+  `build.rs` lee solo esa variable, así que la semilla nativa nunca entra a un bundle web. Su
+  llave pública lleva la marca `[web]` en `llaves_app.txt`. `verificar_llave_app -- web` la
+  revisa antes de publicar y también impide usar la llave web en la app nativa, o al revés.
 
 ---
 
 ## 5. Formatos de archivo
 
 ### `alumno.db` (SQLite, una por perfil en `datos/perfiles/<perfil_id>/`)
+
+El núcleo guarda estas filas a través del trait `Deposito` (`deposito.rs`): SQLite en escritorio y
+Android; en memoria con un diario de cambios que la versión web guarda en IndexedDB (ver
+[`PWA.md`](PWA.md)). El contenido cifrado es el mismo en ambos.
 
 ```sql
 meta(clave, valor)                         -- JSON en claro: perfil público, dispositivo, envolturas, grupo
@@ -312,12 +331,29 @@ Ambos: `{"contenido": "<JSON exacto>", "firma": "<Ed25519 del profesor>"}`.
   operadores, flechas, deshacer): inserta como tecleo normal, así cuenta en el historial.
 - Cambiar de app (`visibilitychange`) cuenta como salida de la ventana.
 - Sin `.exe` (no hay PyInstaller en el celular).
-- **CI** (`build-android.yml`): genera el proyecto con `tauri android init`, compila un APK de
-  depuración x86_64 que se instala en un **emulador** y corre la autoprueba (activada con
-  `autoprueba.txt` en la carpeta privada vía `adb shell run-as`; el resultado queda en
-  `autoprueba_resultado.json`), y el APK para celulares (arm64 y armv7), firmado con el keystore de
-  los secretos `ANDROID_KEYSTORE`, `ANDROID_KEYSTORE_PASSWORD` y `ANDROID_KEY_ALIAS`. La firma debe
-  ser siempre la misma: Android solo actualiza una app (conservando sus datos) si coincide.
+- **Compilación local** (`scripts/compilar-android.ps1`, Windows): toma el SDK de `ANDROID_HOME`
+  o `E:\Android`, el NDK más nuevo y el Java de Android Studio; agrega los targets de Rust, genera
+  el proyecto con `tauri android init` si falta, compila arm64/armv7 (de prueba, o firmado con tu
+  keystore con `-Release`) y deja el APK en `dist-android\` (`-Instalar` lo instala con adb).
+- **CI** (`build-android.yml`, solo a mano y en etiquetas `v*`): genera el proyecto con
+  `tauri android init`, compila un APK de depuración x86_64 que se instala en un **emulador** y
+  corre la autoprueba (activada con `autoprueba.txt` en la carpeta privada vía `adb shell run-as`;
+  el resultado queda en `autoprueba_resultado.json`), y el APK para celulares (arm64 y armv7),
+  firmado con el keystore de los secretos `ANDROID_KEYSTORE`, `ANDROID_KEYSTORE_PASSWORD` y
+  `ANDROID_KEY_ALIAS`. La firma debe ser siempre la misma, en local y en CI: Android solo
+  actualiza una app (conservando sus datos) si coincide.
+
+### Versión web (PWA)
+
+- La misma interfaz (`packages/alumno-ui`) con otra cáscara (`apps/alumno-web`): el núcleo
+  `rlp-core` compilado a WebAssembly corre en un Worker y los perfiles se guardan cifrados en
+  IndexedDB, con las mismas filas que el `alumno.db`. Un perfil se abre en una sola pestaña a la
+  vez (Web Locks).
+- Instalable y sin conexión: el service worker guarda la app y Pyodide, y agrega COOP/COEP para
+  que `input()` funcione en cualquier hosting estático.
+- Archivos con el selector del navegador; la entrega se descarga; QR con la cámara; sin `.exe`.
+  Los datos viven en el navegador: la app recuerda exportar la entrega como respaldo.
+- Detalle, decisiones y resultados de las pruebas en [`PWA.md`](PWA.md).
 
 ### Ejecución de Python
 
@@ -412,6 +448,8 @@ Los diccionarios quedan como posible unidad opcional en una versión posterior.
   **QR**, exportar con "Guardar como", pausa de la app como salida, autoprueba en emulador;
   **hecho**, pendiente afinar las heurísticas de IME con teclados reales). Después: problemas de
   Parsons, historial de versiones, consola interactiva.
+- **Versión web (PWA) de la App Alumno** (**hecha**; falta probarla en iPhone y Android reales):
+  misma interfaz y núcleo en WebAssembly, instalable y sin conexión. Detalle en [`PWA.md`](PWA.md).
 - **Fase 3**: **detección de similitud** entre alumnos (huellas de tokens/AST); visualizador paso a
   paso (tipo Python Tutor); editor del curso y paquetes `.curso` firmados; insignias y rachas;
   tablero de dificultades por actividad.

@@ -1,0 +1,18 @@
+{
+  "extends": "@tsconfig/svelte/tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "types": ["vite/client"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker.ImportScripts"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.svelte", "../../packages/*/src/**/*.ts", "../../packages/*/src/**/*.svelte"],
+  "exclude": ["../../packages/*/src/**/*.test.ts"]
+}

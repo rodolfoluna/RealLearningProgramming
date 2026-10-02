@@ -1,8 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import type { Backend } from "./backend";
-import { conDialogo } from "./dialogos";
+import { conDialogo, type Backend } from "@rlp/alumno-ui";
 
 export function crearBackendTauri(): Backend {
   return {

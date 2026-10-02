@@ -10,13 +10,16 @@ Apps **sin conexión** para aprender y enseñar programación en Python, en espa
   salidas de ventana), **reproduce cómo se escribió** cada código, vuelve a correr las pruebas,
   exporta a Excel y envía **retroalimentación firmada** a los alumnos.
 
-Windows (ambas apps) y Android (App Alumno, APK). El diseño completo está en
-[`docs/DISENO.md`](docs/DISENO.md).
+Windows (ambas apps), Android (App Alumno, APK) y **web** (App Alumno instalable desde el
+navegador, también sin conexión). Las tres versiones de la App Alumno comparten la interfaz y el
+núcleo, y sus entregas son las mismas. El diseño completo está en [`docs/DISENO.md`](docs/DISENO.md);
+la versión web, en [`docs/PWA.md`](docs/PWA.md).
 
 ## Stack
 
-Tauri 2 · Rust (`rlp-core`) · Svelte 5 + TypeScript · CodeMirror 6 · Pyodide (CPython 3.14 en
-WebAssembly) · PyInstaller · SQLite.
+Tauri 2 · Rust (`rlp-core`, también compilado a WebAssembly) · Svelte 5 + TypeScript ·
+CodeMirror 6 · Pyodide (CPython 3.14 en WebAssembly) · PyInstaller · SQLite · IndexedDB y
+service worker (versión web).
 
 ## Desarrollo
 
@@ -27,18 +30,25 @@ Requisitos: Node 22 + pnpm 10, Rust estable, Python 3 (para validar el curso). E
 pnpm install
 pnpm preparar                 # compila el curso y copia Pyodide
 pnpm dev:alumno               # interfaz en el navegador con núcleo simulado (http://localhost:1420)
+pnpm dev:alumno-web           # versión web con el núcleo real en WebAssembly (http://localhost:1422)
 pnpm dev:profesor             # http://localhost:1421 (contraseña de demo: profesor1234)
 pnpm --filter @rlp/alumno tauri dev   # app real
 ```
+
+La versión web compila el núcleo a WebAssembly con `pnpm wasm`. Requiere, una sola vez,
+`rustup target add wasm32-unknown-unknown` y `cargo install wasm-bindgen-cli --version 0.2.129
+--locked` (la versión de `wasm-bindgen` en `Cargo.lock`).
 
 ## Pruebas
 
 ```bash
 cargo test -p rlp-core                 # núcleo: cifrado, historial, entregas, manipulaciones
+cargo test -p rlp-web                  # núcleo de la versión web (perfiles en memoria + diario)
 pnpm vitest run                        # lógica del editor
 python3 scripts/validar_curso.py       # soluciones del curso en CPython
 node scripts/validar-curso-pyodide.mjs # ... y en Pyodide
-pnpm exec playwright test              # interfaz y Pyodide en Chromium
+pnpm exec playwright test              # interfaz y Pyodide en Chromium (versión web: requiere
+                                       # pnpm wasm y, para la prueba sin conexión, su build)
 ./scripts/autoprueba.sh                # apps reales: profesor → alumno → profesor (Xvfb)
 ```
 
@@ -64,3 +74,34 @@ portables) en cada push. Para publicar una versión:
    dos zips y las notas del `CHANGELOG.md`.
 
 La guía para instalar en un laboratorio está en [`docs/INSTALACION.md`](docs/INSTALACION.md).
+
+### Versión web
+
+El workflow **Build Web** genera el sitio (`RLP-Alumno-*-web.zip`, archivos estáticos para
+cualquier hosting). Para publicar:
+
+1. Configura una sola vez el secreto `RLP_CLAVE_APP_WEB` con la semilla de la llave web (su
+   llave pública ya está en `llaves_app.txt` con la marca `[web]`).
+2. Para que se publique en GitHub Pages: Settings → Pages → Source: **GitHub Actions**, y la
+   variable del repositorio `RLP_PAGES` = `1`.
+3. Con la etiqueta `v*`, el workflow verifica la llave, agrega el `.zip` al Release y publica el
+   sitio.
+
+### APK de Android en tu computadora
+
+Requisitos (Windows): el SDK de Android con **NDK**, **Build-Tools** y **Platform-Tools** (desde
+el SDK Manager de Android Studio), Java 17 (el de Android Studio sirve) y `pnpm install` hecho.
+El script toma el SDK de `ANDROID_HOME` o, si no está definida, de `E:\Android`.
+
+```powershell
+.\scripts\compilar-android.ps1                    # APK de prueba (arm64 y armv7) en dist-android\
+.\scripts\compilar-android.ps1 -Instalar          # ... y lo instala con adb en el celular conectado
+.\scripts\compilar-android.ps1 -Targets x86_64    # para un emulador
+$env:RLP_CLAVE_APP = "<semilla>"                  # entregas en verde (la misma del secreto de CI)
+.\scripts\compilar-android.ps1 -Release -Keystore C:\llaves\rlp.jks -Alias rlp
+```
+
+El APK de prueba usa una firma de depuración: para pasar a uno firmado con `-Release` hay que
+desinstalar la app (se borran sus datos). Usa siempre el mismo keystore para que las
+actualizaciones conserven los datos. El workflow **Build Android** ya no corre en cada push: se
+lanza a mano (Actions → Build Android → Run workflow) o al crear una etiqueta `v*`.

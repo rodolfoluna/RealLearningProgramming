@@ -36,10 +36,24 @@ siguen [SemVer](https://semver.org/lang/es/). El curso tiene su propia versión 
 
 ### Android
 
-- **APK de la App Alumno** (arm64 y armv7) generado en CI; autoprueba en un emulador.
+- **APK de la App Alumno** (arm64 y armv7): se compila en local con
+  `scripts/compilar-android.ps1` (SDK en `ANDROID_HOME` o `E:\Android`); el workflow de CI, con
+  autoprueba en un emulador, corre a mano y en las etiquetas `v*`.
 - Unirse al grupo escaneando el **QR** que muestra la App Profesor (Grupos → "QR para celulares").
 - **Barra de teclas de código** en pantallas táctiles; exportar con "Guardar como"; cambiar de
   app cuenta como salida.
+
+### Versión web (PWA)
+
+- **App Alumno en el navegador**, instalable y **sin conexión**: la misma interfaz, el mismo curso
+  y las mismas entregas `.rlp` que la app nativa. El núcleo en Rust se compila a WebAssembly y los
+  perfiles se guardan cifrados en IndexedDB.
+- Funciona en cualquier hosting estático, incluido GitHub Pages: el service worker agrega los
+  encabezados que necesita `input()`. Workflow **Build Web** (artefacto, Release y Pages).
+- Un perfil solo se abre en una pestaña a la vez; recordatorio de exportar la entrega; QR del grupo
+  con la cámara; la entrega se descarga.
+- La App Profesor marca en amarillo la firma de las entregas web (su llave no es secreta).
+- La interfaz de la App Alumno pasa a `packages/alumno-ui`, compartida por la app nativa y la web.
 
 ### Distribución
 

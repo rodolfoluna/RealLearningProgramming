@@ -3,8 +3,7 @@
 import type { Curso } from "@rlp/curso";
 import cursoJson from "@rlp/curso/alumno.json";
 import type { PoliticaPegado } from "@rlp/editor";
-import { EjecutorPython, type PuenteEntrada } from "@rlp/python-worker";
-import { convertFileSrc, invoke } from "@tauri-apps/api/core";
+import { EjecutorPython, type OpcionesEjecutor } from "@rlp/python-worker";
 import { backend } from "./backend";
 import type { EstadoActividad, EstadoAlumno, EstadoApp } from "./tipos";
 
@@ -25,18 +24,17 @@ export const app = $state({
   tema: (localStorageSeguro("rlp-tema") ?? "sistema") as "sistema" | "claro" | "oscuro",
 });
 
-/** Intérprete de Python compartido (un solo worker con Pyodide). */
-export const python = new EjecutorPython({ indexURL: "/pyodide/", timeoutPruebaMs: 4000, puenteEntrada: puente() });
-
-/** Entrada síncrona vía Rust para WebView sin SharedArrayBuffer (p. ej. WebKitGTK). */
-function puente(): PuenteEntrada | undefined {
-  if (typeof window === "undefined" || !("__TAURI_INTERNALS__" in window)) return undefined;
-  return {
-    url: convertFileSrc("", "rlpentrada"),
-    enviar: (linea) => invoke("entrada_enviar", { linea }),
-    cancelar: () => invoke("entrada_cancelar"),
-  };
+/** Pyodide se sirve junto a la app; con `base: "./"` (versión web) la ruta debe ser absoluta. */
+function rutaPyodide(): string {
+  const base = import.meta.env.BASE_URL;
+  return base.startsWith("/") ? `${base}pyodide/` : new URL(`${base}pyodide/`, location.href).href;
 }
+
+/** Opciones del intérprete: `iniciarApp` agrega el puente de entrada de la app nativa. */
+export const opcionesPython: OpcionesEjecutor = { indexURL: rutaPyodide(), timeoutPruebaMs: 4000 };
+
+/** Intérprete de Python compartido (un solo worker con Pyodide). */
+export const python = new EjecutorPython(opcionesPython);
 
 function localStorageSeguro(clave: string): string | null {
   try {
@@ -75,10 +73,31 @@ export async function salir() {
   await cargarEstadoApp();
 }
 
-/** Celular o tableta: exportar con "Guardar como", unirse al grupo por QR, barra de teclas. */
+/** Celular o tableta con la app nativa (Android): barra de teclas, QR, "Guardar como". */
 export function esMovil(): boolean {
   const p = app.estadoApp?.plataforma;
   return p === "android" || p === "ios";
+}
+
+/** Versión web (PWA): los datos viven en el navegador y las entregas se descargan. */
+export function esWeb(): boolean {
+  return app.estadoApp?.plataforma === "web";
+}
+
+/** Exportar a un archivo con nombre ("Guardar como" o descarga) en lugar de elegir una carpeta. */
+export function exportarConNombre(): boolean {
+  return esMovil() || esWeb();
+}
+
+/** Unirse al grupo escaneando el QR que muestra la App Profesor. */
+export function puedeEscanearQr(): boolean {
+  if (esMovil()) return true;
+  return esWeb() && typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
+}
+
+/** Dónde se guardan los perfiles, para los textos de la interfaz. */
+export function lugarDeDatos(): string {
+  return esWeb() ? "este navegador" : esMovil() ? "la app" : "la carpeta de la app";
 }
 
 /** Pantalla táctil sin teclado físico (muestra la barra de teclas de código). */
