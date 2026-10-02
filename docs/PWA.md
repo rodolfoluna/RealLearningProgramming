@@ -12,7 +12,7 @@ igual. Fuera de alcance: crear `.exe`, PWA del profesor, app nativa de iOS y ser
 | 2. Crate `rlp-web` + paquete `nucleo-web` | **Hecha** |
 | 3. Interfaz compartida y `backend-web.ts` | **Hecha** |
 | 4. Cáscara PWA (manifest, service worker, instalación) | **Hecha** |
-| 5. Llave web → Amarillo; pruebas cruzadas con la App Profesor | Pendiente (el núcleo ya pasa las pruebas cruzadas, ver Fase 1) |
+| 5. Llave web → Amarillo; pruebas cruzadas con la App Profesor | **Hecha** |
 | 6. CI, Playwright (Chromium + WebKit) y documentación | Pendiente (CI ya compila y prueba el núcleo web) |
 
 ## Fase 0 — resultados
@@ -138,6 +138,24 @@ respaldo) y aviso de que borrar los datos del sitio borra el perfil. Falta proba
 - Prueba `web.pwa.spec.ts`: el sitio compilado servido **sin encabezados y en una subcarpeta**
   (como GitHub Pages) queda aislado, ofrece el manifest y, **sin red**, registra un perfil y corre
   un programa con `input()`.
+
+## Fase 5 — integridad y compatibilidad con la App Profesor (hecha)
+
+- `verificacion.rs`: una entrega firmada con una llave `[web]` sale en **amarillo** en "Firma de
+  la app" ("creado con la versión web; su firma no es secreta"). El "Historial" también sale en
+  amarillo si incluye eventos escritos en la web, aunque luego se haya exportado desde la app
+  nativa: así una llave web extraída no sirve para "lavar" un historial fabricado. El resto de las
+  revisiones no cambia. Por ahora no es configurable por grupo.
+- Llave web de producción generada: la pública está en `llaves_app.txt` con la marca `[web]` y la
+  semilla va al secreto `RLP_CLAVE_APP_WEB`. `verificar_llave_app -- web` la revisa y rechaza
+  cruzar las llaves nativa y web.
+- Pruebas cruzadas:
+  - en Rust (`crates/rlp-web/tests/nucleo.rs`): entrega web verificada por el profesor,
+    `.rlpa` (con perfil en el navegador o desde el `.rlp`), `.rlpr` guardada y visible al volver
+    a entrar, `.rlpg` por archivo y por QR;
+  - en `crates/rlp-core/tests/web.rs`: escritorio → web → escritorio;
+  - manual: el wasm compilado con la llave de producción generó una entrega que la App Profesor
+    marcó en amarillo solo en firma e historial, con la reconstrucción tecla a tecla en verde.
 
 ## Riesgos encontrados
 

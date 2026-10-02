@@ -278,3 +278,65 @@ fn acceso_del_profesor_y_continuar_desde_un_rlp() {
         .unwrap_err()
         .contains("desconocida"));
 }
+
+#[test]
+fn retroalimentacion_del_profesor_en_la_version_web() {
+    let (profe, grupo) = profesor_y_grupo();
+    let mut app = App::nueva();
+    let r = app
+        .llamar(
+            "registrar",
+            json!({ "metas": [], "grupo": grupo, "numero_control": "21340202",
+                    "nombre": "Iván Web", "contrasena": "clave-ivan" }),
+        )
+        .unwrap();
+    let perfil = r["estado"]["perfil"]["perfil_id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    teclear(&mut app, "u1-a1", "print(1)\n");
+    let rlp = app.llamar("exportar", json!({})).unwrap()["archivo"]
+        .as_str()
+        .unwrap()
+        .to_string();
+
+    // El profesor abre la entrega web y le devuelve una calificación.
+    let entrega = abrir_entrega(&de_b64(&rlp).unwrap(), &profe, &Contexto::default()).unwrap();
+    let dek = profe
+        .abrir_dek(&entrega.manifiesto.envolturas.profesores, &perfil)
+        .unwrap();
+    let notas = std::collections::BTreeMap::from([(
+        "u1-a1".to_string(),
+        rlp_core::retroalimentacion::NotaActividad {
+            calificacion: Some(9.0),
+            comentario: "Bien hecho en la web".into(),
+            actualizado: rlp_core::modelo::ahora_ms(),
+        },
+    )]);
+    let archivo = rlp_core::retroalimentacion::crear(
+        &profe,
+        Some(&entrega.manifiesto.grupo_id.clone().unwrap()),
+        &[(perfil.clone(), *dek, notas)],
+    )
+    .unwrap();
+    let retro = app
+        .llamar(
+            "importar_retroalimentacion",
+            json!({ "archivo": b64(&archivo) }),
+        )
+        .unwrap();
+    assert_eq!(retro["actividades"]["u1-a1"]["calificacion"], json!(9.0));
+    app.llamar("cerrar_sesion", json!({})).unwrap();
+
+    // Queda guardada (cifrada) en el navegador: se ve al volver a entrar.
+    let estado = app
+        .llamar(
+            "iniciar_sesion",
+            json!({ "instantanea": app.instantanea(&perfil), "secreto": contrasena("clave-ivan") }),
+        )
+        .unwrap();
+    assert_eq!(
+        estado["retroalimentacion"]["actividades"]["u1-a1"]["comentario"],
+        json!("Bien hecho en la web")
+    );
+}

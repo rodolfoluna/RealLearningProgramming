@@ -200,6 +200,10 @@ Además el tablero marca si un mismo perfil aparece con otro número de control 
   ventana y una breve **defensa oral** del código son los mejores complementos.
 - En Android (fase 2) el bloqueo de pegado es menos hermético (teclados de terceros): se bloquea el
   menú y las inserciones grandes o de varias líneas, y todo se registra.
+- En la **versión web** cualquiera puede descargar el código, así que su llave de firma no es
+  secreta: la App Profesor marca en **amarillo** la firma de esas entregas y el historial escrito
+  en la web ("confía en el historial y en la reproducción de la escritura"). El resto de las
+  revisiones (descifrado, cadena, reproducción tecla a tecla, fechas, identidad) son las mismas.
 
 ### 4.6 Del profesor al alumno: retroalimentación y acceso
 
@@ -228,6 +232,10 @@ Además el tablero marca si un mismo perfil aparece con otro número de control 
   nunca firma con la llave de desarrollo.
 - La App Profesor se compila **sin** la función `firmar`: no contiene ninguna llave privada. Cada
   app se compila por separado para que Cargo no unifique esa función.
+- **Versión web**: llave propia, secreto `RLP_CLAVE_APP_WEB`. Al compilar a WebAssembly,
+  `build.rs` lee solo esa variable, así que la semilla nativa nunca entra a un bundle web. Su
+  llave pública lleva la marca `[web]` en `llaves_app.txt`. `verificar_llave_app -- web` la
+  revisa antes de publicar y también impide usar la llave web en la app nativa, o al revés.
 
 ---
 

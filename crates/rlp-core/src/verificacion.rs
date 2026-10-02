@@ -138,11 +138,35 @@ pub fn abrir_entrega(
     })
 }
 
+/// Nivel de la firma de la app según la llave que la hizo (la firma ya se comprobó válida).
+fn calificar_firma(conocida: Option<&LlaveConocida>) -> (Nivel, String) {
+    match conocida {
+        None => (
+            Nivel::Rojo,
+            "Firmado con una llave desconocida (no es una versión oficial de la App Alumno)."
+                .into(),
+        ),
+        Some(LlaveConocida { dev: true, .. }) => (
+            Nivel::Amarillo,
+            "Firmado con la llave de desarrollo: úsala solo para pruebas.".into(),
+        ),
+        // El código de la versión web se puede descargar, así que su llave no es secreta: la firma
+        // no prueba que el archivo salió de la app. La evidencia es el historial.
+        Some(LlaveConocida { web: true, .. }) => (
+            Nivel::Amarillo,
+            "Creado con la versión web de la App Alumno. Su firma no es secreta: confía en el \
+             historial y en la reproducción de la escritura."
+                .into(),
+        ),
+        Some(l) => (Nivel::Verde, format!("Firma válida ({}).", l.nombre)),
+    }
+}
+
 fn verificar_firma(leida: &EntregaLeida, reporte: &mut Reporte) {
     let confiables = llaves_confiables();
     let conocida = de_b64_32(&leida.manifiesto.app.llave)
         .ok()
-        .and_then(|p| confiables.iter().find(|l| l.publica == p).cloned());
+        .and_then(|p| confiables.iter().find(|l| l.publica == p));
     if !leida.firma_valida() {
         reporte.agregar(
             "firma",
@@ -151,26 +175,8 @@ fn verificar_firma(leida: &EntregaLeida, reporte: &mut Reporte) {
             "La firma no corresponde al contenido: el archivo fue modificado.",
         );
     } else {
-        match conocida {
-            None => reporte.agregar(
-                "firma",
-                "Firma de la app",
-                Nivel::Rojo,
-                "Firmado con una llave desconocida (no es una versión oficial de la App Alumno).",
-            ),
-            Some(LlaveConocida { dev: true, .. }) => reporte.agregar(
-                "firma",
-                "Firma de la app",
-                Nivel::Amarillo,
-                "Firmado con la llave de desarrollo: úsala solo para pruebas.",
-            ),
-            Some(l) => reporte.agregar(
-                "firma",
-                "Firma de la app",
-                Nivel::Verde,
-                format!("Firma válida ({}).", l.nombre),
-            ),
-        }
+        let (nivel, detalle) = calificar_firma(conocida);
+        reporte.agregar("firma", "Firma de la app", nivel, detalle);
     }
     if leida.payload_integro() {
         reporte.agregar(
@@ -221,6 +227,7 @@ fn verificar_contenido(
     let mut por_disp: BTreeMap<String, Vec<(Evento, String)>> = BTreeMap::new();
     let mut problemas_cadena = Vec::new();
     let mut llave_no_confiable = false;
+    let mut dispositivos_web = std::collections::BTreeSet::new();
     for ef in &firmados {
         let e = match ef.evento() {
             Ok(e) => e,
@@ -229,9 +236,15 @@ fn verificar_contenido(
                 continue;
             }
         };
-        match de_b64_32(&ef.llave) {
-            Ok(pk) if confiables.iter().any(|l| l.publica == pk) => {}
-            _ => llave_no_confiable = true,
+        match de_b64_32(&ef.llave)
+            .ok()
+            .and_then(|pk| confiables.iter().find(|l| l.publica == pk))
+        {
+            Some(l) if l.web => {
+                dispositivos_web.insert(e.dispositivo.clone());
+            }
+            Some(_) => {}
+            None => llave_no_confiable = true,
         }
         por_disp
             .entry(e.dispositivo.clone())
@@ -288,15 +301,21 @@ fn verificar_contenido(
     }
     if problemas_cadena.is_empty() {
         let n: usize = por_disp.values().map(Vec::len).sum();
-        let nivel = if llave_no_confiable {
+        let nivel = if llave_no_confiable || !dispositivos_web.is_empty() {
             Nivel::Amarillo
         } else {
             Nivel::Verde
         };
         let extra = if llave_no_confiable {
-            " Algunos eventos se firmaron con una llave no reconocida."
+            " Algunos eventos se firmaron con una llave no reconocida.".to_string()
+        } else if !dispositivos_web.is_empty() {
+            format!(
+                " Lo escrito en {} dispositivo(s) con la versión web lleva una firma que no es \
+                 secreta: revisa la reproducción.",
+                dispositivos_web.len()
+            )
         } else {
-            ""
+            String::new()
         };
         reporte.agregar(
             "cadena",
@@ -583,4 +602,31 @@ fn verificar_replay(
 
 fn normalizar(t: &str) -> String {
     t.replace("\r\n", "\n").trim_end().to_string()
+}
+
+#[cfg(test)]
+mod pruebas_firma {
+    use super::*;
+
+    fn llave(dev: bool, web: bool) -> LlaveConocida {
+        LlaveConocida {
+            publica: [7; 32],
+            nombre: "v1".into(),
+            dev,
+            web,
+        }
+    }
+
+    #[test]
+    fn la_firma_web_es_amarilla() {
+        assert_eq!(calificar_firma(None).0, Nivel::Rojo);
+        assert_eq!(
+            calificar_firma(Some(&llave(true, false))).0,
+            Nivel::Amarillo
+        );
+        assert_eq!(calificar_firma(Some(&llave(false, false))).0, Nivel::Verde);
+        let (nivel, detalle) = calificar_firma(Some(&llave(false, true)));
+        assert_eq!(nivel, Nivel::Amarillo);
+        assert!(detalle.contains("versión web"));
+    }
 }
