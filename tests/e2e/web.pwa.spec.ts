@@ -3,6 +3,7 @@ import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { extname, join, resolve } from "node:path";
 import { expect, test } from "@playwright/test";
+import { esperarEntrada, registrarErrores } from "./web.diagnostico";
 
 // La PWA publicada tal como quedaría en GitHub Pages: archivos estáticos en una subcarpeta y sin
 // encabezados COOP/COEP del servidor. El service worker debe aislar la página (input()), guardar
@@ -40,10 +41,15 @@ test.beforeAll(async () => {
   base = `http://127.0.0.1:${(servidor.address() as AddressInfo).port}/rlp/`;
 });
 
-test.afterAll(() => servidor?.close());
+test.afterAll(() => {
+  if (!servidor?.listening) return;
+  servidor.closeAllConnections();
+  servidor.close();
+});
 
-test("PWA: aislada sin encabezados del servidor, instalable y sin conexión", async ({ page, context }) => {
+test("PWA: aislada sin encabezados del servidor, instalable y sin conexión", async ({ page }) => {
   test.setTimeout(180_000);
+  const errores = registrarErrores(page);
   await page.goto(base);
   // Primera visita: el service worker recarga la página una vez, ya aislada.
   await page.waitForFunction(() => crossOriginIsolated === true, null, { timeout: 60_000 });
@@ -56,8 +62,10 @@ test("PWA: aislada sin encabezados del servidor, instalable y sin conexión", as
   expect(manifiesto.icons.length).toBeGreaterThanOrEqual(2);
   await page.waitForFunction(() => localStorage.getItem("rlp-sin-conexion"), null, { timeout: 120_000 });
 
-  // Sin red: la app, el núcleo (wasm) y Python vienen de la caché del service worker.
-  await context.setOffline(true);
+  // Sin red (el servidor ya no responde): la app, el núcleo (wasm) y Python vienen de la caché
+  // del service worker.
+  servidor.closeAllConnections();
+  await new Promise((listo) => servidor.close(listo));
   await page.reload();
   await expect(page.getByRole("tab", { name: "Soy nuevo" })).toBeVisible();
   expect(await page.evaluate(() => crossOriginIsolated)).toBe(true);
@@ -76,10 +84,9 @@ test("PWA: aislada sin encabezados del servidor, instalable y sin conexión", as
   await page.keyboard.type('n = input("Nombre: ")\nprint("Hola,", n)', { delay: 10 });
   await page.getByRole("button", { name: "▶ Ejecutar" }).click();
   const dato = page.getByLabel("Dato para el programa");
-  await expect(dato).toBeVisible({ timeout: 60_000 });
+  await esperarEntrada(page, dato, errores);
   await dato.fill("sin red");
   await dato.press("Enter");
   await expect(page.locator("[data-consola]")).toContainText("Hola, sin red");
   await page.screenshot({ path: "tests/e2e/capturas/web-03-sin-conexion.png" });
-  await context.setOffline(false);
 });

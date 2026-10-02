@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
+import { esperarEntrada, registrarErrores } from "./web.diagnostico";
 
 // Versión web (PWA) de la App Alumno con el núcleo real: Rust en WebAssembly y perfiles en
 // IndexedDB. La interfaz es la misma que la de la app nativa.
@@ -23,6 +24,7 @@ async function registrarse(page: Page, control: string, nombre: string) {
 }
 
 test("registro, programa con input(), recarga y entrega descargada", async ({ page }) => {
+  const errores = registrarErrores(page);
   await registrarse(page, "21340500", "Karla Web");
   await page.locator('[data-actividad="u0-hola-mundo"]').click();
   const editor = page.locator("[data-editor] .cm-content");
@@ -32,7 +34,7 @@ test("registro, programa con input(), recarga y entrega descargada", async ({ pa
   await page.keyboard.type('nombre = input("Nombre: ")\nprint("Hola,", nombre)', { delay: 10 });
   await page.getByRole("button", { name: "▶ Ejecutar" }).click();
   const dato = page.getByLabel("Dato para el programa");
-  await expect(dato).toBeVisible({ timeout: 60_000 });
+  await esperarEntrada(page, dato, errores);
   await dato.fill("Web");
   await dato.press("Enter");
   await expect(page.locator("[data-consola]")).toContainText("Hola, Web");
